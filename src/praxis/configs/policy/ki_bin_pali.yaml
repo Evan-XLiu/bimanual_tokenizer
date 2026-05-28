@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: pali
+  - ki/codec@_here_: bin
+  - _self_
+
+name: ki_bin_pali

@@ -1,0 +1,5 @@
+defaults:
+  - fm/backbone@_here_: smol
+  - _self_
+
+name: fm_smol

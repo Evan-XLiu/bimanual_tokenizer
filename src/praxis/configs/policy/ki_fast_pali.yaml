@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: pali
+  - ki/codec@_here_: fast
+  - _self_
+
+name: ki_fast_pali

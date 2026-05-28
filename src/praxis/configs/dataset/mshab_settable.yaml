@@ -1,0 +1,11 @@
+# LeRobot dataset configuration
+name: mshab_settable
+repo_id: chaoqi-liu/mshab_settable_clean
+root: null              # local cache path (null = default HF cache)
+episodes: null          # null = all episodes
+observation_keys:
+  - observation.state
+  - observation.images.fetch_head
+  - observation.images.fetch_hand
+video_backend: null     # null = auto-detect
+bypass_force_cache_sync: false  # true = avoid distributed-only forced sync (workaround for startup hangs)

@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If Praxis supports your research, please cite OAT using this metadata."
+title: "Praxis"
+authors:
+  - family-names: Liu
+    given-names: Chaoqi
+repository-code: "https://github.com/Chaoqi-LIU/praxis"
+url: "https://chaoqi-liu.com/praxis"
+license: Apache-2.0
+preferred-citation:
+  type: article
+  title: "OAT: Ordered Action Tokenization"
+  authors:
+    - family-names: Liu
+      given-names: Chaoqi
+    - family-names: Han
+      given-names: Xiaoshen
+    - family-names: Gao
+      given-names: Jiawei
+    - family-names: Zhao
+      given-names: Yue
+    - family-names: Chen
+      given-names: Haonan
+    - family-names: Du
+      given-names: Yilun
+  year: 2026
+  identifiers:
+    - type: other
+      value: "arXiv:2602.04215"
+      description: "arXiv preprint"
+  url: "https://arxiv.org/abs/2602.04215"

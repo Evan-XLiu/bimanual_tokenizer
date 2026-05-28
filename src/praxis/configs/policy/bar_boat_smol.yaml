@@ -1,0 +1,6 @@
+defaults:
+  - bar/backbone@_here_: smol
+  - bar/codec@_here_: boat
+  - _self_
+
+name: bar_boat_smol

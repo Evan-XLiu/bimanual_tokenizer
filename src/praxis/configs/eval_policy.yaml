@@ -1,0 +1,36 @@
+# Top-level evaluation config
+defaults:
+  - policy: bar_oat_pali
+  - _self_
+
+seed: 42
+device: cuda
+server_address: null
+
+env:
+  type: libero
+  task: libero_10
+  task_ids: null
+  python_bin: null
+
+eval:
+  mode: local_inproc            # local_inproc | remote_grpc
+  num_eval_per_task: 50
+  num_parallel_env: 1           # For env.type=simpler, useful max per task is num_eval_per_task; Bridge tasks run sequentially, not all 4 at once.
+  output_dir: ???               # required: user-specified folder for eval artifacts
+  record_episodes_per_task: 0
+  step_timeout_sec: 600         # fail fast if async env reset/step stalls (0 disables)
+  rollout_failure_retries: 1    # rebuild/retry a wave after native async worker EOF
+  phase_watchdog_sec: null      # watchdog for eval orchestration stalls (null disables)
+  debug_verbose: false
+  policy_kwargs:
+    decode_keep_k: null
+    decode_temperature: null
+    decode_top_k: null
+
+hydra:
+  run:
+    dir: ${eval.output_dir}
+  output_subdir: .hydra
+  job:
+    chdir: false

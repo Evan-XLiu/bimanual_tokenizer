@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: smol
+  - ki/codec@_here_: quest
+  - _self_
+
+name: ki_quest_smol

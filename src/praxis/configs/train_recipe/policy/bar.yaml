@@ -1,0 +1,8 @@
+trainer:
+  lrs:
+    vlm: 1.0e-4
+    vision: 1.0e-4
+    bridge: 1.0e-4
+  lr_scheduler: cosine
+  warmup_steps: 500
+  min_lr_ratio: 0.1

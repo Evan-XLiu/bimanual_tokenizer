@@ -1,0 +1,27 @@
+# BOAT token codec config
+name: boat
+kind: tokens
+pretrained_path: null
+
+# Action/sample geometry
+action_dim: null
+action_horizon: 32
+max_fit_chunks: 50000
+latent_horizon: 16
+
+# Shared transformer dims
+emb_dim: 256
+head_dim: 32
+encoder_depth: 6
+decoder_depth: 6
+dropout: 0.1
+
+# Decoder prefix-dropout schedule over ordered latents
+latent_dropout_mode: pow2
+
+# Quantizer
+quantizer_levels: [8, 8, 6, 5]
+quantizer_drop_quant_p: 0.0
+quantizer_corrupt_tokens_p: 0.0
+quantizer_min_corrupt_tokens_p: null
+quantizer_apply_corrupt_tokens_p: 0.2

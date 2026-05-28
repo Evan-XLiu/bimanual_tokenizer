@@ -1,0 +1,19 @@
+"""ActionCodec continuous action-latent autoencoder components."""
+
+from praxis.codecs.latents.acodec.autoencoder import ActionCodecAutoencoder
+from praxis.codecs.latents.acodec.config import (
+    ActionCodecAutoencoderConfig,
+    ActionCodecModelConfig,
+)
+from praxis.codecs.latents.acodec.modeling import (
+    ActionCodecDecoder,
+    ActionCodecEncoder,
+)
+
+__all__ = [
+    "ActionCodecAutoencoder",
+    "ActionCodecAutoencoderConfig",
+    "ActionCodecModelConfig",
+    "ActionCodecDecoder",
+    "ActionCodecEncoder",
+]

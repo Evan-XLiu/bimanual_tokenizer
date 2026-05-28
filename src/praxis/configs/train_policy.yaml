@@ -1,0 +1,29 @@
+# Top-level training config
+defaults:
+  - policy: bar_oat_pali
+  - dataset: libero
+  - trainer: policy
+  - train_recipe/policy@_global_: bar
+  - _self_
+
+name: train_policy
+seed: 42
+device: cuda
+run_name: ${dataset.name}_${policy.name}
+output_dir: outputs/train_policy/${now:%Y%m%d}/${run_name}
+run_mode: overwrite        # overwrite output_dir unless run_mode=resume
+resume_checkpoint: null   # required checkpoint dir when run_mode=resume
+env:
+  type: null
+  task: null
+  task_ids: null
+  python_bin: null
+
+hydra:
+  job:
+    override_dirname: ${name}
+  run:
+    dir: ${output_dir}
+  sweep:
+    dir: outputs/train_policy/${now:%Y%m%d}/${run_name}
+    subdir: ${hydra.job.num}

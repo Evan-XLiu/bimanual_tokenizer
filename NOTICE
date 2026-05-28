@@ -1,0 +1,15 @@
+Praxis
+Copyright 2026 Chaoqi Liu
+
+This product includes software developed by Chaoqi Liu and contributors.
+
+Unless otherwise noted in source file headers, Praxis is licensed under the
+Apache License, Version 2.0.
+
+Some files under `src/praxis/nn/` include code derived from software copyright
+(C) 2024-2025 EPFL & Apple Inc. and retain headers for the EPFL-Apple Sample
+Code License (Non-Commercial). Those files are governed by their own headers.
+
+Redistributions must preserve this NOTICE file when required by the Apache
+License, Version 2.0, and must preserve any third-party notices and file-level
+license headers.

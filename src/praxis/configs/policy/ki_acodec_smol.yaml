@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: smol
+  - ki/codec@_here_: acodec
+  - _self_
+
+name: ki_acodec_smol

@@ -1,0 +1,66 @@
+# Shared trainer mechanics. Concrete optimization recipes live under train_recipe/.
+max_steps: 30000
+batch_size: 64               # per-rank DataLoader batch size unless global_batch_size is set
+global_batch_size: null      # optimizer-step batch = per-rank batch * world_size * grad accumulation
+num_workers: 4
+prefetch_factor: 4  # DataLoader prefetch batches per worker (null = PyTorch default of 2)
+use_episode_aware_sampler: true
+drop_n_first_frames: 0  # final used value = max(this, n_obs_steps - 1)
+drop_n_last_frames: 0   # final used value = max(this, action_horizon - 1)
+
+# Optimizer mechanics. LR ownership belongs to trainer.lr for codecs and
+# trainer.lrs for policies, supplied by train_recipe/.
+weight_decay: 1.0e-6
+betas: [0.95, 0.999]
+eps: 1.0e-8
+
+# LR scheduler mechanics. Concrete values are recipe-owned.
+lr_scheduler: null
+warmup_steps: 0
+min_lr_ratio: 0.1
+
+# EMA
+use_ema: true
+ema_decay: 0.995
+
+# Mixed precision & gradient accumulation
+mixed_precision: bf16  # bf16 | fp16 | "no"
+gradient_accumulation_steps: 1
+find_unused_parameters: false
+max_grad_norm: 1.0  # gradient clipping (0 = disabled)
+
+# Distributed runtime
+distributed_strategy: ddp  # ddp | fsdp
+fsdp_min_num_params: 100000000
+fsdp_reshard_after_forward: true
+fsdp_cpu_offload: false
+
+# Logging & checkpointing
+log_every: 200            # log train metrics every N steps
+val_every: 1000           # run validation every N steps
+checkpoint_every: 5000    # refresh checkpoints/latest every N steps
+checkpoint_dir: ${output_dir}/checkpoints
+local_log_path: ${output_dir}/train_metrics.jsonl
+
+# Validation
+val_ratio: 0.05           # fraction of episodes held out for validation (0 to disable)
+split_seed: ${seed}       # seed for deterministic random episode split
+val_batch_size: null      # null = reuse train batch size for val/reconst loaders
+max_val_batches: 100      # max val batches per validation run (null = all)
+
+# Candidate checkpoint retention for inline/external eval selection
+checkpoint_candidates:
+  best:
+    metric_key: val_reconst_loss  # default proxy metric for reconstruction quality
+    mode: min                    # reconstruction loss: lower is better
+    k: 3                         # number of proxy-ranked best checkpoints to keep
+  recent:
+    k: 2                         # number of lightweight recent checkpoints to keep
+
+# WandB
+use_wandb: true
+wandb_project: policy-research
+wandb_entity: null
+wandb_init_timeout: null  # seconds; null keeps wandb's package default
+wandb_upload_eval_videos: true
+wandb_max_eval_videos: 16

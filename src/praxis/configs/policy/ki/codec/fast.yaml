@@ -1,0 +1,9 @@
+action_tokenizer:
+  name: fast
+  kind: tokens
+  pretrained_path: null
+  bpe_tokenizer_path: physical-intelligence/fast
+freeze_action_tokenizer: true
+block_ce_weighting: block_mean
+ce_vocab_scope: action
+ce_supervise_eos: true

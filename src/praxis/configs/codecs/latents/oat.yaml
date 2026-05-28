@@ -1,0 +1,31 @@
+# OAT latent codec config
+name: oat
+kind: latents
+pretrained_path: null
+
+# Action/sample geometry
+action_dim: null
+action_horizon: 32
+max_fit_chunks: 50000
+latent_horizon: 16
+latent_dim: 4
+
+# Shared transformer dims
+emb_dim: 256
+head_dim: 32
+encoder_depth: 6
+decoder_depth: 6
+dropout: 0.1
+
+# Decoder prefix-dropout schedule over ordered latents
+latent_dropout_mode: pow2
+
+# Standalone latent-space training controls
+latent_space:
+  regularization:
+    enabled: true
+    mean_weight: 0.001
+    variance_weight: 0.001
+    covariance_weight: 0.0
+    norm_weight: 0.0
+  decoder_noise_std: 0.0
