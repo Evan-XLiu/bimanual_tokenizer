@@ -54,6 +54,7 @@ jobs:
           --extra qwen
           --extra smol
           --extra pali
+          --extra slurm
 
       - name: Run tests
         run: uv run pytest --strict-markers -m "not manual"
