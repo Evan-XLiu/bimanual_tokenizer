@@ -1,7 +1,7 @@
 # Praxis
 
-[![Docs](https://github.com/Chaoqi-LIU/praxis/actions/workflows/docs.yml/badge.svg)](https://github.com/Chaoqi-LIU/praxis/actions/workflows/docs.yml)
-[![Tests](https://github.com/Chaoqi-LIU/praxis/actions/workflows/test.yml/badge.svg)](https://github.com/Chaoqi-LIU/praxis/actions/workflows/test.yml)
+[![Docs](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/docs.yml/badge.svg)](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/docs.yml)
+[![Tests](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/test.yml/badge.svg)](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 Praxis is a source research codebase for controlled comparison of
@@ -46,7 +46,7 @@ bar_oat_pali  vs  ki_oat_pali       # policy-objective comparison
 The maintained documentation is the source of truth for setup, configuration,
 training, evaluation, and extension:
 
-https://chaoqi-liu.com/praxis
+https://chaoqi-liu.com/praxis-vla
 
 Good entry points:
 
@@ -66,8 +66,8 @@ Praxis is released as a source research repository, not as a PyPI package. Use a
 checkout and `uv`.
 
 ```bash
-git clone https://github.com/Chaoqi-LIU/praxis.git
-cd praxis
+git clone https://github.com/Chaoqi-LIU/praxis-vla.git
+cd praxis-vla
 uv sync --group dev
 uv run python -c "import praxis; print('praxis import OK')"
 uv run python -m pytest tests/ -x
@@ -80,7 +80,7 @@ uv sync --group dev --extra pali --extra serving --extra logging --extra libero
 ```
 
 Common extras include `pali`, `qwen`, `smol`, `serving`, `logging`, `libero`,
-`metaworld`, `mshab`, `robocasa`, `robomimic`, and `simpler`.
+`metaworld`, `mshab`, `robocasa`, `robomimic`, `simpler`, and `slurm`.
 
 ## Command Surface
 
@@ -105,6 +105,7 @@ configuration docs before running them on shared infrastructure.
 | `src/praxis/training/` | trainers, checkpointing, distributed runtime, metrics, inline eval |
 | `src/praxis/configs/` | Hydra configs for policies, codecs, datasets, trainers, recipes |
 | `src/praxis/serving/` | policy server runtime and remote inference integration |
+| `scripts/infra/` | optional Slurm launcher helpers with user-supplied account env vars |
 | `scripts/tokenizer/` | tokenizer diagnostics and reconstruction analysis utilities |
 | `docs/` | VitePress documentation source |
 

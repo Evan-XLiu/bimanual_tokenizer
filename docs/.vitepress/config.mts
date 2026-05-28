@@ -18,7 +18,7 @@ export default defineConfig({
       { text: "Codecs", link: "/codecs/overview" },
       { text: "Methods", link: "/methods/overview" },
       { text: "Quickstart", link: "/quickstart" },
-      { text: "GitHub", link: "https://github.com/Chaoqi-LIU/praxis" },
+      { text: "GitHub", link: "https://github.com/Chaoqi-LIU/praxis-vla" },
     ],
     sidebar: [
       {
@@ -102,7 +102,7 @@ export default defineConfig({
       },
     ],
     socialLinks: [
-      { icon: "github", link: "https://github.com/Chaoqi-LIU/praxis" },
+      { icon: "github", link: "https://github.com/Chaoqi-LIU/praxis-vla" },
     ],
     search: {
       provider: "local",

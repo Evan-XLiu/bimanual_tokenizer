@@ -3,8 +3,8 @@
 ## Development Setup
 
 ```bash
-git clone https://github.com/Chaoqi-LIU/praxis.git
-cd praxis
+git clone https://github.com/Chaoqi-LIU/praxis-vla.git
+cd praxis-vla
 uv sync --group dev
 uv run pre-commit install
 uv run pytest --strict-markers -m "not manual"
@@ -15,6 +15,11 @@ Install only the optional extras needed for the work you are doing, for example:
 ```bash
 uv sync --group dev --extra pali --extra serving --extra logging --extra libero
 ```
+
+For optional Slurm launcher helpers under `scripts/infra/`, also install
+`--extra slurm` and set the relevant account environment variable for your
+cluster, for example `PRAXIS_FASRC_ACCOUNT`, `PRAXIS_DELTAAI_ACCOUNT`,
+`PRAXIS_DELTA_ACCOUNT`, `PRAXIS_ANVIL_ACCOUNT`, or `PRAXIS_PSC_ACCOUNT`.
 
 ## Project Boundary
 

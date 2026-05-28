@@ -2807,147 +2807,6 @@ wheels = [
 ]
 
 [[package]]
-name = "praxis"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "datasets" },
-    { name = "diffusers" },
-    { name = "einops" },
-    { name = "huggingface-hub" },
-    { name = "hydra-core" },
-    { name = "lerobot" },
-    { name = "numpy" },
-    { name = "omegaconf" },
-    { name = "pillow" },
-    { name = "praxis-eval" },
-    { name = "praxis-remote" },
-    { name = "safetensors" },
-    { name = "torch", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine != 'aarch64' or sys_platform != 'linux'" },
-    { name = "torch", version = "2.10.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
-    { name = "torchvision", version = "0.22.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine != 'aarch64' or sys_platform != 'linux'" },
-    { name = "torchvision", version = "0.25.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
-    { name = "tqdm" },
-    { name = "transformers" },
-]
-
-[package.optional-dependencies]
-all = [
-    { name = "grpcio" },
-    { name = "grpcio-tools" },
-    { name = "num2words" },
-    { name = "peft" },
-    { name = "praxis-eval", extra = ["libero", "metaworld", "mshab", "robocasa", "robomimic", "simpler"] },
-    { name = "protobuf" },
-    { name = "qwen-vl-utils" },
-    { name = "wandb" },
-]
-libero = [
-    { name = "praxis-eval", extra = ["libero"] },
-]
-logging = [
-    { name = "wandb" },
-]
-metaworld = [
-    { name = "praxis-eval", extra = ["metaworld"] },
-]
-mshab = [
-    { name = "praxis-eval", extra = ["mshab"] },
-]
-pali = [
-    { name = "peft" },
-]
-qwen = [
-    { name = "peft" },
-    { name = "qwen-vl-utils" },
-]
-robocasa = [
-    { name = "praxis-eval", extra = ["robocasa"] },
-]
-robomimic = [
-    { name = "praxis-eval", extra = ["robomimic"] },
-]
-serving = [
-    { name = "grpcio" },
-    { name = "grpcio-tools" },
-    { name = "protobuf" },
-]
-simpler = [
-    { name = "praxis-eval", extra = ["simpler"] },
-]
-smol = [
-    { name = "num2words" },
-    { name = "peft" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "basedpyright" },
-    { name = "h5py" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "datasets", specifier = ">=4.0.0" },
-    { name = "diffusers", specifier = ">=0.27.0" },
-    { name = "einops", specifier = ">=0.8.0" },
-    { name = "grpcio", marker = "extra == 'serving'", specifier = ">=1.78.0" },
-    { name = "grpcio-tools", marker = "extra == 'serving'", specifier = ">=1.78.0" },
-    { name = "huggingface-hub", specifier = ">=0.28.0" },
-    { name = "hydra-core", specifier = ">=1.3.0" },
-    { name = "lerobot", specifier = "==0.4.4" },
-    { name = "num2words", marker = "extra == 'smol'" },
-    { name = "numpy", specifier = ">=1.26.0" },
-    { name = "omegaconf", specifier = ">=2.3.0" },
-    { name = "peft", marker = "extra == 'pali'" },
-    { name = "peft", marker = "extra == 'qwen'" },
-    { name = "peft", marker = "extra == 'smol'" },
-    { name = "pillow", specifier = ">=10.0.0" },
-    { name = "praxis", extras = ["libero"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["logging"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["metaworld"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["mshab"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["pali"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["qwen"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["robocasa"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["robomimic"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["serving"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["simpler"], marker = "extra == 'all'" },
-    { name = "praxis", extras = ["smol"], marker = "extra == 'all'" },
-    { name = "praxis-eval", specifier = "==0.1.2" },
-    { name = "praxis-eval", extras = ["libero"], marker = "extra == 'libero'", specifier = "==0.1.2" },
-    { name = "praxis-eval", extras = ["metaworld"], marker = "extra == 'metaworld'", specifier = "==0.1.2" },
-    { name = "praxis-eval", extras = ["mshab"], marker = "extra == 'mshab'", specifier = "==0.1.2" },
-    { name = "praxis-eval", extras = ["robocasa"], marker = "extra == 'robocasa'", specifier = "==0.1.2" },
-    { name = "praxis-eval", extras = ["robomimic"], marker = "extra == 'robomimic'", specifier = "==0.1.2" },
-    { name = "praxis-eval", extras = ["simpler"], marker = "extra == 'simpler'", specifier = "==0.1.2" },
-    { name = "praxis-remote", specifier = "==0.1.1" },
-    { name = "protobuf", marker = "extra == 'serving'", specifier = ">=6.31.1" },
-    { name = "qwen-vl-utils", marker = "extra == 'qwen'" },
-    { name = "safetensors", specifier = ">=0.4.0" },
-    { name = "torch", marker = "platform_machine != 'aarch64' or sys_platform != 'linux'", specifier = ">=2.7.0,<2.8.0" },
-    { name = "torch", marker = "platform_machine == 'aarch64' and sys_platform == 'linux'", specifier = ">=2.10.0,<2.11.0", index = "https://download.pytorch.org/whl/cu126" },
-    { name = "torchvision", marker = "platform_machine != 'aarch64' or sys_platform != 'linux'", specifier = ">=0.22.0,<0.23.0" },
-    { name = "torchvision", marker = "platform_machine == 'aarch64' and sys_platform == 'linux'", specifier = ">=0.25.0,<0.26.0", index = "https://download.pytorch.org/whl/cu126" },
-    { name = "tqdm", specifier = ">=4.66.0" },
-    { name = "transformers", specifier = ">=4.57.6,<5" },
-    { name = "wandb", marker = "extra == 'logging'", specifier = ">=0.16.0" },
-]
-provides-extras = ["serving", "libero", "robocasa", "robomimic", "metaworld", "simpler", "mshab", "logging", "qwen", "smol", "pali", "all"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "basedpyright", specifier = ">=1.34.0" },
-    { name = "h5py", specifier = ">=3.15.0" },
-    { name = "pre-commit", specifier = ">=4.0.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-
-[[package]]
 name = "praxis-eval"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3138,6 +2997,153 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c5/07/0e8d71513b2e86e7ca8c9f16538a7c4bfea435133b84facac93170811858/praxis_simpler-0.0.1.post2.tar.gz", hash = "sha256:1bbdfe7b77893c337ddc1b56cf5d640e3dfeb67bd644133e2977455388dac506", size = 151338, upload-time = "2026-05-22T11:30:40.413Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6d/d8/7eafde96e585fe970cc69c62da234e8b212b6d00dee0e0d407fcdf3d6cf6/praxis_simpler-0.0.1.post2-py3-none-any.whl", hash = "sha256:9f4d6a538f375b2a95389267a1930b763125a5b8566509e2ea35f565bc00d669", size = 159212, upload-time = "2026-05-22T11:30:38.451Z" },
+]
+
+[[package]]
+name = "praxis-vla"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "datasets" },
+    { name = "diffusers" },
+    { name = "einops" },
+    { name = "huggingface-hub" },
+    { name = "hydra-core" },
+    { name = "lerobot" },
+    { name = "numpy" },
+    { name = "omegaconf" },
+    { name = "pillow" },
+    { name = "praxis-eval" },
+    { name = "praxis-remote" },
+    { name = "safetensors" },
+    { name = "torch", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine != 'aarch64' or sys_platform != 'linux'" },
+    { name = "torch", version = "2.10.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
+    { name = "torchvision", version = "0.22.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine != 'aarch64' or sys_platform != 'linux'" },
+    { name = "torchvision", version = "0.25.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
+    { name = "tqdm" },
+    { name = "transformers" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "grpcio" },
+    { name = "grpcio-tools" },
+    { name = "num2words" },
+    { name = "peft" },
+    { name = "praxis-eval", extra = ["libero", "metaworld", "mshab", "robocasa", "robomimic", "simpler"] },
+    { name = "protobuf" },
+    { name = "qwen-vl-utils" },
+    { name = "submitit" },
+    { name = "wandb" },
+]
+libero = [
+    { name = "praxis-eval", extra = ["libero"] },
+]
+logging = [
+    { name = "wandb" },
+]
+metaworld = [
+    { name = "praxis-eval", extra = ["metaworld"] },
+]
+mshab = [
+    { name = "praxis-eval", extra = ["mshab"] },
+]
+pali = [
+    { name = "peft" },
+]
+qwen = [
+    { name = "peft" },
+    { name = "qwen-vl-utils" },
+]
+robocasa = [
+    { name = "praxis-eval", extra = ["robocasa"] },
+]
+robomimic = [
+    { name = "praxis-eval", extra = ["robomimic"] },
+]
+serving = [
+    { name = "grpcio" },
+    { name = "grpcio-tools" },
+    { name = "protobuf" },
+]
+simpler = [
+    { name = "praxis-eval", extra = ["simpler"] },
+]
+slurm = [
+    { name = "submitit" },
+]
+smol = [
+    { name = "num2words" },
+    { name = "peft" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "basedpyright" },
+    { name = "h5py" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "datasets", specifier = ">=4.0.0" },
+    { name = "diffusers", specifier = ">=0.27.0" },
+    { name = "einops", specifier = ">=0.8.0" },
+    { name = "grpcio", marker = "extra == 'serving'", specifier = ">=1.78.0" },
+    { name = "grpcio-tools", marker = "extra == 'serving'", specifier = ">=1.78.0" },
+    { name = "huggingface-hub", specifier = ">=0.28.0" },
+    { name = "hydra-core", specifier = ">=1.3.0" },
+    { name = "lerobot", specifier = "==0.4.4" },
+    { name = "num2words", marker = "extra == 'smol'" },
+    { name = "numpy", specifier = ">=1.26.0" },
+    { name = "omegaconf", specifier = ">=2.3.0" },
+    { name = "peft", marker = "extra == 'pali'" },
+    { name = "peft", marker = "extra == 'qwen'" },
+    { name = "peft", marker = "extra == 'smol'" },
+    { name = "pillow", specifier = ">=10.0.0" },
+    { name = "praxis-eval", specifier = "==0.1.2" },
+    { name = "praxis-eval", extras = ["libero"], marker = "extra == 'libero'", specifier = "==0.1.2" },
+    { name = "praxis-eval", extras = ["metaworld"], marker = "extra == 'metaworld'", specifier = "==0.1.2" },
+    { name = "praxis-eval", extras = ["mshab"], marker = "extra == 'mshab'", specifier = "==0.1.2" },
+    { name = "praxis-eval", extras = ["robocasa"], marker = "extra == 'robocasa'", specifier = "==0.1.2" },
+    { name = "praxis-eval", extras = ["robomimic"], marker = "extra == 'robomimic'", specifier = "==0.1.2" },
+    { name = "praxis-eval", extras = ["simpler"], marker = "extra == 'simpler'", specifier = "==0.1.2" },
+    { name = "praxis-remote", specifier = "==0.1.1" },
+    { name = "praxis-vla", extras = ["libero"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["logging"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["metaworld"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["mshab"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["pali"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["qwen"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["robocasa"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["robomimic"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["serving"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["simpler"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["slurm"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["smol"], marker = "extra == 'all'" },
+    { name = "protobuf", marker = "extra == 'serving'", specifier = ">=6.31.1" },
+    { name = "qwen-vl-utils", marker = "extra == 'qwen'" },
+    { name = "safetensors", specifier = ">=0.4.0" },
+    { name = "submitit", marker = "extra == 'slurm'", specifier = ">=1.5.3" },
+    { name = "torch", marker = "platform_machine != 'aarch64' or sys_platform != 'linux'", specifier = ">=2.7.0,<2.8.0" },
+    { name = "torch", marker = "platform_machine == 'aarch64' and sys_platform == 'linux'", specifier = ">=2.10.0,<2.11.0", index = "https://download.pytorch.org/whl/cu126" },
+    { name = "torchvision", marker = "platform_machine != 'aarch64' or sys_platform != 'linux'", specifier = ">=0.22.0,<0.23.0" },
+    { name = "torchvision", marker = "platform_machine == 'aarch64' and sys_platform == 'linux'", specifier = ">=0.25.0,<0.26.0", index = "https://download.pytorch.org/whl/cu126" },
+    { name = "tqdm", specifier = ">=4.66.0" },
+    { name = "transformers", specifier = ">=4.57.6,<5" },
+    { name = "wandb", marker = "extra == 'logging'", specifier = ">=0.16.0" },
+]
+provides-extras = ["serving", "libero", "robocasa", "robomimic", "metaworld", "simpler", "mshab", "logging", "slurm", "qwen", "smol", "pali", "all"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "basedpyright", specifier = ">=1.34.0" },
+    { name = "h5py", specifier = ">=3.15.0" },
+    { name = "pre-commit", specifier = ">=4.0.0" },
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "ruff", specifier = ">=0.4.0" },
 ]
 
 [[package]]
@@ -4197,6 +4203,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/44/cd/a040c4b3119bbe532e5b0732286f805445375489fceaec1f48306068ee3b/smmap-5.0.2.tar.gz", hash = "sha256:26ea65a03958fa0c8a1c7e8c7a58fdc77221b8910f6be2131affade476898ad5", size = 22329, upload-time = "2025-01-02T07:14:40.909Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/be/d09147ad1ec7934636ad912901c5fd7667e1c858e19d355237db0d0cd5e4/smmap-5.0.2-py3-none-any.whl", hash = "sha256:b30115f0def7d7531d22a0fb6502488d879e75b260a9db4d0819cfb25403af5e", size = 24303, upload-time = "2025-01-02T07:14:38.724Z" },
+]
+
+[[package]]
+name = "submitit"
+version = "1.5.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cloudpickle" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/47/86/497018fb3b74e71bef45df82762b176e6b3d159f29941c20d2f141ec4096/submitit-1.5.4.tar.gz", hash = "sha256:7100848bd1cdda79c7196e54ee830793ae75fd7adde0c5bef738d72360a07508", size = 81538, upload-time = "2025-12-17T19:20:03.396Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/bb/711e1c2ebd18a21202c972dd5d5c8e09a921f2d3560e3a53d6350c808ab7/submitit-1.5.4-py3-none-any.whl", hash = "sha256:c26f3a7c8d4150eaf70b1da71e2023e9e9936c93e8342ed7db910f29158561c5", size = 76043, upload-time = "2025-12-17T19:20:01.941Z" },
 ]
 
 [[package]]

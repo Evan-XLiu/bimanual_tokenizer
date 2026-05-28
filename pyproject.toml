@@ -3,7 +3,7 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "praxis"
+name = "praxis-vla"
 version = "0.1.0"
 description = "Robot policy learning framework for training and evaluating manipulation policies"
 readme = "README.md"
@@ -87,6 +87,9 @@ mshab = [
 logging = [
     "wandb>=0.16.0",
 ]
+slurm = [
+    "submitit>=1.5.3",
+]
 qwen = [
     "qwen-vl-utils",
     "peft",
@@ -99,17 +102,18 @@ pali = [
     "peft",
 ]
 all = [
-    "praxis[serving]",
-    "praxis[libero]",
-    "praxis[metaworld]",
-    "praxis[mshab]",
-    "praxis[robocasa]",
-    "praxis[robomimic]",
-    "praxis[simpler]",
-    "praxis[logging]",
-    "praxis[qwen]",
-    "praxis[smol]",
-    "praxis[pali]",
+    "praxis-vla[serving]",
+    "praxis-vla[libero]",
+    "praxis-vla[metaworld]",
+    "praxis-vla[mshab]",
+    "praxis-vla[robocasa]",
+    "praxis-vla[robomimic]",
+    "praxis-vla[simpler]",
+    "praxis-vla[logging]",
+    "praxis-vla[slurm]",
+    "praxis-vla[qwen]",
+    "praxis-vla[smol]",
+    "praxis-vla[pali]",
 ]
 
 [project.scripts]
@@ -119,10 +123,10 @@ praxis-serve = "praxis.scripts.serve:main"
 praxis-eval-monitor = "praxis.scripts.eval_monitor:main"
 
 [project.urls]
-Homepage = "https://chaoqi-liu.com/praxis"
-Source = "https://github.com/Chaoqi-LIU/praxis"
-Issues = "https://github.com/Chaoqi-LIU/praxis/issues"
-Documentation = "https://chaoqi-liu.com/praxis"
+Homepage = "https://chaoqi-liu.com/praxis-vla"
+Source = "https://github.com/Chaoqi-LIU/praxis-vla"
+Issues = "https://github.com/Chaoqi-LIU/praxis-vla/issues"
+Documentation = "https://chaoqi-liu.com/praxis-vla"
 
 [tool.uv.sources]
 torch = [

@@ -4,8 +4,8 @@ title: "Praxis"
 authors:
   - family-names: Liu
     given-names: Chaoqi
-repository-code: "https://github.com/Chaoqi-LIU/praxis"
-url: "https://chaoqi-liu.com/praxis"
+repository-code: "https://github.com/Chaoqi-LIU/praxis-vla"
+url: "https://chaoqi-liu.com/praxis-vla"
 license: Apache-2.0
 preferred-citation:
   type: article
