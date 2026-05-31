@@ -23,7 +23,6 @@ export default defineConfig({
       {
         text: "Start Here",
         items: [
-          { text: "Docs Home", link: "/" },
           { text: "Introduction", link: "/introduction" },
           { text: "Installation", link: "/installation" },
           { text: "Quickstart", link: "/quickstart" },
