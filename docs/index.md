@@ -4,19 +4,23 @@ layout: home
 hero:
   name: "Praxis"
   text: "Controlled VLA policy research, as code"
-  tagline: "Praxis makes objectives, action representations, VLM backbones, and evaluators explicit so VLA experiments can say what changed, what stayed fixed, and why the result is interpretable."
+  tagline: "Technical documentation for building, comparing, evaluating, and extending Praxis policy cells."
   actions:
     - theme: brand
+      text: "Why Praxis"
+      link: /why-praxis
+    - theme: alt
       text: "Read The Introduction"
       link: /introduction
     - theme: alt
       text: "Run The Quickstart"
       link: /quickstart
-    - theme: alt
-      text: "Design A Comparison"
-      link: /axes/comparison-design
 
 features:
+  - title: "Why Praxis Exists"
+    details: "Understand the benchmark-centric comparison problem and why Praxis treats VLA policies as controlled design-space coordinates."
+    link: /why-praxis
+    linkText: "Read the motivation"
   - title: "Policy Cells"
     details: "Use public names such as bar_oat_pali and fm_qwen as executable coordinates in a policy matrix."
     link: /foundations/policy-cells
@@ -37,65 +41,18 @@ features:
     details: "Add a codec, backbone, objective, or public cell at the module that owns that axis."
     link: /extension/overview
     linkText: "Extend Praxis"
-  - title: "Reference Surface"
-    details: "Look up CLI commands, Hydra composition, artifact formats, and factory behavior."
-    link: /reference/cli
-    linkText: "Open reference"
 ---
 
-## The Problem
+## Documentation Map
 
-VLA policy research has outgrown one-architecture comparisons. A reported
-rollout score may change the objective, action tokenizer, VLM backbone,
-preprocessing, normalization, serving mode, simulator dependencies, benchmark
-adapter, and metric code at the same time.
-
-That stack-level result can track capability, but it is weak evidence for a
-specific claim such as "this tokenizer is better" or "this backbone is
-stronger." Praxis exists because controlled VLA research needs a codebase where
-the variables are named before the measurement is made.
-
-## What This Repository Is
-
-This repository is `praxis-vla`, the policy side of Praxis. It owns policy
-construction, action representations, VLM adapters, training, checkpointing,
-serving, and the adapter used by `praxis-eval`.
-
-`praxis-eval` owns closed-loop benchmark execution: simulator setup, task
-selection, rollout, metrics, media, and benchmark-specific action validation.
-The split keeps benchmark integration from becoming an unreported policy
-variable.
-
-## The Mental Model
-
-Token-based policies are policy cells:
-
-$$
-\pi_{m,c,b}
-= \mathrm{Policy}(\text{objective}=m,\ \text{codec}=c,\ \text{backbone}=b).
-$$
-
-Continuous FM policies have no discrete codec coordinate:
-
-$$
-\pi_{\mathrm{FM},\varnothing,b}.
-$$
-
-The quickstart cell is:
-
-```text
-bar_oat_pali = BAR objective + OAT codec + PaliGemma2 backbone
-```
-
-It is a compact runnable path, not a recommendation. It exercises codec
-training, token-policy training, VLM adaptation, checkpoint loading, serving,
-and evaluation through `praxis-eval`.
-
-## Where To Start
+Praxis has two related artifacts. The paper explains the high-level motivation:
+why VLA research needs controlled design-space comparisons. These docs explain
+the codebase: interfaces, artifacts, commands, modules, and extension paths.
 
 | Goal | Page |
 | --- | --- |
-| Understand the repo purpose | [Introduction](/introduction) |
+| Understand why this repository exists | [Why Praxis](/why-praxis) |
+| Understand the repo model | [Introduction](/introduction) |
 | Learn the core architecture | [Foundations Overview](/foundations/overview) |
 | Run one end-to-end path | [Quickstart](/quickstart) |
 | Design a controlled ablation | [Comparison Design](/axes/comparison-design) |

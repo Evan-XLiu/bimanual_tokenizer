@@ -23,7 +23,8 @@ export default defineConfig({
       {
         text: "Start Here",
         items: [
-          { text: "Why Praxis", link: "/" },
+          { text: "Docs Home", link: "/" },
+          { text: "Why Praxis", link: "/why-praxis" },
           { text: "Introduction", link: "/introduction" },
           { text: "Installation", link: "/installation" },
           { text: "Quickstart", link: "/quickstart" },
