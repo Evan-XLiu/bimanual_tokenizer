@@ -27,6 +27,18 @@ hold these contracts fixed
 measure through this evaluation boundary
 ```
 
+Praxis does not claim that one objective, tokenizer, backbone, or benchmark is
+best. It makes those claims easier to test by exposing the variables and
+contracts that a study must declare.
+
+| Need | Praxis response |
+| --- | --- |
+| Name the variable under study | public policy cells such as `bar_oat_pali` |
+| Preserve data and action assumptions | `PolicyIO`, `policy_io.json`, and `norm_stats.pt` |
+| Keep action-token meaning explicit | codec checkpoints referenced by token policies |
+| Avoid benchmark glue as a hidden variable | `PolicyEvalAdapter` plus `praxis-eval` ownership |
+| Add new research coordinates cleanly | axis-local extension paths for codecs, backbones, and objectives |
+
 ## What `praxis-vla` Owns
 
 This repository is the policy-side package. It owns:

@@ -7,9 +7,6 @@ hero:
   tagline: "Technical documentation for building, comparing, evaluating, and extending Praxis policy cells."
   actions:
     - theme: brand
-      text: "Why Praxis"
-      link: /why-praxis
-    - theme: alt
       text: "Read The Introduction"
       link: /introduction
     - theme: alt
@@ -17,10 +14,10 @@ hero:
       link: /quickstart
 
 features:
-  - title: "Why Praxis Exists"
-    details: "Understand the benchmark-centric comparison problem and why Praxis treats VLA policies as controlled design-space coordinates."
-    link: /why-praxis
-    linkText: "Read the motivation"
+  - title: "Introduction"
+    details: "Understand the benchmark-centric comparison problem, repo purpose, and policy-cell mental model."
+    link: /introduction
+    linkText: "Start reading"
   - title: "Policy Cells"
     details: "Use public names such as bar_oat_pali and fm_qwen as executable coordinates in a policy matrix."
     link: /foundations/policy-cells
@@ -51,8 +48,8 @@ the codebase: interfaces, artifacts, commands, modules, and extension paths.
 
 | Goal | Page |
 | --- | --- |
-| Understand why this repository exists | [Why Praxis](/why-praxis) |
-| Understand the repo model | [Introduction](/introduction) |
+| Understand why this repository exists | [Introduction](/introduction) |
+| Learn the policy-cell model | [Policy Cells](/foundations/policy-cells) |
 | Learn the core architecture | [Foundations Overview](/foundations/overview) |
 | Run one end-to-end path | [Quickstart](/quickstart) |
 | Design a controlled ablation | [Comparison Design](/axes/comparison-design) |
