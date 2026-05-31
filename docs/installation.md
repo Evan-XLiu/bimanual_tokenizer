@@ -1,15 +1,16 @@
 # Installation
 
-Praxis is a Python package with optional extras for serving, backbone-specific dependencies, logging, and benchmark runtimes.
+Praxis is distributed as a source research repository. Use a checkout and `uv`;
+do not expect a PyPI-first workflow.
 
 ## Base Environment
 
 Recommended:
 
-- Linux
-- Python 3.10 through 3.13
-- `uv`
-- CUDA-capable GPU for real training
+- Linux for real training and simulator evaluation;
+- Python 3.10 through 3.13;
+- CUDA-capable GPU for training;
+- `uv` for dependency management.
 
 Install the development environment:
 
@@ -17,41 +18,48 @@ Install the development environment:
 uv sync --group dev
 ```
 
-Install all extras you need in one `uv sync` command. For example, a common
-LIBERO plus PaliGemma serving environment is:
+Verify the package:
+
+```bash
+uv run python -c "import praxis; print('praxis import OK')"
+```
+
+## Extras
+
+Install the extras for the surfaces you need. For the quickstart:
 
 ```bash
 uv sync --group dev --extra pali --extra serving --extra logging --extra libero
 ```
 
-For a broader local development environment, include the other backbone extras
-in the same command:
+For broader local development:
 
 ```bash
 uv sync --group dev --extra pali --extra qwen --extra smol --extra serving --extra logging --extra libero
 ```
 
-`uv sync` makes the environment match the selected extras, so do not run a
-second sync with fewer extras unless you intend to remove the earlier ones.
-
-`praxis-eval` owns simulator-specific packages and setup commands. Praxis depends on `praxis-eval`, but it should not grow benchmark environment wrappers inside `src/praxis`.
-
-## Compute Nodes
-
-Training and simulator evaluation are GPU jobs. Use `--cfg job` on a login node
-to inspect Hydra composition, and run real jobs inside an interactive or batch
-compute allocation.
-
-## Optional Extras
+`uv sync` makes the environment match the selected extras. A later sync with
+fewer extras can remove packages installed by an earlier command.
 
 | Extra | Purpose |
 | --- | --- |
-| `pali` | PaliGemma / PaliGemma2 LoRA dependencies. |
-| `qwen` | Qwen3-VL utilities and LoRA dependencies. |
-| `smol` | SmolVLM preprocessing dependencies and LoRA dependencies. |
-| `serving` | gRPC server dependencies. |
+| `pali` | PaliGemma / PaliGemma2 dependencies. |
+| `qwen` | Qwen3-VL utilities. |
+| `smol` | SmolVLM preprocessing dependencies. |
+| `serving` | gRPC serving dependencies. |
 | `logging` | Weights & Biases logging. |
 | `libero`, `robocasa`, `robomimic`, `metaworld`, `simpler`, `mshab` | Benchmark extras forwarded to `praxis-eval`. |
+
+## Compute Nodes
+
+Training and simulator evaluation are GPU workloads. On shared clusters, use
+Hydra inspection on login nodes:
+
+```bash
+uv run praxis-train policy=bar_oat_pali --cfg job
+```
+
+Run real jobs in an interactive or batch compute allocation.
 
 ## Developer Checks
 
@@ -63,13 +71,13 @@ uv run python -m basedpyright src/praxis scripts
 uv run python -m pre_commit run --all-files
 ```
 
-Run the cheap docs content check from the repo root:
+Run docs checks:
 
 ```bash
 uv run python docs/scripts/check_snippets.py
 ```
 
-Build the VitePress site from `docs/` when Node/npm is working:
+Build the VitePress site:
 
 ```bash
 cd docs
@@ -77,6 +85,5 @@ npm install
 npm run docs:build
 ```
 
-The docs use VitePress and MathJax for equations. On clusters where the system
-`npm` hangs, run the VitePress build in a Node environment where `npm --version`
-returns promptly.
+The docs package currently requires a Node version supported by Vite. If the
+system `node` is broken or too old, use a working Node 20 or newer environment.

@@ -1,63 +1,48 @@
 # Policy Factory
 
-The policy factory lives at:
+The policy factory is the construction interface shared by training, serving,
+and evaluation.
 
-```text
-src/praxis/policies/factory.py
-```
+## Main Functions
 
-It owns:
-
-- policy class registry;
-- `available_policies()`;
-- `get_policy_class(name)`;
-- `make_policy(policy_cfg, io=None)`;
-- loading pretrained policy checkpoints;
-- validating action-tokenizer checkpoint sidecars.
+| Function | Role |
+| --- | --- |
+| `available_policies()` | list registered policy names |
+| `get_policy_class(name)` | resolve a public name to a `BasePolicy` subclass |
+| `make_policy(policy_cfg, io=None)` | build from scratch or load from checkpoint |
+| `register_policy(name, import_path)` | add an external policy class |
 
 ## From Scratch
 
-Fresh policy construction requires `PolicyIO`:
+Fresh construction requires `PolicyIO`:
 
 ```python
-from praxis.policies.factory import make_policy
-
 policy = make_policy(cfg.policy, io=policy_io)
 ```
 
-BAR and KI fresh construction also require:
+BAR and KI construction also requires:
 
 ```text
 policy.action_tokenizer.pretrained_path
 ```
 
+The tokenizer checkpoint must include action normalization stats.
+
 ## From Pretrained
 
-Checkpoint construction loads the self-contained checkpoint:
+Pretrained construction loads weights plus sidecars:
 
 ```python
 policy = make_policy(cfg.policy)
 ```
 
-where:
+where `cfg.policy.pretrained_path` points to a policy `pretrained_model`
+directory.
 
-```text
-cfg.policy.pretrained_path = /absolute/path/to/policy/pretrained_model
-```
+## Source
 
-The checkpoint must include:
-
-```text
-policy_io.json
-norm_stats.pt
-```
-
-## Registry Source
-
-The default registry is generated from:
-
-```text
-src/praxis/policies/catalog.py
-```
-
-Public names should resolve through the catalog rather than one-off factory registration.
+| Responsibility | File |
+| --- | --- |
+| public matrix | `src/praxis/policies/catalog.py` |
+| factory | `src/praxis/policies/factory.py` |
+| base policy | `src/praxis/policies/core/policy.py` |

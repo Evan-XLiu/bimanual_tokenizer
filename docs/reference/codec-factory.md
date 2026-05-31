@@ -1,67 +1,43 @@
 # Codec Factory
 
-The codec factory lives at:
+The codec factory constructs action representations from config or checkpoints.
+
+## Registry Keys
+
+Codec registry keys are `(kind, name)` pairs:
 
 ```text
-src/praxis/codecs/factory.py
+tokens/oat
+tokens/fast
+tokens/bin
+latents/oat
 ```
 
-It owns:
+## Main Functions
 
-- `make_codec(...)`;
-- `register_codec(...)`;
-- `available_codecs(...)`;
-- pretrained codec loading;
-- runtime-compatible config overrides;
-- relative codec path resolution from policy checkpoints.
+| Function | Role |
+| --- | --- |
+| `available_codecs(kind=None)` | list registered codecs |
+| `make_codec(codec_cfg)` | construct from config or checkpoint |
+| `register_codec(name, import_path, kind=...)` | add an external codec |
+| `codec_path_base(path)` | resolve relative pretrained paths against a base |
 
-## Registry Key
+## Pretrained Loading
 
-Each codec is registered by:
+When `pretrained_path` is set, the factory loads the source codec and validates
+runtime overrides before transplanting state.
 
-```text
-(kind, name)
-```
+Relative paths are resolved in this order:
 
-Examples:
+1. current working directory;
+2. active `codec_path_base`;
+3. raw string as a Hub id.
 
-```text
-("tokens", "oat")
-("tokens", "fast")
-("latents", "oat")
-```
+## Source
 
-## Config Contract
-
-Every codec config must include:
-
-```yaml
-kind: tokens
-name: oat
-```
-
-Optional pretrained loading uses:
-
-```yaml
-pretrained_path: outputs/train_codecs/.../pretrained_model
-```
-
-## Available Codecs
-
-```python
-from praxis.codecs.factory import available_codecs
-
-print(available_codecs())
-print(available_codecs(kind="tokens"))
-```
-
-## Checkpoint Sidecars
-
-`BaseCodec.save_pretrained(...)` writes:
-
-```text
-policy_io.json
-norm_stats.pt
-```
-
-Those sidecars are part of the codec interface. A tokenizer checkpoint without action normalization stats is not valid for BAR/KI policy construction.
+| Responsibility | File |
+| --- | --- |
+| registry and construction | `src/praxis/codecs/factory.py` |
+| shared codec lifecycle | `src/praxis/codecs/core/` |
+| token codecs | `src/praxis/codecs/tokens/` |
+| latent codecs | `src/praxis/codecs/latents/` |

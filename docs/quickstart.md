@@ -1,40 +1,40 @@
 # Quickstart
 
-This page gives a minimal executable path using one policy configuration:
+This quickstart runs one compact policy cell:
 
 ```text
 policy=bar_oat_pali
 ```
 
-That means:
+That expands to:
 
-- method: [BAR](/methods/bar)
-- action codec: [OAT](/codecs/oat)
-- VLM backbone: [PaliGemma2](/backbones/paligemma)
+| Coordinate | Choice |
+| --- | --- |
+| objective | BAR |
+| action representation | OAT |
+| VLM backbone | PaliGemma2 |
+
+Use this path to verify the repository surfaces. It is not a claim that this
+cell is the best choice for your study.
 
 ## Install
 
-From the repo root:
+From the repository root:
 
 ```bash
 uv sync --group dev --extra libero --extra pali --extra serving --extra logging
 ```
 
-Verify that the package imports:
+Verify the package imports:
 
 ```bash
 uv run python -c "import praxis; print('praxis import OK')"
 ```
 
-## Train Or Bootstrap An Action Codec
+## Train The OAT Codec
 
-Run training and evaluation commands on a compute node with a GPU. On a login
-node, append `--cfg job` to inspect Hydra composition without launching the job.
-The examples below are real training/evaluation commands; do not run them as
-heavy jobs on a login node.
-
-BAR and KI policies need a pretrained action codec checkpoint. For this example
-path, train OAT:
+BAR and KI policies require a pretrained token codec. The codec checkpoint
+carries parameters plus action-normalization sidecars.
 
 ```bash
 HYDRA_FULL_ERROR=1 uv run praxis-train --config-name train_codecs \
@@ -45,18 +45,15 @@ HYDRA_FULL_ERROR=1 uv run praxis-train --config-name train_codecs \
   trainer.use_wandb=false
 ```
 
-The codec artifact is written under:
+The codec path has this shape:
 
 ```text
 outputs/train_codecs/<date>/<run_name>/checkpoints/latest/pretrained_model
 ```
 
-The policy constructor requires this codec checkpoint because it carries both
-codec parameters and action-normalization sidecars.
+## Train The Policy
 
-## Train The Example Policy
-
-Use the OAT checkpoint from the previous step:
+Point the policy at the codec checkpoint:
 
 ```bash
 CODEC_CKPT="$(find outputs/train_codecs -path '*/checkpoints/latest/pretrained_model' -type d | sort | tail -n 1)"
@@ -75,17 +72,16 @@ HYDRA_FULL_ERROR=1 MUJOCO_GL=egl uv run praxis-train \
   trainer.use_wandb=false trainer.wandb_upload_eval_videos=false
 ```
 
-The trained policy artifact is written under:
+The policy checkpoint has this shape:
 
 ```text
 outputs/train_policy/<date>/libero_bar_oat_pali/checkpoints/latest/pretrained_model
 ```
 
-## Evaluate The Checkpoint
+## Evaluate Locally
 
-Praxis delegates benchmark rollout to `praxis-eval`. The local evaluation mode
-loads a Praxis policy checkpoint, wraps it with `PolicyEvalAdapter`, and calls
-`praxis_eval.evaluate(...)`.
+Local evaluation loads the checkpoint in the same Python environment as the
+simulator:
 
 ```bash
 POLICY_CKPT="$(find outputs/train_policy -path '*/checkpoints/latest/pretrained_model' -type d | sort | tail -n 1)"
@@ -101,16 +97,16 @@ HYDRA_FULL_ERROR=1 MUJOCO_GL=egl uv run praxis-eval \
   eval.output_dir=outputs/eval/libero_bar_oat_pali_smoke
 ```
 
-The evaluator writes:
+Results are written under:
 
 ```text
-outputs/eval/libero_bar_oat_pali_smoke/results.json
-outputs/eval/libero_bar_oat_pali_smoke/media/
+outputs/eval/libero_bar_oat_pali_smoke/
 ```
 
-## Serve The Checkpoint
+## Serve And Evaluate Remotely
 
-Start a gRPC policy server:
+Use the remote path when policy and simulator dependencies should not share one
+environment.
 
 ```bash
 POLICY_CKPT="$(find outputs/train_policy -path '*/checkpoints/latest/pretrained_model' -type d | sort | tail -n 1)"
@@ -123,7 +119,7 @@ uv run praxis-serve \
   port=50051
 ```
 
-Then evaluate through remote transport:
+In another terminal:
 
 ```bash
 HYDRA_FULL_ERROR=1 MUJOCO_GL=egl uv run praxis-eval \
@@ -136,6 +132,6 @@ HYDRA_FULL_ERROR=1 MUJOCO_GL=egl uv run praxis-eval \
 
 ## Next
 
-- [PolicyIO Contract](/concepts/policy-io) defines the data and normalization contract.
-- [Comparison Axes](/concepts/comparison-axes) defines controlled experiment cells.
-- [Codec Training](/codecs/training) explains codec checkpoints and validation.
+Read [Policy Cells](/foundations/policy-cells) to understand the name
+`bar_oat_pali`, then [Comparison Design](/axes/comparison-design) before
+changing any coordinate for a real study.

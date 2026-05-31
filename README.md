@@ -4,29 +4,32 @@
 [![Tests](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/test.yml/badge.svg)](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-Praxis is a source research codebase for controlled comparison of
-vision-language-action policies. It treats a robot policy as a cell in a design
-matrix:
+Praxis is a controlled laboratory for vision-language-action (VLA) policy
+research. This repository, `praxis-vla`, is the policy-side implementation:
+policy objectives, action representations, VLM backbones, training,
+checkpointing, serving, and the adapter used by `praxis-eval`.
+
+The problem Praxis addresses is that VLA rollout scores often compare whole
+private pipelines rather than one declared design choice. Objective, tokenizer,
+backbone, preprocessing, normalization, serving, simulator dependencies, and
+benchmark adapters can all change at once. Praxis makes the intended variables
+explicit by treating a robot policy as a cell in a design matrix:
 
 ```text
-policy = method + action representation + VLM backbone
+policy = objective + action representation + VLM backbone
 ```
 
-One quickstart example is:
+One runnable cell is:
 
 ```text
 bar_oat_pali = BAR objective + OAT codec + PaliGemma2 backbone
 ```
 
-The point of the codebase is not to hide this matrix behind one recipe. Praxis
-keeps the axes explicit so researchers can change one component at a time and
-compare the result under the same training, checkpointing, serving, and
-evaluation surface. `bar_oat_pali` is used in the quickstart because it is a
-compact runnable example, not because it is a preferred method.
+`bar_oat_pali` is a compact quickstart path, not a preferred method.
 
 ## What Is Included
 
-| Axis | Implemented choices |
+| Surface | Implemented choices |
 | --- | --- |
 | Policy objectives | BAR, FM, KI |
 | Action representations | Binning, FAST, OAT, BOAT, QueST, ActionCodec |
@@ -37,8 +40,8 @@ Useful comparisons look like:
 
 ```text
 bar_oat_pali  vs  bar_oat_qwen      # backbone comparison
-bar_oat_pali  vs  bar_fast_pali     # action-codec comparison
-bar_oat_pali  vs  ki_oat_pali       # policy-objective comparison
+bar_oat_pali  vs  bar_fast_pali     # action-representation comparison
+bar_oat_pali  vs  ki_oat_pali       # objective comparison
 ```
 
 ## Documentation
@@ -48,22 +51,24 @@ training, evaluation, and extension:
 
 https://chaoqi-liu.com/praxis-vla
 
-Good entry points:
+Local entry points:
 
-- [Introduction](docs/introduction.md): project model and reading path.
-- [Quickstart](docs/quickstart.md): minimal BAR OAT Pali training/eval path.
-- [Comparison Axes](docs/concepts/comparison-axes.md): how to run controlled
-  method, codec, and backbone comparisons.
-- [PolicyIO Contract](docs/concepts/policy-io.md): dataset/checkpoint/eval I/O
-  contract.
-- [Adding Codecs](docs/development/adding-codecs.md), [Adding Backbones](docs/development/adding-backbones.md),
-  and [Adding Policy Variants](docs/development/adding-policy-variants.md):
-  extension guides.
+- [Introduction](docs/introduction.md): problem statement and repo model.
+- [Foundations](docs/foundations/overview.md): policy cells, `PolicyIO`,
+  evaluation boundary, and source layout.
+- [Design Axes](docs/axes/overview.md): objectives, action representations,
+  backbones, and comparison design.
+- [Workflows](docs/workflows/overview.md): train codecs, train policies,
+  evaluate, and serve.
+- [Extension](docs/extension/overview.md): add codecs, backbones, objectives,
+  and public cells.
+- [Reference](docs/reference/cli.md): CLI, config, artifacts, factories, and
+  docs maintenance.
 
 ## Install From Source
 
-Praxis is released as a source research repository, not as a PyPI package. Use a
-checkout and `uv`.
+Praxis is released as a source research repository, not as a PyPI-first
+package. Use a checkout and `uv`.
 
 ```bash
 git clone https://github.com/Chaoqi-LIU/praxis-vla.git
@@ -84,8 +89,6 @@ Common extras include `pali`, `qwen`, `smol`, `serving`, `logging`, `libero`,
 
 ## Command Surface
 
-The installable entrypoints are:
-
 ```bash
 uv run praxis-train --help
 uv run praxis-eval --help
@@ -95,19 +98,6 @@ uv run praxis-eval-monitor --help
 
 Training and benchmark rollout are GPU/simulator workloads. Use the
 configuration docs before running them on shared infrastructure.
-
-## Repository Map
-
-| Path | Responsibility |
-| --- | --- |
-| `src/praxis/codecs/` | action codecs, tokenizers, latent autoencoders, codec factory |
-| `src/praxis/policies/` | BAR, FM, KI policies, backbone adapters, policy catalog/factory |
-| `src/praxis/training/` | trainers, checkpointing, distributed runtime, metrics, inline eval |
-| `src/praxis/configs/` | Hydra configs for policies, codecs, datasets, trainers, recipes |
-| `src/praxis/serving/` | policy server runtime and remote inference integration |
-| `scripts/infra/` | optional Slurm launcher helpers with user-supplied account env vars |
-| `scripts/tokenizer/` | tokenizer diagnostics and reconstruction analysis utilities |
-| `docs/` | VitePress documentation source |
 
 ## Evaluation Boundary
 

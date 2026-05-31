@@ -3,78 +3,102 @@ layout: home
 
 hero:
   name: "Praxis"
-  text: "A framework for comparing vision-language-action systems"
-  tagline: "Praxis lets researchers train, evaluate, and extend VLA policies by varying the policy objective, VLM backbone, and action representation under a shared training and evaluation surface."
+  text: "Controlled VLA policy research, as code"
+  tagline: "Praxis makes objectives, action representations, VLM backbones, and evaluators explicit so VLA experiments can say what changed, what stayed fixed, and why the result is interpretable."
   actions:
     - theme: brand
-      text: "Read the Introduction"
+      text: "Read The Introduction"
       link: /introduction
     - theme: alt
-      text: "Run the Quickstart"
+      text: "Run The Quickstart"
       link: /quickstart
     - theme: alt
-      text: "BAR OAT Pali Example"
-      link: /guides/bar-oat-pali-example
+      text: "Design A Comparison"
+      link: /axes/comparison-design
 
 features:
-  - title: "Compare VLA Design Axes"
-    details: "Run controlled comparisons across policy objectives, VLM backbones, and action codecs instead of treating a VLA policy as one fixed recipe."
-    link: /concepts/comparison-axes
-    linkText: "Study the axes"
-  - title: "Swap Action Representations"
-    details: "Evaluate Binning, FAST, OAT, BOAT, QueST, and ActionCodec through a shared codec lifecycle and policy-facing tokenizer interface."
-    link: /codecs/overview
-    linkText: "Open codec docs"
-  - title: "Swap VLM Backbones"
-    details: "Use PaliGemma2, Qwen3-VL, and SmolVLM through backbone adapters that preserve family-specific preprocessing and prefix conventions."
-    link: /backbones/overview
-    linkText: "Open backbone docs"
-  - title: "Study BAR, FM, and KI"
-    details: "Compare token generation, continuous flow matching, and knowledge-insulated policies with their objectives and inference paths stated explicitly."
-    link: /methods/overview
-    linkText: "Open method docs"
-  - title: "Build New Components"
-    details: "Add a new codec, backbone, or policy method by wiring the registry, Hydra config, implementation class, and focused tests at the correct boundary."
-    link: /development/adding-codecs
-    linkText: "Start extending"
-  - title: "Evaluate Through praxis-eval"
-    details: "Keep benchmark rollout, task selection, metrics, and simulator setup in praxis-eval while Praxis owns policy construction and checkpoints."
-    link: /concepts/eval-boundary
-    linkText: "Read the boundary"
+  - title: "Policy Cells"
+    details: "Use public names such as bar_oat_pali and fm_qwen as executable coordinates in a policy matrix."
+    link: /foundations/policy-cells
+    linkText: "Learn the cell model"
+  - title: "Explicit Contracts"
+    details: "Keep observations, actions, horizons, normalization, sidecars, and checkpoints visible across training, serving, and evaluation."
+    link: /foundations/policy-io
+    linkText: "Read PolicyIO"
+  - title: "Research Axes"
+    details: "Study BAR, FM, KI, action tokenizers, learned codecs, and VLM backbones as declared variables."
+    link: /axes/overview
+    linkText: "Open the axes"
+  - title: "Operational Workflows"
+    details: "Train codecs, train policies, serve checkpoints, and evaluate locally or remotely through praxis-eval."
+    link: /workflows/overview
+    linkText: "Run workflows"
+  - title: "Extension Paths"
+    details: "Add a codec, backbone, objective, or public cell at the module that owns that axis."
+    link: /extension/overview
+    linkText: "Extend Praxis"
+  - title: "Reference Surface"
+    details: "Look up CLI commands, Hydra composition, artifact formats, and factory behavior."
+    link: /reference/cli
+    linkText: "Open reference"
 ---
 
-## What Praxis Is
+## The Problem
 
-Praxis is a modular research codebase for VLA policy comparison. It makes the
-policy objective, action representation, and VLM backbone explicit so
-experiments can change one axis at a time instead of treating a VLA policy as
-one fixed recipe.
+VLA policy research has outgrown one-architecture comparisons. A reported
+rollout score may change the objective, action tokenizer, VLM backbone,
+preprocessing, normalization, serving mode, simulator dependencies, benchmark
+adapter, and metric code at the same time.
 
-The documentation is organized for three reader tasks:
+That stack-level result can track capability, but it is weak evidence for a
+specific claim such as "this tokenizer is better" or "this backbone is
+stronger." Praxis exists because controlled VLA research needs a codebase where
+the variables are named before the measurement is made.
 
-| Reader task | Start here |
-| --- | --- |
-| Understand the project | [Introduction](/introduction) |
-| Run a small end-to-end path | [Quickstart](/quickstart) |
-| Compare methods, codecs, or backbones | [Comparison Axes](/concepts/comparison-axes) |
-| Add a new action codec | [New Action Codec](/development/adding-codecs) |
-| Add a new VLM backbone | [New VLM Backbone](/development/adding-backbones) |
+## What This Repository Is
 
-## Quickstart Example
+This repository is `praxis-vla`, the policy side of Praxis. It owns policy
+construction, action representations, VLM adapters, training, checkpointing,
+serving, and the adapter used by `praxis-eval`.
+
+`praxis-eval` owns closed-loop benchmark execution: simulator setup, task
+selection, rollout, metrics, media, and benchmark-specific action validation.
+The split keeps benchmark integration from becoming an unreported policy
+variable.
+
+## The Mental Model
+
+Token-based policies are policy cells:
+
+$$
+\pi_{m,c,b}
+= \mathrm{Policy}(\text{objective}=m,\ \text{codec}=c,\ \text{backbone}=b).
+$$
+
+Continuous FM policies have no discrete codec coordinate:
+
+$$
+\pi_{\mathrm{FM},\varnothing,b}.
+$$
+
+The quickstart cell is:
 
 ```text
 bar_oat_pali = BAR objective + OAT codec + PaliGemma2 backbone
 ```
 
-The quickstart uses `bar_oat_pali` because it exercises the main Praxis
-surfaces in one runnable path:
+It is a compact runnable path, not a recommendation. It exercises codec
+training, token-policy training, VLM adaptation, checkpoint loading, serving,
+and evaluation through `praxis-eval`.
 
-- action codec training and checkpointing;
-- token-generating VLA policy training;
-- VLM backbone adaptation;
-- policy checkpoint loading;
-- local and remote evaluation through `praxis-eval`.
+## Where To Start
 
-It is an example configuration, not a project recommendation. For the full
-explanation, read [Introduction](/introduction). For commands, use
-[Quickstart](/quickstart).
+| Goal | Page |
+| --- | --- |
+| Understand the repo purpose | [Introduction](/introduction) |
+| Learn the core architecture | [Foundations Overview](/foundations/overview) |
+| Run one end-to-end path | [Quickstart](/quickstart) |
+| Design a controlled ablation | [Comparison Design](/axes/comparison-design) |
+| Train or evaluate models | [Workflows Overview](/workflows/overview) |
+| Add a new research coordinate | [Extension Overview](/extension/overview) |
+| Look up command/config details | [Reference](/reference/cli) |

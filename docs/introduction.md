@@ -1,169 +1,90 @@
 # Introduction
 
-Praxis is a research framework for building and comparing
-vision-language-action policies. It is designed around a simple experimental
-question:
+Praxis is a controlled research substrate for vision-language-action (VLA)
+policy work. The paper explains the motivation at a high level: VLA research
+needs a way to separate design variables from the surrounding training,
+serving, and evaluation stack. These docs are the technical companion: they
+explain how to use and extend the repository.
 
-> If the dataset, action horizon, training loop, and evaluator are fixed, what
-> changes when we swap the policy objective, the VLM backbone, or the action
-> representation?
+## Why Praxis Exists
 
-The central abstraction is a policy cell:
+Benchmark-centric progress is useful, but it often hides what changed. A VLA
+rollout score is produced by a full stack: dataset, objective, action
+representation, VLM backbone, preprocessing, prompt format, normalization,
+action decode, checkpoint loading, simulator setup, task selector, serving
+mode, metric code, and artifact reporting.
+
+If those factors move together, a method claim becomes hard to interpret. A
+tokenizer comparison may also be a backbone comparison. A backbone comparison
+may also be an evaluation-adapter comparison. An objective comparison may also
+change the action horizon or normalization state.
+
+Praxis makes the intended comparison explicit:
+
+```text
+change this coordinate
+hold these contracts fixed
+measure through this evaluation boundary
+```
+
+## What `praxis-vla` Owns
+
+This repository is the policy-side package. It owns:
+
+| Surface | Responsibility |
+| --- | --- |
+| Policy matrix | public policy cells and construction aliases |
+| Objective families | BAR, FM, and KI training/inference implementations |
+| Action representations | token codecs, learned codec checkpoints, codec factory |
+| VLM backbones | PaliGemma2, Qwen3-VL, and SmolVLM adapters |
+| Training | policy and codec trainers, recipes, checkpointing, metrics |
+| Runtime | checkpoint loading, local inference adapter, gRPC serving |
+
+`praxis-eval` owns benchmark execution: benchmark drivers, simulator
+dependencies, task selection, rollout, metrics, media artifacts, and
+benchmark-specific observation/action validation.
+
+## The Core Abstraction
+
+A token-based VLA policy is a policy cell:
 
 $$
 \pi_{m,c,b}
-= \mathrm{Policy}(\text{method}=m,\ \text{codec}=c,\ \text{backbone}=b),
+= \mathrm{Policy}(\text{objective}=m,\ \text{codec}=c,\ \text{backbone}=b),
 $$
 
-where $m$ is the policy objective, $c$ is the action codec, and $b$ is the
-pretrained VLM backbone. One runnable example cell is:
+where $m$ is the objective, $c$ is the action representation, and $b$ is the
+VLM backbone. FM policies remove the discrete codec from the inference path and
+therefore use a null codec coordinate:
+
+$$
+\pi_{\mathrm{FM},\varnothing,b}.
+$$
+
+The public config names encode this cell:
 
 ```text
-bar_oat_pali = BAR objective + OAT codec + PaliGemma2 backbone
+bar_oat_pali
+ki_fast_qwen
+fm_smol
 ```
 
-`bar_oat_pali` appears in quickstart-style commands because it exercises the
-main system surfaces. It is not a claim that BAR, OAT, or PaliGemma2 is the
-best or preferred choice for every setting.
+The name is not cosmetic. It is the first statement of the experiment.
 
-## What You Can Do With Praxis
+## What The Docs Are For
 
-Praxis supports three common workflows.
+The docs are organized by reader task:
 
-| Workflow | What changes | Where to start |
-| --- | --- | --- |
-| Run an end-to-end example | OAT codec, then BAR OAT Pali policy | [Quickstart](/quickstart) |
-| Run controlled comparisons | method, codec, or backbone axis | [Comparison Axes](/concepts/comparison-axes) |
-| Extend the framework | new codec, backbone, or policy method | [Extension](/development/adding-codecs) |
-
-The goal is to make comparisons interpretable. A useful experiment changes one
-axis and keeps the rest of the system fixed:
-
-```text
-bar_oat_pali  vs  bar_oat_qwen      # backbone comparison
-bar_oat_pali  vs  bar_fast_pali     # action-codec comparison
-bar_oat_pali  vs  ki_oat_pali       # policy-objective comparison
-```
-
-## Implemented Design Axes
-
-| Axis | Implemented choices |
+| Reader task | Start here |
 | --- | --- |
-| Policy objectives | BAR, FM, KI |
-| VLM backbones | PaliGemma2, Qwen3-VL, SmolVLM |
-| Action codecs | Binning, FAST, OAT, BOAT, QueST, ActionCodec |
+| Understand the lab structure | [Foundations Overview](/foundations/overview) |
+| Understand public policy names | [Policy Cells](/foundations/policy-cells) |
+| Understand data/checkpoint contracts | [PolicyIO](/foundations/policy-io) |
+| Compare objectives, codecs, or backbones | [Design Axes](/axes/overview) |
+| Run training/evaluation commands | [Workflows](/workflows/overview) |
+| Add a new research coordinate | [Extension](/extension/overview) |
+| Look up command and artifact details | [Reference](/reference/cli) |
 
-The docs use BAR OAT Pali for the first runnable path because BAR directly
-exposes action-token modelability, OAT provides a learned ordered action-token
-representation, and PaliGemma2 gives a compact VLM path. Other cells are
-first-class configurations rather than deviations from a preferred recipe.
-
-## System Boundary
-
-The core source tree is `src/praxis`. It owns:
-
-- policy classes and factories;
-- action codecs and codec checkpoints;
-- policy and codec training;
-- checkpoint loading and sidecars;
-- serving;
-- `PolicyEvalAdapter`.
-
-Benchmark rollout lives in `praxis-eval`. That package owns benchmark
-environments, task selection, rollout loops, metrics, media artifacts, simulator
-setup, and benchmark-specific observation/action validation.
-
-The boundary is:
-
-```text
-Praxis policy checkpoint
-  -> PolicyEvalAdapter
-  -> praxis-eval rollout
-  -> metrics and media artifacts
-```
-
-This split keeps simulator integration separate from policy implementation.
-
-## Data And Checkpoint Contract
-
-Praxis uses `PolicyIO` to make datasets, codecs, policies, checkpoints, and
-evaluation agree on feature names, shapes, horizons, and normalization modes.
-The structural contract is saved as:
-
-```text
-policy_io.json
-```
-
-The numerical normalization tensors are saved as:
-
-```text
-norm_stats.pt
-```
-
-Token-based policies such as BAR and KI require an action codec checkpoint:
-
-```text
-policy.action_tokenizer.pretrained_path=/absolute/path/to/codec/pretrained_model
-```
-
-The codec checkpoint is part of the policy definition because action tokens only
-have meaning under the action scale and horizon used to train the codec.
-
-## Mathematical Summary
-
-Let $o$ denote the observation context, including images, optional state, and
-the task instruction. Let $a_{1:H}\in\mathbb{R}^{H\times D}$ be a normalized
-action chunk. Let $z_{1:L}$ be action tokens when a codec is present.
-
-BAR models action tokens directly:
-
-$$
-L_{\mathrm{BAR}}
-=-\sum_{i=1}^{L} \log p_\theta(z_i \mid o,z_{<i}),
-\qquad
-\hat{a}_{1:H}=D(\hat{z}_{1:L}).
-$$
-
-FM trains a continuous flow expert:
-
-$$
-x_t=(1-t)a+t\epsilon,
-\qquad
-L_{\mathrm{FM}}
-=\|v_\phi(x_t,t,h_\theta(o))-(\epsilon-a)\|_2^2.
-$$
-
-KI combines action-token supervision with an insulated flow expert:
-
-$$
-L_{\mathrm{KI}}
-=\lambda_{\mathrm{CE}}L_{\mathrm{CE}}
-+\lambda_{\mathrm{flow}}
- \|v_\phi(x_t,t,\mathrm{sg}(h_\theta(o)))-(\epsilon-a)\|_2^2.
-$$
-
-The action codec defines:
-
-$$
-z_{1:L}=E(a_{1:H}),
-\qquad
-\hat{a}_{1:H}=D(z_{1:L}).
-$$
-
-For token-based methods, codec quality is therefore not only reconstruction
-quality. It also determines token sequence length, vocabulary size, prefix
-semantics, invalid-decode behavior, and next-token prediction difficulty.
-
-## Reading Path
-
-Read in this order when learning Praxis:
-
-1. [PolicyIO Contract](/concepts/policy-io) for the data and checkpoint
-   contract.
-2. [Comparison Axes](/concepts/comparison-axes) for the experimental design.
-3. [Codec Interface](/codecs/overview) for action representations.
-4. [Policy Objectives](/methods/overview) for BAR, FM, and KI.
-5. [Backbone Adapters](/backbones/overview) for PaliGemma2, Qwen3-VL, and
-   SmolVLM.
-6. [BAR OAT Pali Example](/guides/bar-oat-pali-example) for a complete
-   training and evaluation example.
+The docs do not try to reproduce the paper. The paper gives the motivation and
+research framing. The docs give the implementation map, commands, artifact
+contracts, and extension rules.
