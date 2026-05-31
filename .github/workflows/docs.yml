@@ -29,7 +29,7 @@ jobs:
       pages: write
       id-token: write
     env:
-      VITEPRESS_BASE: ${{ vars.VITEPRESS_BASE || '/praxis/' }}
+      VITEPRESS_BASE: /praxis-vla/
       PYTHON_BIN: python
     steps:
       - name: Checkout
