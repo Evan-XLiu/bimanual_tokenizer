@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Structured metric tracking aligned with LeRobot's training utilities."""
 
 from __future__ import annotations

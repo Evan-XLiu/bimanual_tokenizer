@@ -24,7 +24,7 @@ This check validates:
 From `docs/`:
 
 ```bash
-npm install
+npm ci --no-audit --no-fund
 npm run docs:build
 ```
 

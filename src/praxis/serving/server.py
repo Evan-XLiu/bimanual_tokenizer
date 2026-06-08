@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Policy server backed by the standalone praxis-remote transport."""
 
 from __future__ import annotations

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Evaluate tokenizer reconstruction MSE on a LeRobot dataset split.
 
 The headline metric intentionally matches ``CodecsTrainer.reconstruct``:
@@ -7,7 +11,7 @@ compute MSE against the original raw actions.
 
 Usage:
     uv run python scripts/tokenizer/evaluate_reconstruction.py \
-        --checkpoint outputs/train_codecs/20260422/mshab_boat_codec/checkpoints/latest \
+        --checkpoint outputs/train_codecs/<date>/<run>/checkpoints/latest \
         --keep-ks 1 2 4 8 16 \
         [--dataset-repo-id chaoqi-liu/mshab_settable] \
         [--split val] \

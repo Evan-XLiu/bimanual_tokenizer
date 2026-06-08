@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for shared VLM action-token schedules and attention masks."""
 
 from __future__ import annotations

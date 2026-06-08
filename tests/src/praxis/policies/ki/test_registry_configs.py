@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Registry and Hydra coverage for KI policy surfaces."""
 
 from __future__ import annotations

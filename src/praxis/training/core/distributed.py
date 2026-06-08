@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """PyTorch-native distributed training runtime.
 
 This module owns the trainer's distributed substrate so DDP and FSDP behavior

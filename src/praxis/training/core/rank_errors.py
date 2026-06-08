@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Rank-aware error propagation helpers for distributed trainer services."""
 
 from __future__ import annotations

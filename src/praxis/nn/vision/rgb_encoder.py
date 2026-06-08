@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared RGB encoder: ResNet backbone + SpatialSoftmax pooling."""
 
 from __future__ import annotations

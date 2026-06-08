@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """OAT-family action-latent modeling blocks.
 
 BOAT is a schedule-specialized OAT variant, so its codec reuses these

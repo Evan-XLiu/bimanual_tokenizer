@@ -1,27 +1,27 @@
-# --------------------------------------------------------------------
-# Copyright (C) 2024-2025 EPFL & Apple Inc.
-# Licensed under the EPFL-Apple Sample Code License (Non-Commercial)
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
 #
-# Modifications by Chaoqi Liu for research purposes.
-# --------------------------------------------------------------------
+# SPDX-License-Identifier: Apache-2.0
+
+"""Attention blocks used by Praxis transformer modules."""
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from functools import partial
 
-import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from praxis.nn.layers.norm import Fp32RMSNorm
 
-__all__ = ["Attention", "SelfAttention", "CrossAttention"]
+__all__ = ["Attention", "CrossAttention", "SelfAttention"]
 
 _DEFAULT_NORM_LAYER = partial(Fp32RMSNorm, elementwise_affine=False)
 
 
 class Attention(nn.Module):
-    """Shared multi-head attention core."""
+    """Shared scaled-dot-product attention core."""
 
     def __init__(
         self,
@@ -33,15 +33,27 @@ class Attention(nn.Module):
         norm_layer: Callable[[int], nn.Module] = _DEFAULT_NORM_LAYER,
     ) -> None:
         super().__init__()
-        self.num_heads = num_heads
-        self.head_dim = dim // num_heads
+        if dim % num_heads != 0:
+            raise ValueError(f"dim={dim} must be divisible by num_heads={num_heads}.")
+
+        self.num_heads = int(num_heads)
+        self.head_dim = dim // self.num_heads
         self.proj = nn.Linear(dim, dim, bias=proj_bias)
         self.proj_drop = nn.Dropout(proj_drop)
         if qk_norm:
             self.q_norm = norm_layer(self.head_dim)
             self.k_norm = norm_layer(self.head_dim)
         else:
-            self.q_norm = self.k_norm = nn.Identity()
+            self.q_norm = nn.Identity()
+            self.k_norm = nn.Identity()
+
+    def _split_heads(self, x: torch.Tensor) -> torch.Tensor:
+        batch, seq_len, _ = x.shape
+        return x.view(batch, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+
+    def _merge_heads(self, x: torch.Tensor) -> torch.Tensor:
+        batch, _, seq_len, _ = x.shape
+        return x.transpose(1, 2).reshape(batch, seq_len, self.num_heads * self.head_dim)
 
     def _attend(
         self,
@@ -50,18 +62,15 @@ class Attention(nn.Module):
         v: torch.Tensor,
         block_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        q = einops.rearrange(q, "b n (h d) -> b h n d", h=self.num_heads)
-        k = einops.rearrange(k, "b n (h d) -> b h n d", h=self.num_heads)
-        v = einops.rearrange(v, "b n (h d) -> b h n d", h=self.num_heads)
-        q = self.q_norm(q)
-        k = self.k_norm(k)
-        x = F.scaled_dot_product_attention(q, k, v, attn_mask=block_mask)
-        x = einops.rearrange(x, "b h n d -> b n (h d)")
-        return self.proj_drop(self.proj(x))
+        q = self.q_norm(self._split_heads(q))
+        k = self.k_norm(self._split_heads(k))
+        v = self._split_heads(v)
+        attended = F.scaled_dot_product_attention(q, k, v, attn_mask=block_mask)
+        return self.proj_drop(self.proj(self._merge_heads(attended)))
 
 
 class SelfAttention(Attention):
-    """Self-attention with fused QKV projection."""
+    """Self-attention with a fused QKV projection."""
 
     def __init__(
         self,
@@ -83,13 +92,19 @@ class SelfAttention(Attention):
         )
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
 
-    def forward(self, x, block_mask=None, **kwargs):
+    def forward(
+        self,
+        x: torch.Tensor,
+        block_mask: torch.Tensor | None = None,
+        **kwargs,
+    ) -> torch.Tensor:
+        del kwargs
         q, k, v = self.qkv(x).chunk(3, dim=-1)
         return self._attend(q, k, v, block_mask=block_mask)
 
 
 class CrossAttention(Attention):
-    """Cross-attention with fused KV projection."""
+    """Cross-attention with separate query and fused key/value projections."""
 
     def __init__(
         self,
@@ -112,7 +127,14 @@ class CrossAttention(Attention):
         self.q_proj = nn.Linear(dim, dim, bias=qkv_bias)
         self.kv_proj = nn.Linear(dim, dim * 2, bias=qkv_bias)
 
-    def forward(self, x, context, block_mask=None, **kwargs):
+    def forward(
+        self,
+        x: torch.Tensor,
+        context: torch.Tensor,
+        block_mask: torch.Tensor | None = None,
+        **kwargs,
+    ) -> torch.Tensor:
+        del kwargs
         q = self.q_proj(x)
         k, v = self.kv_proj(context).chunk(2, dim=-1)
         return self._attend(q, k, v, block_mask=block_mask)

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """SmolVLA-style flow-matching action expert conditioned on VLM K/V."""
 
 from __future__ import annotations

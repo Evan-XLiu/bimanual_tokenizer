@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Backfill eval monitor results from eval_results.json to W&B.
 
 This script attaches to the training run recorded in ``wandb_run_info.json`` and

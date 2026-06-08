@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared VLM helper modules for policy families."""
 
 from praxis.policies.core.vlm.blockwise import (

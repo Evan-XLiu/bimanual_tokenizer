@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared decode metadata and decode-parameter helpers for action-token policies."""
 
 from __future__ import annotations

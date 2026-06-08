@@ -1,9 +1,10 @@
-# --------------------------------------------------------------------
-# Copyright (C) 2024-2025 EPFL & Apple Inc.
-# Licensed under the EPFL-Apple Sample Code License (Non-Commercial)
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
 #
-# Modifications by Chaoqi Liu for research purposes.
-# --------------------------------------------------------------------
+# SPDX-License-Identifier: Apache-2.0
+
+"""Transformer encoder and decoder blocks."""
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from functools import partial
@@ -24,36 +25,46 @@ _DEFAULT_NORM_LAYER = partial(Fp32RMSNorm, elementwise_affine=False)
 
 
 def modulate(x: torch.Tensor, shift: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+    """Apply adaLN shift/scale modulation."""
     return x * (1.0 + scale) + shift
 
 
 def expand_to_padded_seq(emb: torch.Tensor, padded_seq: torch.Tensor) -> torch.Tensor:
-    N_emb, N_seq = emb.shape[1], padded_seq.shape[1]
-    num_padding_tokens = N_seq - N_emb
-    if num_padding_tokens == 0:
+    """Right-pad a packed embedding sequence to match a padded sequence length."""
+    if emb.shape[1] > padded_seq.shape[1]:
+        raise ValueError(
+            "packed embedding is longer than padded sequence: "
+            f"{emb.shape[1]} > {padded_seq.shape[1]}."
+        )
+    pad_tokens = padded_seq.shape[1] - emb.shape[1]
+    if pad_tokens == 0:
         return emb
-    else:
-        return F.pad(emb, (0, 0, 0, num_padding_tokens))
+    return F.pad(emb, (0, 0, 0, pad_tokens))
+
+
+def _resolve_num_heads(
+    *,
+    dim: int,
+    num_heads: int | None,
+    head_dim: int | None,
+) -> int:
+    if num_heads is None and head_dim is None:
+        raise ValueError("Either num_heads or head_dim must be provided.")
+    if num_heads is None:
+        if head_dim is None:
+            raise ValueError("head_dim must be provided when num_heads is None.")
+        if dim % head_dim != 0:
+            raise ValueError(f"dim={dim} must be divisible by head_dim={head_dim}.")
+        return dim // head_dim
+    return int(num_heads)
+
+
+def _drop_path_module(drop_path: float) -> nn.Module:
+    return DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
 
 class Block(nn.Module):
-    """Transformer block.
-
-    Args:
-        dim: Transformer dimension size.
-        num_heads: Number of attention heads (overrides head_dim if specified).
-        head_dim: Dimension size per attention head.
-        mlp_ratio: Ratio of hidden dimension size to input dimension size in the MLP.
-        qkv_bias: Whether to use bias in Q, K, V projections.
-        proj_bias: Whether to use bias in the output projection layer.
-        mlp_bias: Whether to use bias in the MLP layer.
-        drop: Dropout rate for attention and MLP linear layers.
-        drop_path: Stochastic depth drop rate.
-        act_layer: Activation layer used in the MLP.
-        norm_layer: Pre-normalization layer.
-        gated_mlp: Whether to use a gated MLP layer, e.g. for SwiGLU.
-        qk_norm: Whether to apply QK normalization.
-    """
+    """Pre-norm transformer encoder block."""
 
     def __init__(
         self,
@@ -74,33 +85,28 @@ class Block(nn.Module):
     ) -> None:
         super().__init__()
         del kwargs
-        self.dim = dim
-        self.norm1 = norm_layer(dim)
-        if num_heads is None and head_dim is None:
-            raise ValueError("Either num_heads or head_dim must be provided.")
-        if num_heads is None:
-            if head_dim is None:
-                raise ValueError("head_dim must be provided when num_heads is None.")
-            num_heads = dim // head_dim
+        self.dim = int(dim)
+        resolved_heads = _resolve_num_heads(
+            dim=self.dim, num_heads=num_heads, head_dim=head_dim
+        )
 
+        self.norm1 = norm_layer(self.dim)
         self.attn = SelfAttention(
-            dim,
-            num_heads=num_heads,
+            self.dim,
+            num_heads=resolved_heads,
             qkv_bias=qkv_bias,
             proj_bias=proj_bias,
             proj_drop=drop,
             qk_norm=qk_norm,
             norm_layer=norm_layer,
         )
+        self.drop_path = _drop_path_module(drop_path)
+        self.norm2 = norm_layer(self.dim)
 
-        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-        self.norm2 = norm_layer(dim)
-        mlp_hidden_dim = int(dim * mlp_ratio)
-
-        mlp_layer = GatedMlp if gated_mlp else Mlp
-        self.mlp = mlp_layer(
-            in_features=dim,
-            hidden_features=mlp_hidden_dim,
+        mlp_cls = GatedMlp if gated_mlp else Mlp
+        self.mlp = mlp_cls(
+            in_features=self.dim,
+            hidden_features=int(self.dim * mlp_ratio),
             act_layer=act_layer,
             bias=mlp_bias,
             drop=drop,
@@ -113,34 +119,24 @@ class Block(nn.Module):
         **kwargs: Any,
     ) -> torch.Tensor:
         del kwargs
-        x = x + self.drop_path(
-            self.attn(
-                self.norm1(x),
-                block_mask=block_mask,
-            )
-        )
+        x = x + self.drop_path(self.attn(self.norm1(x), block_mask=block_mask))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
 
 class BlockAdaLN(Block):
-    """Transformer block with adaLN-zero modulation.
-    See Block for arguments.
-    Args:
-        adaLN_expansion: Expansion factor for adaLN modulation, e.g. for learning separate
-            shift and scale parameters for patches and registers.
-    """
+    """Encoder block with adaLN-zero residual gates."""
 
-    def __init__(self, adaLN_expansion: int = 1, *args, **kwargs):
+    def __init__(self, adaLN_expansion: int = 1, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-
-        self.adaLN_expansion = adaLN_expansion
+        self.adaLN_expansion = int(adaLN_expansion)
         self.adaLN_modulation = nn.Sequential(
-            nn.SiLU(), nn.Linear(self.dim, adaLN_expansion * 6 * self.dim, bias=True)
+            nn.SiLU(),
+            nn.Linear(self.dim, self.adaLN_expansion * 6 * self.dim, bias=True),
         )
-        modulation_out = cast(nn.Linear, self.adaLN_modulation[-1])
-        nn.init.zeros_(modulation_out.weight)
-        nn.init.zeros_(modulation_out.bias)
+        modulation = cast(nn.Linear, self.adaLN_modulation[-1])
+        nn.init.zeros_(modulation.weight)
+        nn.init.zeros_(modulation.bias)
 
     def forward(
         self,
@@ -153,44 +149,22 @@ class BlockAdaLN(Block):
         del kwargs
         if adaLN_emb is None or adaLN_packing_fn is None:
             raise ValueError("BlockAdaLN requires adaLN_emb and adaLN_packing_fn.")
-        # Embed and expand adaLN_embs: B x (exp*6*D) -> sum(N_i) x (6*D)
-        adaLN_emb_packed = adaLN_packing_fn(self.adaLN_modulation(adaLN_emb))
-        adaLN_emb_packed = expand_to_padded_seq(adaLN_emb_packed, x)
-        gate_msa, gate_mlp, shift_msa, scale_msa, shift_mlp, scale_mlp = (
-            adaLN_emb_packed.chunk(6, dim=-1)
-        )
 
+        packed = adaLN_packing_fn(self.adaLN_modulation(adaLN_emb))
+        gate_msa, gate_mlp, shift_msa, scale_msa, shift_mlp, scale_mlp = (
+            expand_to_padded_seq(packed, x).chunk(6, dim=-1)
+        )
         x = x + gate_msa * self.drop_path(
-            self.attn(
-                modulate(self.norm1(x), shift_msa, scale_msa),
-                block_mask=block_mask,
-            )
+            self.attn(modulate(self.norm1(x), shift_msa, scale_msa), block_mask)
         )
         x = x + gate_mlp * self.drop_path(
             self.mlp(modulate(self.norm2(x), shift_mlp, scale_mlp))
         )
-
         return x
 
 
 class DecoderBlock(nn.Module):
-    """Transformer Decoder block, i.e. interleaved self- and cross-attention.
-
-    Args:
-        dim: Transformer dimension size.
-        num_heads: Number of attention heads (overrides head_dim if specified).
-        head_dim: Dimension size per attention head.
-        mlp_ratio: Ratio of hidden dimension size to input dimension size in the MLP.
-        qkv_bias: Whether to use bias in Q, K, V projections.
-        proj_bias: Whether to use bias in the output projection layer.
-        mlp_bias: Whether to use bias in the MLP layer.
-        drop: Dropout rate for attention and MLP linear layers.
-        drop_path: Stochastic depth drop rate.
-        act_layer: Activation layer used in the MLP.
-        norm_layer: Pre-normalization layer.
-        gated_mlp: Whether to use a gated MLP layer, e.g. for SwiGLU.
-        qk_norm: Whether to apply QK normalization.
-    """
+    """Pre-norm decoder block with optional self-attention and cross-attention."""
 
     def __init__(
         self,
@@ -212,21 +186,18 @@ class DecoderBlock(nn.Module):
     ) -> None:
         super().__init__()
         del kwargs
-        self.dim = dim
+        self.dim = int(dim)
         self.enable_self_attn = bool(enable_self_attn)
-        self.norm1 = norm_layer(dim)
-        if num_heads is None and head_dim is None:
-            raise ValueError("Either num_heads or head_dim must be provided.")
-        if num_heads is None:
-            if head_dim is None:
-                raise ValueError("head_dim must be provided when num_heads is None.")
-            num_heads = dim // head_dim
+        resolved_heads = _resolve_num_heads(
+            dim=self.dim, num_heads=num_heads, head_dim=head_dim
+        )
 
+        self.norm1 = norm_layer(self.dim)
         self.self_attn: SelfAttention | None = None
         if self.enable_self_attn:
             self.self_attn = SelfAttention(
-                dim,
-                num_heads=num_heads,
+                self.dim,
+                num_heads=resolved_heads,
                 qkv_bias=qkv_bias,
                 proj_bias=proj_bias,
                 proj_drop=drop,
@@ -234,26 +205,23 @@ class DecoderBlock(nn.Module):
                 norm_layer=norm_layer,
             )
         self.cross_attn = CrossAttention(
-            dim,
-            num_heads=num_heads,
+            self.dim,
+            num_heads=resolved_heads,
             qkv_bias=qkv_bias,
             proj_bias=proj_bias,
             proj_drop=drop,
             qk_norm=qk_norm,
             norm_layer=norm_layer,
         )
+        self.query_norm = norm_layer(self.dim)
+        self.context_norm = norm_layer(self.dim)
+        self.drop_path = _drop_path_module(drop_path)
+        self.norm2 = norm_layer(self.dim)
 
-        self.query_norm = norm_layer(dim)
-        self.context_norm = norm_layer(dim)
-
-        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-        self.norm2 = norm_layer(dim)
-        mlp_hidden_dim = int(dim * mlp_ratio)
-
-        mlp_layer = GatedMlp if gated_mlp else Mlp
-        self.mlp = mlp_layer(
-            in_features=dim,
-            hidden_features=mlp_hidden_dim,
+        mlp_cls = GatedMlp if gated_mlp else Mlp
+        self.mlp = mlp_cls(
+            in_features=self.dim,
+            hidden_features=int(self.dim * mlp_ratio),
             act_layer=act_layer,
             bias=mlp_bias,
             drop=drop,
@@ -269,12 +237,7 @@ class DecoderBlock(nn.Module):
     ) -> torch.Tensor:
         del kwargs
         if self.self_attn is not None:
-            x = x + self.drop_path(
-                self.self_attn(
-                    self.norm1(x),
-                    block_mask=block_mask,
-                )
-            )
+            x = x + self.drop_path(self.self_attn(self.norm1(x), block_mask=block_mask))
         x = x + self.drop_path(
             self.cross_attn(
                 self.query_norm(x),
@@ -287,24 +250,18 @@ class DecoderBlock(nn.Module):
 
 
 class DecoderBlockAdaLN(DecoderBlock):
-    """Transformer Decoder block with adaLN-zero modulation.
-    See DecoderBlock for arguments.
+    """Decoder block with adaLN-zero residual gates."""
 
-    Args:
-        adaLN_expansion: Expansion factor for adaLN modulation, e.g. for learning separate
-            shift and scale parameters.
-    """
-
-    def __init__(self, adaLN_expansion: int = 1, *args, **kwargs):
+    def __init__(self, adaLN_expansion: int = 1, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-
-        self.adaLN_expansion = adaLN_expansion
+        self.adaLN_expansion = int(adaLN_expansion)
         self.adaLN_modulation = nn.Sequential(
-            nn.SiLU(), nn.Linear(self.dim, adaLN_expansion * 11 * self.dim, bias=True)
+            nn.SiLU(),
+            nn.Linear(self.dim, self.adaLN_expansion * 11 * self.dim, bias=True),
         )
-        modulation_out = cast(nn.Linear, self.adaLN_modulation[-1])
-        nn.init.zeros_(modulation_out.weight)
-        nn.init.zeros_(modulation_out.bias)
+        modulation = cast(nn.Linear, self.adaLN_modulation[-1])
+        nn.init.zeros_(modulation.weight)
+        nn.init.zeros_(modulation.bias)
 
     def forward(
         self,
@@ -321,11 +278,11 @@ class DecoderBlockAdaLN(DecoderBlock):
             raise ValueError(
                 "DecoderBlockAdaLN requires adaLN_emb and adaLN_packing_fn."
             )
-        # Embed and expand adaLN_embs: B x (exp*11*D) -> sum(N_i) x (11*D)
-        adaLN_emb_packed = adaLN_packing_fn(self.adaLN_modulation(adaLN_emb))
-        adaLN_emb_packed = expand_to_padded_seq(adaLN_emb_packed, x)
-        gate_shift_scale = adaLN_emb_packed.chunk(11, dim=-1)
-        gate_msa, gate_mxa, gate_mlp = gate_shift_scale[:3]
+
+        packed = expand_to_padded_seq(
+            adaLN_packing_fn(self.adaLN_modulation(adaLN_emb)), x
+        )
+        gate_msa, gate_mxa, gate_mlp, *mods = packed.chunk(11, dim=-1)
         (
             shift_msa,
             scale_msa,
@@ -335,7 +292,7 @@ class DecoderBlockAdaLN(DecoderBlock):
             scale_mxa_c,
             shift_mlp,
             scale_mlp,
-        ) = gate_shift_scale[3:]
+        ) = mods
 
         if self.self_attn is not None:
             x = x + gate_msa * self.drop_path(

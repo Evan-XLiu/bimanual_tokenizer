@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for command construction in scripts/infra/fasrc_launch.py."""
 
 from __future__ import annotations

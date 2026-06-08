@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Concrete BAR policy variants.
 
 The public policy matrix is method x codec x backbone, but those matrix cells do

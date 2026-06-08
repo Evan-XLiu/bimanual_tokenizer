@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Integrated VLM-prefix/action-expert training loop."""
 
 from __future__ import annotations

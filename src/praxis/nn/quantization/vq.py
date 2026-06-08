@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared vector quantization module (EMA codebook updates)."""
 
 from __future__ import annotations

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared training core implementations."""
 
 from praxis.training.core.checkpoint.pretrained import (

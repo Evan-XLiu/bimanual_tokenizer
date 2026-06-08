@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Base policy for end-to-end flow-matching VLM/action-expert training."""
 
 from __future__ import annotations

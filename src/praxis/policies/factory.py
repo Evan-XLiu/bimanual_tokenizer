@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Policy factory: instantiate policies from config with optional pretrained loading."""
 
 from __future__ import annotations

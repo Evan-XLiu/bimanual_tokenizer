@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Decode helpers for blockwise VLM action-token policies."""
 
 from __future__ import annotations

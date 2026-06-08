@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """HF chat-template prompting helpers for VLM policy backbones."""
 
 from __future__ import annotations

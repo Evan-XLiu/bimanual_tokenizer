@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for scripts/tokenizer/boat/independence_diagnostic.py."""
 
 from __future__ import annotations

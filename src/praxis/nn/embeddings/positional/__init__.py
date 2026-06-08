@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Position embedding modules."""
 
 from praxis.nn.embeddings.positional.learned import LearnedPosEmbed

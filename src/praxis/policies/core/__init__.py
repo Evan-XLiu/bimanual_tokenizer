@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared policy-family-generic helpers."""
 
 from praxis.policies.core.action_tokens import (

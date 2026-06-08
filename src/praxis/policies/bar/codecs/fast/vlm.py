@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared FAST variable-length policy mixin for VLM backbones."""
 
 from __future__ import annotations

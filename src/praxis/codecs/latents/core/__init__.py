@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared continuous action-latent codec interfaces."""
 
 from praxis.codecs.latents.core.autoencoder import Autoencoder, AutoencoderEncoding

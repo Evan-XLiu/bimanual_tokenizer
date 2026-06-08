@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Focused tests for end-to-end FM policy semantics."""
 
 from __future__ import annotations

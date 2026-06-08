@@ -59,7 +59,7 @@ checkpoint_candidates:
 
 # WandB
 use_wandb: true
-wandb_project: policy-research
+wandb_project: praxis-vla
 wandb_entity: null
 wandb_init_timeout: null  # seconds; null keeps wandb's package default
 wandb_upload_eval_videos: true

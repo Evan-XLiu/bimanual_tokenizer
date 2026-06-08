@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Regression guard for family-scoped prefix attention defaults."""
 
 from praxis.policies.bar.backbones.pali.pali_base import PaliPolicyBase

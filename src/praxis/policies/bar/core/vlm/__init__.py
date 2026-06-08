@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """VLM-specific action-token helpers."""
 
 from praxis.policies.bar.core.stop import DecodeStopMode

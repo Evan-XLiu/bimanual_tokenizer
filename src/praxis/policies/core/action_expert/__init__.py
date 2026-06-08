@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared VLM-conditioned action-expert modules for VLA policies."""
 
 from praxis.policies.core.action_expert.expert import ActionExpert, ActionExpertLayer

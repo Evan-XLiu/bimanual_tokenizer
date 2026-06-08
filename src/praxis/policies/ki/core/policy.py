@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Base policy for knowledge-insulated VLM/action-expert co-training."""
 
 from __future__ import annotations

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Supported policy-family matrix.
 
 The catalog is the source of truth for generated policy names. Runtime class

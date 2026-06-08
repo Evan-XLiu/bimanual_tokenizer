@@ -1,6 +1,6 @@
 # BAR OAT Pali Path
 
-`bar_oat_pali` is the canonical smoke path because it touches the main Praxis
+`bar_oat_pali` is a compact smoke path because it touches the main Praxis
 surfaces:
 
 ```text

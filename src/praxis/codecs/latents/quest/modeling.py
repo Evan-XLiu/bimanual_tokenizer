@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """QueST-family temporal convolution modeling blocks."""
 
 from __future__ import annotations

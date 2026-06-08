@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Hydra composition tests for trainer/train_recipe ownership."""
 
 from __future__ import annotations

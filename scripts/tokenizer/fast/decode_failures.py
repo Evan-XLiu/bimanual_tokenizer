@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Evaluate FAST policy strict-decode failure ratio.
 
 Loads a trained FAST policy, runs autoregressive inference on a dataset,

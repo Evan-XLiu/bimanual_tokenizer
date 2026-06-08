@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared checkpoint artifact constants/helpers for policy/tokenizer artifacts."""
 
 from __future__ import annotations

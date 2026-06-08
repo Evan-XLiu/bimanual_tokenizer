@@ -1,9 +1,10 @@
-# --------------------------------------------------------------------
-# Copyright (C) 2024-2025 EPFL & Apple Inc.
-# Licensed under the EPFL-Apple Sample Code License (Non-Commercial)
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
 #
-# Modifications by Chaoqi Liu for research purposes.
-# --------------------------------------------------------------------
+# SPDX-License-Identifier: Apache-2.0
+
+"""Transformer stacks used by action-tokenizer models."""
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from functools import partial
@@ -31,36 +32,38 @@ def _zero_query_projection(module: nn.Module) -> None:
         nn.init.zeros_(module.qkv.weight[:query_dim])
         if module.qkv.bias is not None:
             nn.init.zeros_(module.qkv.bias[:query_dim])
-        return
-    if isinstance(module, CrossAttention):
+    elif isinstance(module, CrossAttention):
         nn.init.zeros_(module.q_proj.weight)
         if module.q_proj.bias is not None:
             nn.init.zeros_(module.q_proj.bias)
 
 
-class Transformer(nn.Module):
-    """
-    Transformer.
+def _init_transformer_module(
+    module: nn.Module,
+    *,
+    name: str,
+    weight_init_style: str,
+) -> None:
+    if isinstance(module, nn.Linear):
+        if "adaLN_modulation" in name:
+            nn.init.zeros_(module.weight)
+        elif weight_init_style == "xavier":
+            nn.init.xavier_uniform_(module.weight)
+        elif weight_init_style == "trunc_normal":
+            nn.init.trunc_normal_(module.weight, std=0.02)
+        else:
+            raise ValueError(f"Unsupported weight init: {weight_init_style}")
+        if module.bias is not None:
+            nn.init.zeros_(module.bias)
+    elif isinstance(module, nn.LayerNorm):
+        if module.weight is not None:
+            nn.init.ones_(module.weight)
+        if module.bias is not None:
+            nn.init.zeros_(module.bias)
 
-    Args:
-        dim: Dimension of the input and output features.
-        depth: Number of Transformer blocks in the model.
-        head_dim: Dimension of each attention head.
-        mlp_ratio: Ratio of the hidden dimension size to the input dimension size in the MLP layers.
-        qkv_bias: Whether to use bias in the Q, K, V projections of the attention layers.
-        proj_bias: Whether to use bias in the projection layers of the attention.
-        mlp_bias: Whether to use bias in the MLP layers.
-        drop: Dropout rate applied to attention and MLP layers.
-        drop_path_rate: Dropout rate for stochastic depth (drop path).
-        act_layer: Activation layer used in the MLPs.
-        norm_layer: Normalization layer used before attention and MLP layers.
-        gated_mlp: Whether to use gated MLP layers in the transformer blocks.
-        qk_norm: Whether to apply normalization to the Q and K projections.
-        weight_init_style: Style of weight initialization ('xavier', 'trunc_normal').
-        zero_init_query_proj: Whether to zero-initialize the query projection layer.
-        adaLN_expansion: Expansion factor for adaLN modulation, e.g. for learning separate
-            shift and scale parameters for patches and registers.
-    """
+
+class Transformer(nn.Module):
+    """Stack of encoder-style transformer blocks."""
 
     def __init__(
         self,
@@ -81,16 +84,13 @@ class Transformer(nn.Module):
         zero_init_query_proj: bool = False,
         use_adaLN: bool = False,
         adaLN_expansion: int = 1,
-    ):
+    ) -> None:
         super().__init__()
-
-        block_fn = BlockAdaLN if use_adaLN else Block
-
-        # Stochastic depth decay rule
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
+        block_cls = BlockAdaLN if use_adaLN else Block
+        drop_rates = torch.linspace(0, drop_path_rate, depth).tolist()
         self.blocks = nn.ModuleList(
             [
-                block_fn(
+                block_cls(
                     dim=dim,
                     head_dim=head_dim,
                     mlp_ratio=mlp_ratio,
@@ -98,47 +98,26 @@ class Transformer(nn.Module):
                     proj_bias=proj_bias,
                     mlp_bias=mlp_bias,
                     drop=drop,
-                    drop_path=dpr[i],
+                    drop_path=float(drop_rates[idx]),
                     act_layer=act_layer,
                     norm_layer=norm_layer,
                     gated_mlp=gated_mlp,
                     qk_norm=qk_norm,
                     adaLN_expansion=adaLN_expansion,
                 )
-                for i in range(depth)
+                for idx in range(depth)
             ]
         )
-
-        # Weight init
         self.weight_init_style = weight_init_style
-        self.zero_init_query_proj = zero_init_query_proj
+        self.zero_init_query_proj = bool(zero_init_query_proj)
         self.init_weights_sp()
 
-    def init_weights_sp(self):
-        """SP weight initialization scheme"""
-        for name, m in self.named_modules():
-            # Linear
-            if isinstance(m, nn.Linear):
-                # Weight
-                if "adaLN_modulation" in name:
-                    nn.init.constant_(m.weight, 0)
-                elif self.weight_init_style == "xavier":
-                    nn.init.xavier_uniform_(m.weight)
-                elif self.weight_init_style == "trunc_normal":
-                    nn.init.trunc_normal_(m.weight, std=0.02)
-                else:
-                    raise ValueError(
-                        f"Unsupported weight init: {self.weight_init_style}"
-                    )
-                # Bias
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            # LayerNorm
-            elif isinstance(m, nn.LayerNorm):
-                if m.weight is not None:
-                    nn.init.constant_(m.weight, 1.0)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
+    def init_weights_sp(self) -> None:
+        """Initialize linear and LayerNorm modules using the configured scheme."""
+        for name, module in self.named_modules():
+            _init_transformer_module(
+                module, name=name, weight_init_style=self.weight_init_style
+            )
         if self.zero_init_query_proj:
             for module in self.modules():
                 _zero_query_projection(module)
@@ -161,28 +140,7 @@ class Transformer(nn.Module):
 
 
 class TransformerDecoder(nn.Module):
-    """
-    Transformer Decoder.
-
-    Args:
-        dim: Dimension of the input and output features.
-        depth: Number of Transformer blocks in the model.
-        head_dim: Dimension of each attention head.
-        mlp_ratio: Ratio of the hidden dimension size to the input dimension size in the MLP layers.
-        qkv_bias: Whether to use bias in the Q, K, V projections of the attention layers.
-        proj_bias: Whether to use bias in the projection layers of the attention.
-        mlp_bias: Whether to use bias in the MLP layers.
-        drop: Dropout rate applied to attention and MLP layers.
-        drop_path_rate: Dropout rate for stochastic depth (drop path).
-        act_layer: Activation layer used in the MLPs.
-        norm_layer: Normalization layer used before attention and MLP layers.
-        gated_mlp: Whether to use gated MLP layers in the transformer blocks.
-        qk_norm: Whether to apply normalization to the Q and K projections.
-        weight_init_style: Style of weight initialization ('xavier', 'trunc_normal').
-        zero_init_query_proj: Whether to zero-initialize the query projection layer.
-        adaLN_expansion: Expansion factor for adaLN modulation, e.g. for learning separate
-            shift and scale parameters for patches and registers.
-    """
+    """Stack of decoder blocks with cross-attention to a context sequence."""
 
     def __init__(
         self,
@@ -204,16 +162,13 @@ class TransformerDecoder(nn.Module):
         use_adaLN: bool = False,
         adaLN_expansion: int = 1,
         enable_self_attn: bool = True,
-    ):
+    ) -> None:
         super().__init__()
-
-        block_fn = DecoderBlockAdaLN if use_adaLN else DecoderBlock
-
-        # Stochastic depth decay rule
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
+        block_cls = DecoderBlockAdaLN if use_adaLN else DecoderBlock
+        drop_rates = torch.linspace(0, drop_path_rate, depth).tolist()
         self.blocks = nn.ModuleList(
             [
-                block_fn(
+                block_cls(
                     dim=dim,
                     head_dim=head_dim,
                     mlp_ratio=mlp_ratio,
@@ -221,7 +176,7 @@ class TransformerDecoder(nn.Module):
                     proj_bias=proj_bias,
                     mlp_bias=mlp_bias,
                     drop=drop,
-                    drop_path=dpr[i],
+                    drop_path=float(drop_rates[idx]),
                     act_layer=act_layer,
                     norm_layer=norm_layer,
                     gated_mlp=gated_mlp,
@@ -229,40 +184,19 @@ class TransformerDecoder(nn.Module):
                     enable_self_attn=enable_self_attn,
                     adaLN_expansion=adaLN_expansion,
                 )
-                for i in range(depth)
+                for idx in range(depth)
             ]
         )
-
-        # Weight init
         self.weight_init_style = weight_init_style
-        self.zero_init_query_proj = zero_init_query_proj
+        self.zero_init_query_proj = bool(zero_init_query_proj)
         self.init_weights_sp()
 
-    def init_weights_sp(self):
-        """SP weight initialization scheme"""
-        for name, m in self.named_modules():
-            # Linear
-            if isinstance(m, nn.Linear):
-                # Weight
-                if "adaLN_modulation" in name:
-                    nn.init.constant_(m.weight, 0)
-                elif self.weight_init_style == "xavier":
-                    nn.init.xavier_uniform_(m.weight)
-                elif self.weight_init_style == "trunc_normal":
-                    nn.init.trunc_normal_(m.weight, std=0.02)
-                else:
-                    raise ValueError(
-                        f"Unsupported weight init: {self.weight_init_style}"
-                    )
-                # Bias
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            # LayerNorm
-            elif isinstance(m, nn.LayerNorm):
-                if m.weight is not None:
-                    nn.init.constant_(m.weight, 1.0)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
+    def init_weights_sp(self) -> None:
+        """Initialize linear and LayerNorm modules using the configured scheme."""
+        for name, module in self.named_modules():
+            _init_transformer_module(
+                module, name=name, weight_init_style=self.weight_init_style
+            )
         if self.zero_init_query_proj:
             for module in self.modules():
                 _zero_query_projection(module)

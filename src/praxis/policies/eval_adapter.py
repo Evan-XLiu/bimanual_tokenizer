@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Adapters between Praxis policies and the standalone ``praxis_eval`` API."""
 
 from __future__ import annotations

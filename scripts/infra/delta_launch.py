@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """submitit Slurm launcher for Praxis experiments on NCSA Delta/DeltaAI.
 
 Usage:
@@ -7,10 +11,10 @@ Usage:
 
     uv run python scripts/infra/delta_launch.py \
         train-policy --method bar --codec oat --backbone pali --dataset libero_10 \
-        --tokenizer-ckpt outputs/train_codecs/20260301/libero10_oat_codec/checkpoints/latest/pretrained_model
+        --tokenizer-ckpt <codec-checkpoint>/pretrained_model
 
     uv run python scripts/infra/delta_launch.py \
-        eval-monitor --train-dir outputs/train_policy/20260312/libero10_bar_oat_qwen
+        eval-monitor --train-dir <policy-train-output-dir>
 """
 
 from __future__ import annotations

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Standalone shared base for Pali VLM action-token policies."""
 
 from __future__ import annotations

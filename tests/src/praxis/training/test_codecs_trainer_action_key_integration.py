@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Integration test for CodecsTrainer with non-default action key."""
 
 from __future__ import annotations
@@ -139,7 +143,7 @@ def _build_cfg(tmp_path: Path, codec_cfg: dict | None = None):
                 "fsdp_cpu_offload": False,
                 "max_grad_norm": 1.0,
                 "use_wandb": False,
-                "wandb_project": "policy-research",
+                "wandb_project": "praxis-vla",
                 "wandb_entity": None,
                 "use_ema": False,
                 "checkpoint_dir": str(tmp_path / "checkpoints"),

@@ -81,9 +81,13 @@ Build the VitePress site:
 
 ```bash
 cd docs
-npm install
+npm ci --no-audit --no-fund
 npm run docs:build
 ```
+
+External datasets, checkpoints, simulator assets, and model weights are governed
+by their upstream cards, licenses, and access terms rather than by this
+repository's Apache-2.0 license.
 
 The docs package currently requires a Node version supported by Vite. If the
 system `node` is broken or too old, use a working Node 20 or newer environment.

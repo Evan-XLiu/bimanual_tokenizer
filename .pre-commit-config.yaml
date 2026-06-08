@@ -26,6 +26,18 @@ repos:
     hooks:
       - id: uv-lock
 
+  - repo: https://github.com/johannsdg/pre-commit-license-headers
+    rev: v0.1.0
+    hooks:
+      - id: check-license-headers
+        files: ^(src|scripts|tests|docs/scripts)/.*\.py$
+        args:
+          - --template
+          - |
+            SPDX-FileCopyrightText: [YEARS] [OWNER]
+            SPDX-License-Identifier: Apache-2.0
+          - --owner=.+
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.1
     hooks:

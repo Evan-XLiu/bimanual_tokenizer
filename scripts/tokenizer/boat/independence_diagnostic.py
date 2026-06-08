@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Probe BOAT intra-block token dependence from encoded action tokens.
 
 This script measures how much extra signal same-block context provides beyond

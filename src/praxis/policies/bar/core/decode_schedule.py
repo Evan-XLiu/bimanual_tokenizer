@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """BAR decode scheduling and incremental attention-mask helpers."""
 
 from __future__ import annotations

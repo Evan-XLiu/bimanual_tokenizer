@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Normalization modules backed by LeRobot normalization processors."""
 
 from __future__ import annotations

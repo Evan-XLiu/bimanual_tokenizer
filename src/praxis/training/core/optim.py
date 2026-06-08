@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Optimizer parameter-group adapter for trainer-owned LR recipes."""
 
 from __future__ import annotations

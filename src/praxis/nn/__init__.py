@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Shared neural network building blocks for Praxis."""
 
 from praxis.nn.architectures.transformer import Transformer, TransformerDecoder

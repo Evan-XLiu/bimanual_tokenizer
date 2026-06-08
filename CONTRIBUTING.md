@@ -40,11 +40,11 @@ Keep method-specific behavior in the nearest honest owner:
 
 ## License Headers
 
-New manually maintained original Python files under `src/` should carry SPDX
-headers:
+Manually maintained original Python files under `src/`, `scripts/`, `tests/`,
+and `docs/scripts/` should carry SPDX headers:
 
 ```text
-SPDX-FileCopyrightText: 2026 Chaoqi Liu and contributors
+SPDX-FileCopyrightText: 2026 Chaoqi Liu
 SPDX-License-Identifier: Apache-2.0
 ```
 
@@ -54,11 +54,12 @@ changes in a later year, update only that file's year range or copyright holder
 when appropriate.
 
 Do not remove third-party copyright notices or file-level license headers.
-Files with existing non-Apache headers remain governed by those headers.
+Files with existing non-Apache headers remain governed by those headers and
+must not be relicensed without a clean-room replacement or explicit permission.
 
-Tests, documentation, workflow files, project config, generated files, lockfiles,
-and files that should not be edited directly are licensed through the root
-`LICENSE` and `NOTICE` files, but they should not carry visible SPDX headers.
+Markdown documentation, workflow files, project config, generated files,
+lockfiles, and files that should not be edited directly are licensed through the
+root `LICENSE` and `NOTICE` files, but they do not need visible SPDX headers.
 
 ## Checks
 

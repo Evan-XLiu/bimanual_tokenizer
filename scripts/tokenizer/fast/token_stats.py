@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Compute FAST token statistics on a dataset.
 
 Tokenizes action chunks from a LeRobot dataset and reports:

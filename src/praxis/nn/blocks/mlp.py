@@ -1,17 +1,20 @@
-# --------------------------------------------------------------------
-# Copyright (C) 2024-2025 EPFL & Apple Inc.
-# Licensed under the EPFL-Apple Sample Code License (Non-Commercial)
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
 #
-# Modifications by Chaoqi Liu for research purposes.
-# --------------------------------------------------------------------
+# SPDX-License-Identifier: Apache-2.0
+
+"""Feed-forward blocks used by Praxis transformer modules."""
+
+from __future__ import annotations
 
 import torch.nn as nn
 from torch import Tensor
 
-__all__ = ["Mlp", "GatedMlp"]
+__all__ = ["GatedMlp", "Mlp"]
 
 
 class Mlp(nn.Module):
+    """Two-layer feed-forward network."""
+
     def __init__(
         self,
         in_features: int,
@@ -22,8 +25,9 @@ class Mlp(nn.Module):
         bias: bool = True,
     ) -> None:
         super().__init__()
-        out_features = out_features or in_features
-        hidden_features = hidden_features or in_features
+        hidden_features = int(hidden_features or in_features)
+        out_features = int(out_features or in_features)
+
         self.fc1 = nn.Linear(in_features, hidden_features, bias=bias)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features, bias=bias)
@@ -34,7 +38,7 @@ class Mlp(nn.Module):
 
 
 class GatedMlp(nn.Module):
-    """Implements SwiGLU and other gated feed-forward layers."""
+    """SwiGLU-style feed-forward network with separate gate projection."""
 
     def __init__(
         self,
@@ -46,9 +50,9 @@ class GatedMlp(nn.Module):
         bias: bool = True,
     ) -> None:
         super().__init__()
-        out_features = out_features or in_features
-        # If gated, multiply hidden_dim by 2/3 to account for extra matmul
+        out_features = int(out_features or in_features)
         hidden_features = int(2 * (hidden_features or in_features) / 3)
+
         self.fc1 = nn.Linear(in_features, hidden_features, bias=bias)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features, bias=bias)

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Cross-backbone BOAT registration and Hydra setup tests."""
 
 from __future__ import annotations

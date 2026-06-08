@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Codec factory: instantiate action codecs from config with optional pretrained loading."""
 
 from __future__ import annotations

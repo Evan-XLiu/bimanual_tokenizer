@@ -87,6 +87,11 @@ uv sync --group dev --extra pali --extra serving --extra logging --extra libero
 Common extras include `pali`, `qwen`, `smol`, `serving`, `logging`, `libero`,
 `metaworld`, `mshab`, `robocasa`, `robomimic`, `simpler`, and `slurm`.
 
+External Hugging Face datasets, model checkpoints, simulator assets, and
+benchmark packages are governed by their upstream model cards, dataset cards,
+licenses, and access terms. This repository's Apache-2.0 license covers the
+Praxis source code, not those external artifacts.
+
 ## Command Surface
 
 ```bash
@@ -138,8 +143,4 @@ boundaries, checks, and license-header guidance.
 
 ## License
 
-Unless otherwise noted in file headers, Praxis is licensed under Apache-2.0. See
-[LICENSE](LICENSE) and [NOTICE](NOTICE).
-
-Some source files retain third-party non-commercial license headers. Those files
-must be used according to their own notices.
+Praxis is licensed under Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

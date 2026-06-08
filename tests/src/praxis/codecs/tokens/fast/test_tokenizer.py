@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chaoqi Liu
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Unit tests for FAST tokenizer (DCT + BPE)."""
 
 from __future__ import annotations
