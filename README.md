@@ -2,16 +2,15 @@
 
 Official implementation of **OAT: Ordered Action Tokenization**.
 
-[Project Page](https://ordered-action-tokenization.github.io/) |
-[Paper](https://arxiv.org/abs/2602.04215) |
-[Documentation](https://chaoqi-liu.com/praxis-vla) |
-[praxis-eval](https://github.com/Chaoqi-LIU/praxis-eval)
+[Webpage](https://ordered-action-tokenization.github.io/) |
+[arXiv](https://arxiv.org/abs/2602.04215) |
+[Docs](https://chaoqi-liu.com/praxis-vla)
 
 Praxis is a research codebase for training and evaluating
 vision-language-action policies with explicit action representations. It
 contains action tokenizers/codecs, policy objectives, VLM backbone adapters,
 training and checkpointing code, serving utilities, and the policy adapter used
-by `praxis-eval`.
+by [`praxis-eval`](https://github.com/Chaoqi-LIU/praxis-eval).
 
 ## Installation
 
@@ -72,8 +71,7 @@ them on compute nodes rather than login nodes.
 | Evaluation bridge | `PolicyEvalAdapter` for `praxis-eval` |
 | Cluster utilities | Submitit/Slurm launchers under `scripts/infra` |
 
-Closed-loop benchmark execution lives in
-[`praxis-eval`](https://github.com/Chaoqi-LIU/praxis-eval). Praxis owns policy
+Closed-loop benchmark execution lives in `praxis-eval`. Praxis owns policy
 construction, codec training, checkpoint loading, preprocessing, and serving;
 `praxis-eval` owns benchmark setup, rollout execution, metrics, artifacts, and
 simulator dependencies.
