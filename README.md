@@ -1,7 +1,5 @@
 # Praxis
 
-Official implementation of **OAT: Ordered Action Tokenization**.
-
 [Webpage](https://ordered-action-tokenization.github.io/) |
 [arXiv](https://arxiv.org/abs/2602.04215) |
 [Docs](https://chaoqi-liu.com/praxis-vla)
