@@ -1,19 +1,89 @@
 # Praxis
 
-[![Docs](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/docs.yml/badge.svg)](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/docs.yml)
-[![Tests](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/test.yml/badge.svg)](https://github.com/Chaoqi-LIU/praxis-vla/actions/workflows/test.yml)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[Website](https://ordered-action-tokenization.github.io/) | [arXiv](https://arxiv.org/abs/2602.04215) | [Docs](https://chaoqi-liu.com/praxis-vla)| [BibTeX](#citation)
 
-Praxis is a controlled laboratory for vision-language-action (VLA) policy
-research. This repository, `praxis-vla`, is the policy-side implementation:
-policy objectives, action representations, VLM backbones, training,
-checkpointing, serving, and the adapter used by `praxis-eval`.
+Praxis is a research codebase for training and evaluating
+vision-language-action (VLA) manipulation policies. This repository contains
+the policy-side implementation: action tokenizers, policy objectives, VLM backbones, training, checkpoint export/load, serving, and the adapter boundary
+used by [`praxis-eval`](https://chaoqi-liu.com/praxis-eval/).
 
-The problem Praxis addresses is that VLA rollout scores often compare whole
-private pipelines rather than one declared design choice. Objective, tokenizer,
-backbone, preprocessing, normalization, serving, simulator dependencies, and
-benchmark adapters can all change at once. Praxis makes the intended variables
-explicit by treating a robot policy as a cell in a design matrix:
+## Table of Contents
+
+- [Usage](#usage)
+  - [Installation](#installation)
+  - [Getting Started](#getting-started)
+  - [Command Surface](#command-surface)
+- [Policy Cells](#policy-cells)
+- [Evaluation Boundary](#evaluation-boundary)
+- [External Artifacts](#external-artifacts)
+- [Development](#development)
+- [License](#license)
+- [Citation](#citation)
+
+## Usage
+
+### Installation
+
+Praxis is released as a source research repository, not as a PyPI-first package.
+Use a checkout and `uv`:
+
+```bash
+git clone https://github.com/Chaoqi-LIU/praxis-vla.git
+cd praxis-vla
+uv sync --group dev
+uv run python -c "import praxis; print('praxis import OK')"
+```
+
+Install only the optional extras needed for your workflow. For the quickstart:
+
+```bash
+uv sync --group dev --extra pali --extra serving --extra logging --extra libero
+```
+
+Common extras include `pali`, `qwen`, `smol`, `serving`, `logging`, `libero`,
+`metaworld`, `mshab`, `robocasa`, `robomimic`, `simpler`, and `slurm`.
+
+### Getting Started
+
+The maintained documentation is the source of truth for setup, configuration,
+training, evaluation, and extension:
+
+https://chaoqi-liu.com/praxis-vla
+
+For a compact end-to-end smoke path, see
+[BAR OAT Pali Path](docs/workflows/bar-oat-pali.md). It trains an OAT codec,
+trains a BAR policy with a PaliGemma2 backbone, and evaluates the resulting
+checkpoint through `praxis-eval`.
+
+Inspect the composed Hydra config before launching real training jobs:
+
+```bash
+uv run praxis-train policy=bar_oat_pali --cfg job
+```
+
+Training and simulator evaluation are GPU/simulator workloads. On shared
+clusters, run them inside an interactive or batch compute allocation.
+
+### Command Surface
+
+```bash
+uv run praxis-train --help
+uv run praxis-eval --help
+uv run praxis-serve --help
+uv run praxis-eval-monitor --help
+```
+
+Typical forms:
+
+```bash
+uv run praxis-train --config-name train_codecs codecs@codec=tokens/oat
+uv run praxis-train policy=bar_oat_pali policy.action_tokenizer.pretrained_path=/path/to/codec
+uv run praxis-eval policy=bar_oat_pali policy.pretrained_path=/path/to/policy env.type=libero env.task=libero
+```
+
+## Policy Cells
+
+Praxis treats a robot policy as a cell in a design matrix:
 
 ```text
 policy = objective + action representation + VLM backbone
@@ -25,18 +95,8 @@ One runnable cell is:
 bar_oat_pali = BAR objective + OAT codec + PaliGemma2 backbone
 ```
 
-`bar_oat_pali` is a compact quickstart path, not a preferred method.
-
-## What Is Included
-
-| Surface | Implemented choices |
-| --- | --- |
-| Policy objectives | BAR, FM, KI |
-| Action representations | Binning, FAST, OAT, BOAT, QueST, ActionCodec |
-| VLM backbones | PaliGemma2, Qwen3-VL, SmolVLM |
-| Runtime surfaces | training, validation, checkpoint export/load, serving, `praxis-eval` adapter |
-
-Useful comparisons look like:
+`bar_oat_pali` is the compact quickstart example, not a claimed best method.
+Useful comparisons change one coordinate at a time:
 
 ```text
 bar_oat_pali  vs  bar_oat_qwen      # backbone comparison
@@ -44,14 +104,36 @@ bar_oat_pali  vs  bar_fast_pali     # action-representation comparison
 bar_oat_pali  vs  ki_oat_pali       # objective comparison
 ```
 
-## Documentation
+| Axis | Implemented choices |
+| --- | --- |
+| Policy objectives | BAR, FM, KI |
+| Action representations | Binning, FAST, OAT, BOAT, QueST, ActionCodec |
+| VLM backbones | PaliGemma2, Qwen3-VL, SmolVLM |
+| Runtime surfaces | training, validation, checkpoint export/load, serving, `praxis-eval` adapter |
 
-The maintained documentation is the source of truth for setup, configuration,
-training, evaluation, and extension:
+## Evaluation Boundary
 
-https://chaoqi-liu.com/praxis-vla
+Closed-loop benchmark execution is delegated to `praxis-eval`.
 
-Local entry points:
+Praxis owns policy construction, codec training, checkpoint loading,
+preprocessing, serving, and `PolicyEvalAdapter`. `praxis-eval` owns benchmark
+setup, rollout execution, metrics, artifacts, simulator dependencies, and
+benchmark-specific observation/action contracts.
+
+```text
+Praxis checkpoint -> PolicyEvalAdapter -> praxis-eval rollout -> metrics/media
+```
+
+## External Artifacts
+
+External Hugging Face datasets, model checkpoints, simulator assets, benchmark
+packages, and any released weights are governed by their upstream model cards,
+dataset cards, licenses, and access terms. This repository's Apache-2.0 license
+covers the Praxis source code, not those external artifacts.
+
+## Development
+
+Local documentation entry points:
 
 - [Introduction](docs/introduction.md): problem statement and repo model.
 - [Foundations](docs/foundations/overview.md): policy cells, `PolicyIO`,
@@ -65,58 +147,20 @@ Local entry points:
 - [Reference](docs/reference/cli.md): CLI, config, artifacts, factories, and
   docs maintenance.
 
-## Install From Source
-
-Praxis is released as a source research repository, not as a PyPI-first
-package. Use a checkout and `uv`.
+Run checks from the repo root:
 
 ```bash
-git clone https://github.com/Chaoqi-LIU/praxis-vla.git
-cd praxis-vla
-uv sync --group dev
-uv run python -c "import praxis; print('praxis import OK')"
 uv run python -m pytest tests/ -x
+uv run python -m pre_commit run --all-files
 ```
 
-Install only the optional extras needed for the workflow:
+See [CONTRIBUTING.md](CONTRIBUTING.md) for project boundaries, development
+setup, and license-header guidance.
 
-```bash
-uv sync --group dev --extra pali --extra serving --extra logging --extra libero
-```
+## License
 
-Common extras include `pali`, `qwen`, `smol`, `serving`, `logging`, `libero`,
-`metaworld`, `mshab`, `robocasa`, `robomimic`, `simpler`, and `slurm`.
-
-External Hugging Face datasets, model checkpoints, simulator assets, and
-benchmark packages are governed by their upstream model cards, dataset cards,
-licenses, and access terms. This repository's Apache-2.0 license covers the
-Praxis source code, not those external artifacts.
-
-## Command Surface
-
-```bash
-uv run praxis-train --help
-uv run praxis-eval --help
-uv run praxis-serve --help
-uv run praxis-eval-monitor --help
-```
-
-Training and benchmark rollout are GPU/simulator workloads. Use the
-configuration docs before running them on shared infrastructure.
-
-## Evaluation Boundary
-
-Closed-loop benchmark execution is delegated to
-[`praxis-eval`](https://github.com/Chaoqi-LIU/praxis-eval).
-
-Praxis owns policy construction, codec training, checkpoint loading,
-preprocessing, serving, and `PolicyEvalAdapter`. `praxis-eval` owns benchmark
-setup, rollout execution, metrics, artifacts, simulator dependencies, and
-benchmark-specific observation/action contracts.
-
-```text
-Praxis checkpoint -> PolicyEvalAdapter -> praxis-eval rollout -> metrics/media
-```
+Praxis source code is licensed under Apache-2.0. See [LICENSE](LICENSE) and
+[NOTICE](NOTICE).
 
 ## Citation
 
@@ -135,12 +179,3 @@ If Praxis or OAT supports your research, please cite:
 ```
 
 Machine-readable citation metadata is available in [CITATION.cff](CITATION.cff).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, project
-boundaries, checks, and license-header guidance.
-
-## License
-
-Praxis is licensed under Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
