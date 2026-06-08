@@ -45,7 +45,9 @@ def test_cross_attention_uses_separate_query_and_key_value_projections() -> None
 
 
 @pytest.mark.parametrize("mlp_cls", [Mlp, GatedMlp])
-def test_mlp_variants_preserve_batch_sequence_shape(mlp_cls: type[torch.nn.Module]) -> None:
+def test_mlp_variants_preserve_batch_sequence_shape(
+    mlp_cls: type[torch.nn.Module],
+) -> None:
     mlp = mlp_cls(in_features=8, hidden_features=16, out_features=6, drop=0.0)
     x = torch.randn(2, 3, 8)
 
