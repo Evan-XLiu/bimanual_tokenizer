@@ -12,6 +12,7 @@ the change.
 | VLM family | [Add A Backbone](/extension/add-backbone) | `src/praxis/policies/backbones/` |
 | objective family | [Add An Objective](/extension/add-objective) | `src/praxis/policies/` |
 | public matrix entry | [Add A Public Cell](/extension/add-public-cell) | `src/praxis/policies/catalog.py` |
+| Slurm cluster surface | [Add A Cluster Launcher](/extension/add-cluster-launcher) | `scripts/infra/` |
 | benchmark | `praxis-eval` docs | evaluator package |
 
 ## Extension Rule

@@ -56,6 +56,7 @@ export default defineConfig({
           { text: "Train A Policy", link: "/workflows/train-policy" },
           { text: "Evaluate", link: "/workflows/evaluate" },
           { text: "Serve", link: "/workflows/serve" },
+          { text: "Slurm Launchers", link: "/workflows/slurm-launchers" },
           { text: "BAR OAT Pali Path", link: "/workflows/bar-oat-pali" },
         ],
       },
@@ -67,6 +68,7 @@ export default defineConfig({
           { text: "Add A Backbone", link: "/extension/add-backbone" },
           { text: "Add An Objective", link: "/extension/add-objective" },
           { text: "Add A Public Cell", link: "/extension/add-public-cell" },
+          { text: "Add A Cluster Launcher", link: "/extension/add-cluster-launcher" },
         ],
       },
       {

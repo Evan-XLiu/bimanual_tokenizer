@@ -17,6 +17,7 @@ used by [`praxis-eval`](https://chaoqi-liu.com/praxis-eval/).
 - [Evaluation Boundary](#evaluation-boundary)
 - [External Artifacts](#external-artifacts)
 - [Development](#development)
+- [Cluster Launchers](#cluster-launchers)
 - [License](#license)
 - [Citation](#citation)
 
@@ -156,6 +157,18 @@ uv run python -m pre_commit run --all-files
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for project boundaries, development
 setup, and license-header guidance.
+
+## Cluster Launchers
+
+Praxis includes extensible Submitit launchers for Slurm clusters under
+`scripts/infra`. The shared launcher core lives in `scripts/infra/launch/`;
+cluster entrypoints such as `fasrc_launch.py`, `delta_launch.py`,
+`anvil_launch.py`, and `psc_launch.py` are thin profiles for partitions,
+accounts, and cluster-specific resource details.
+
+See [Slurm Launchers](docs/workflows/slurm-launchers.md) for usage and
+[Add A Cluster Launcher](docs/extension/add-cluster-launcher.md) for porting
+the launcher surface to another cluster.
 
 ## License
 
