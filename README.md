@@ -112,10 +112,10 @@ If Praxis or OAT supports your research, please cite:
       url={https://arxiv.org/abs/2602.04215},
 }
 @misc{liu2026praxis,
-  title={Praxis: A Controlled Laboratory for Vision-Language-Action Policy Research},
-  author={Chaoqi Liu},
-  year={2026},
-  url={https://ordered-action-tokenization.github.io/praxis/praxis.pdf},
+      title={Praxis: A Controlled Laboratory for Vision-Language-Action Policy Research},
+      author={Chaoqi Liu},
+      year={2026},
+      url={https://ordered-action-tokenization.github.io/praxis},
 }
 ```
 
