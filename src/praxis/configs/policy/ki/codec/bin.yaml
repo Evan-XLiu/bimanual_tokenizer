@@ -1,0 +1,7 @@
+action_tokenizer:
+  name: bin
+  kind: tokens
+  pretrained_path: null
+freeze_action_tokenizer: true
+block_ce_weighting: block_mean
+ce_vocab_scope: action

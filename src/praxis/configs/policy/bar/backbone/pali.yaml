@@ -1,0 +1,36 @@
+pretrained_path: null
+
+# VLM backbone
+vlm_model_name: google/paligemma2-3b-mix-224
+vlm_dtype: bfloat16
+freeze_vision_encoder: false
+
+# LoRA (optional, off = full fine-tuning)
+use_lora: false
+lora_r: 64
+lora_alpha: 16
+lora_target_modules: [q_proj, v_proj, k_proj, o_proj, gate_proj, up_proj, down_proj]
+lora_dropout: 0.05
+lora_modules_to_save: [lm_head, embed_tokens]
+gradient_checkpointing: false
+
+# Action tokens in VLM vocabulary
+action_token_template: "<|action_{i}|>"
+action_embed_init: normal
+
+# VLM state prefix
+state_prefix_encoding: discrete_text
+state_prefix_num_bins: 256
+
+# Decode sampling (null/0 => greedy argmax)
+decode_temperature: null
+decode_top_k: null
+
+# Instruction
+default_instruction: "Analyze the input image(s) and predict robot actions."
+
+# Policy IO
+action_dim: null
+n_obs_steps: 1
+action_horizon: 32
+n_action_steps: 16

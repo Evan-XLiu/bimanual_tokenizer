@@ -1,0 +1,17 @@
+# Codec trainer configuration
+defaults:
+  - common
+  - _self_
+
+_trainer_type: codecs
+
+# Codec training uses one scalar LR supplied by train_recipe/codecs/*.
+lr: null
+
+# Reconstruction evaluation (tokenize -> detokenize MSE on val set)
+reconst_every: 1000
+max_reconst_batches: 100
+
+# Bootstrap-only path for non-trainable codecs such as FAST when using a
+# prebuilt BPE and only persisting dataset action stats / sidecars.
+skip_codec_fit: false

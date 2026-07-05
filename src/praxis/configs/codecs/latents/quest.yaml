@@ -1,0 +1,34 @@
+# QueST latent codec config
+name: quest
+kind: latents
+pretrained_path: null
+
+# Action/sample geometry
+action_dim: null
+action_horizon: 32
+
+# Model dimensions
+encoder_dim: 256
+encoder_nhead: 8
+encoder_nlayer: 6
+decoder_dim: 256
+decoder_nhead: 8
+decoder_nlayer: 6
+dropout: 0.1
+
+# Temporal / causal settings
+downsample_factor: 2
+use_causal_encoder: true
+use_causal_decoder: true
+
+latent_dim: 4
+
+# Standalone latent-space training controls
+latent_space:
+  regularization:
+    enabled: true
+    mean_weight: 0.001
+    variance_weight: 0.001
+    covariance_weight: 0.0
+    norm_weight: 0.0
+  decoder_noise_std: 0.0

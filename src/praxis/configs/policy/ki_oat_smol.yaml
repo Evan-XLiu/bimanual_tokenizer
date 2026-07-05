@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: smol
+  - ki/codec@_here_: oat
+  - _self_
+
+name: ki_oat_smol

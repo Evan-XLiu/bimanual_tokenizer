@@ -1,0 +1,35 @@
+# ActionCodec token codec config (standalone VQ, official-style defaults)
+name: acodec
+kind: tokens
+pretrained_path: null
+
+# Action/sample geometry
+action_dim: null
+action_horizon: 32
+latent_horizon: 16
+
+# Model dims
+emb_dim: 256
+latent_dim: 512
+head_dim: 32
+encoder_depth: 6
+decoder_depth: 6
+dropout: 0.1
+mlp_ratio: 4.0
+qk_norm: ln
+layer_scale: true
+pos_scale: 0.1
+encoder_add_self_attn: false
+encoder_add_causal_mask: false
+decoder_add_self_attn: false
+decoder_add_causal_mask: false
+
+# Vector quantizer
+vq_codebook_size: 2048
+vq_codebook_dim: null
+vq_commitment_weight: 0.25
+vq_decay: 0.99
+vq_epsilon: 1e-5
+vq_threshold_ema_dead_code: 2
+vq_kmeans_init: true
+vq_kmeans_iters: 10

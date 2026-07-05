@@ -1,0 +1,101 @@
+# ======================== Python ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+.Python
+MANIFEST
+.installed.cfg
+cython_debug/
+
+# ======================== Packaging ========================
+node_modules/
+dist/
+build/
+sdist/
+wheels/
+develop-eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ======================== Virtual Environments ========================
+.venv/
+.venv-*/
+venv/
+env/
+
+# ======================== Testing & Coverage ========================
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# ======================== Type Checkers ========================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# ======================== Linters ========================
+.ruff_cache/
+
+# ======================== IDE & Editors ========================
+.codex/
+.claude/
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+.spyderproject
+.spyproject
+.ropeproject
+
+# ======================== OS ========================
+.DS_Store
+Thumbs.db
+
+# ======================== Hydra ========================
+outputs/
+outputs
+multirun/
+.hydra/
+
+# ======================== Checkpoints & Model Weights ========================
+*.ckpt
+*.pt
+*.pth
+checkpoints/
+
+# ======================== Logging ========================
+wandb/
+*.wandb
+logs/
+*.log
+
+# ======================== gRPC / Protobuf Generated ========================
+*_pb2.py
+*_pb2_grpc.py
+*_pb2.pyi
+
+# ======================== Data & Media ========================
+*.parquet
+*.mp4
+.tmp/
+.cache/
+/data/
+
+# ======================== Jupyter / IPython ========================
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py

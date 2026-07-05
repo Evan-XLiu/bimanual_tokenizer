@@ -1,0 +1,53 @@
+pretrained_path: null
+
+# VLM backbone
+vlm_model_name: HuggingFaceTB/SmolVLM2-500M-Video-Instruct
+vlm_dtype: bfloat16
+resize_imgs_with_padding: [512, 512]
+freeze_vision_encoder: false
+
+# LoRA (optional, off = full fine-tuning)
+use_lora: false
+lora_r: 64
+lora_alpha: 16
+lora_target_modules: [q_proj, v_proj, k_proj, o_proj, gate_proj, up_proj, down_proj]
+lora_dropout: 0.05
+lora_modules_to_save: [lm_head, embed_tokens]
+gradient_checkpointing: false
+
+# KI objectives
+ce_loss_weight: 1.0
+flow_loss_weight: 1.0
+
+# Action tokens in VLM vocabulary
+num_action_tokens: null
+action_token_template: "<|action_{i}|>"
+action_mask_token_template: "<|action_mask|>"
+action_embed_init: normal
+
+# Policy IO
+action_dim: null
+n_obs_steps: 1
+action_horizon: 32
+n_action_steps: 16
+
+# VLM state prefix
+state_prefix_encoding: continuous_projection
+state_prefix_num_bins: 256
+
+# Flow expert
+flow_sampling_steps: 10
+flow_time_sampling: beta
+flow_beta_alpha: 1.5
+flow_beta_beta: 1.0
+flow_min_time: 0.001
+expert_hidden_size: null
+expert_width_multiplier: 0.75
+expert_num_layers: null
+expert_self_attn_every_n_layers: 2
+expert_dropout: 0.0
+expert_time_min_period: 0.004
+expert_time_max_period: 4.0
+
+# Prompting
+default_instruction: "Analyze the input image(s) and predict robot actions."

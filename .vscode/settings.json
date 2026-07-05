@@ -1,0 +1,30 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  },
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/outputs/**": true,
+    "**/data/**": true,
+    "**/.venv/**": true,
+    "**/node_modules/**": true,
+    "**/checkpoints/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/__pycache__/**": true
+  },
+  "search.exclude": {
+    "**/outputs/**": true,
+    "**/data/**": true,
+    "**/.venv/**": true,
+    "**/node_modules/**": true,
+    "**/checkpoints/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/__pycache__/**": true
+  }
+}

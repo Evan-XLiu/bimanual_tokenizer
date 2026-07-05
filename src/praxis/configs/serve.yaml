@@ -1,0 +1,8 @@
+# Top-level serving config
+defaults:
+  - policy: bar_oat_pali
+  - _self_
+
+device: cuda
+host: 0.0.0.0
+port: 50051

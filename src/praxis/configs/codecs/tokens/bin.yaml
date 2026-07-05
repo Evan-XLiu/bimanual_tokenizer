@@ -1,0 +1,13 @@
+# Bin token codec config
+name: bin
+kind: tokens
+pretrained_path: null
+
+# Action/sample geometry
+action_dim: null
+action_horizon: 32
+
+# Binning
+num_bins: 256
+min_val: -1.0
+max_val: 1.0

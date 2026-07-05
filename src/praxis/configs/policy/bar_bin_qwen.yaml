@@ -1,0 +1,6 @@
+defaults:
+  - bar/backbone@_here_: qwen
+  - bar/codec@_here_: bin
+  - _self_
+
+name: bar_bin_qwen

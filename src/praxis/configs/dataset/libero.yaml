@@ -1,0 +1,7 @@
+# LeRobot dataset configuration
+name: libero
+repo_id: lerobot/libero
+root: null              # local cache path (null = default HF cache)
+episodes: null          # null = all episodes
+video_backend: null     # null = auto-detect
+bypass_force_cache_sync: false  # true = avoid distributed-only forced sync (workaround for startup hangs)

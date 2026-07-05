@@ -1,0 +1,10 @@
+# LeRobot dataset configuration
+name: bridge_single_view
+repo_id: chaoqi-liu/bridge_single_view
+root: null              # local cache path (null = default HF cache)
+episodes: null          # null = all episodes
+observation_keys:       # null = keep all observation keys from dataset metadata
+  - observation.state
+  - observation.images.image
+video_backend: null     # null = auto-detect
+bypass_force_cache_sync: false  # true = avoid distributed-only forced sync (workaround for startup hangs)

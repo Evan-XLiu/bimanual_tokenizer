@@ -1,0 +1,25 @@
+# QueST token codec config
+name: quest
+kind: tokens
+pretrained_path: null
+
+# Action/sample geometry
+action_dim: null
+action_horizon: 32
+
+# Model dimensions
+encoder_dim: 256
+encoder_nhead: 8
+encoder_nlayer: 6
+decoder_dim: 256
+decoder_nhead: 8
+decoder_nlayer: 6
+dropout: 0.1
+
+# Temporal / causal settings
+downsample_factor: 2
+use_causal_encoder: true
+use_causal_decoder: true
+
+# FiniteScalarQuantization
+fsq_levels: [8, 8, 6, 5]

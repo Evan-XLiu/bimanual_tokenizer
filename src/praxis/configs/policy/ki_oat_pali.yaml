@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: pali
+  - ki/codec@_here_: oat
+  - _self_
+
+name: ki_oat_pali

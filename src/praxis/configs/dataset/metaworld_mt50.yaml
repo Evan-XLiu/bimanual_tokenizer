@@ -1,0 +1,10 @@
+# LeRobot dataset configuration
+name: metaworld_mt50
+repo_id: reece-omahoney/metaworld_mt50_video
+root: null              # local cache path (null = default HF cache)
+episodes: null          # null = all episodes
+observation_keys:
+  - observation.state
+  - observation.image
+video_backend: null     # null = auto-detect
+bypass_force_cache_sync: false  # true = avoid distributed-only forced sync (workaround for startup hangs)
