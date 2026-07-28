@@ -190,11 +190,19 @@ class DefaultTrainer:
         )
         self.device = self.runtime.device
         global_batch_size = OmegaConf.select(self.tc, "global_batch_size", default=None)
+        resolved_global_batch_size = (
+            None if global_batch_size is None else int(global_batch_size)
+        )
+        if resolved_global_batch_size is not None:
+            OmegaConf.update(
+                self.tc,
+                "global_batch_size",
+                resolved_global_batch_size,
+                merge=False,
+            )
         self.tc.batch_size = resolve_per_rank_batch_size(
             configured_batch_size=int(self.tc.batch_size),
-            global_batch_size=None
-            if global_batch_size is None
-            else int(global_batch_size),
+            global_batch_size=resolved_global_batch_size,
             world_size=self.runtime.num_processes,
             gradient_accumulation_steps=int(self.tc.gradient_accumulation_steps),
         )

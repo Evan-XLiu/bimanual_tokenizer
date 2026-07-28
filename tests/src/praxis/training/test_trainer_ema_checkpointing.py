@@ -18,6 +18,7 @@ from safetensors.torch import load_file, save_file, save_model as save_model_saf
 
 from praxis.core.types import FeatureSpec, FeatureType, NormMode, PolicyIO
 from praxis.policies.core import BasePolicy
+from praxis.training.core.checkpoint.io import DdpCheckpointIO
 from praxis.training.core.ema import EMAModel
 from praxis.training.core.trainer import DefaultTrainer
 from praxis.training.core.trainer_components import CheckpointService
@@ -350,6 +351,96 @@ def test_checkpoint_saves_policy_sidecars_when_io_present(tmp_path: Path) -> Non
 
     assert (out_dir / "pretrained_model" / "policy_io.json").exists()
     assert (out_dir / "pretrained_model" / "norm_stats.pt").exists()
+
+
+def test_ddp_normalization_restore_uses_model_payload_hook(tmp_path: Path) -> None:
+    class _PayloadModel(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.payload: dict | None = None
+
+        def _load_normalization_checkpoint_payload(self, data: dict) -> None:
+            self.payload = data
+
+        def set_normalization_stats(self, *args, **kwargs) -> None:
+            raise AssertionError("restore must delegate through the payload hook")
+
+    path = tmp_path / "norm_stats.pt"
+    payload = {
+        "normalization_kind": "test_marker_v1",
+        "stats": {"action": {"min": torch.zeros(2), "max": torch.ones(2)}},
+        "modes": {"action": NormMode.MIN_MAX.value},
+    }
+    torch.save(payload, path)
+    model = _PayloadModel()
+
+    DdpCheckpointIO._load_norm_stats(model, path)
+
+    assert model.payload is not None
+    assert model.payload["normalization_kind"] == "test_marker_v1"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        pytest.param(
+            {
+                "normalization_kind": "unknown_v2",
+                "stats": {},
+                "modes": {},
+            },
+            id="unknown-marker-empty-stats",
+        ),
+        pytest.param(
+            {
+                "normalization_kind": "xtokenizer_dual_role_v1",
+                "stats": {},
+                "modes": {},
+            },
+            id="dual-role-empty-roles",
+        ),
+        pytest.param(
+            {
+                "normalization_kind": "xtokenizer_dual_role_v1",
+                "stats": {"action": {}},
+                "modes": {"action": NormMode.MIN_MAX.value},
+            },
+            id="dual-role-missing-observation-role",
+        ),
+    ],
+)
+def test_ddp_normalization_restore_dispatches_empty_marked_payloads(
+    tmp_path: Path,
+    payload: dict,
+) -> None:
+    class _PayloadModel(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.payload: dict | None = None
+
+        def _load_normalization_checkpoint_payload(self, data: dict) -> None:
+            self.payload = data
+
+    path = tmp_path / "norm_stats.pt"
+    torch.save(payload, path)
+    model = _PayloadModel()
+
+    DdpCheckpointIO._load_norm_stats(model, path)
+
+    assert model.payload == payload
+
+
+def test_ddp_normalization_restore_keeps_unmarked_empty_payload_as_noop(
+    tmp_path: Path,
+) -> None:
+    class _PayloadModel(nn.Module):
+        def _load_normalization_checkpoint_payload(self, data: dict) -> None:
+            raise AssertionError(f"unmarked empty payload must remain a no-op: {data}")
+
+    path = tmp_path / "norm_stats.pt"
+    torch.save({"stats": {}, "modes": {}}, path)
+
+    DdpCheckpointIO._load_norm_stats(_PayloadModel(), path)
 
 
 def test_load_checkpoint_restores_tied_weights_saved_via_save_pretrained(

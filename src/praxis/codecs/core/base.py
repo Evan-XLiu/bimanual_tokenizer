@@ -103,8 +103,10 @@ class BaseCodec(nn.Module, PyTorchModelHubMixin, ABC):
         (save_dir / POLICY_IO_FILENAME).write_text(
             json.dumps(self.io.to_dict(), indent=2) + "\n"
         )
-        stats, modes = self._export_norm_stats_for_checkpoint()
-        torch.save({"stats": stats, "modes": modes}, save_dir / NORM_STATS_FILENAME)
+        torch.save(
+            self._normalization_checkpoint_payload(),
+            save_dir / NORM_STATS_FILENAME,
+        )
         if push_kwargs is not None:
             return push_saved_pretrained_dir(
                 save_dir=save_dir,
@@ -170,10 +172,19 @@ class BaseCodec(nn.Module, PyTorchModelHubMixin, ABC):
                 f"Codec checkpoint at {model_id} is missing {NORM_STATS_FILENAME}."
             )
         data = torch.load(norm_path, map_location="cpu", weights_only=True)
-        norm_stats = data.get("stats", {})
-        norm_modes = {k: NormMode(v) for k, v in data.get("modes", {}).items()}
-        model.set_normalization_stats(norm_stats, modes=norm_modes)
+        model._load_normalization_checkpoint_payload(data)
         return model
+
+    def _normalization_checkpoint_payload(self) -> dict[str, Any]:
+        """Return the existing generic normalization sidecar payload."""
+        stats, modes = self._export_norm_stats_for_checkpoint()
+        return {"stats": stats, "modes": modes}
+
+    def _load_normalization_checkpoint_payload(self, data: dict[str, Any]) -> None:
+        """Restore the existing generic normalization sidecar payload."""
+        stats = data.get("stats", {})
+        modes = {key: NormMode(value) for key, value in data.get("modes", {}).items()}
+        self.set_normalization_stats(stats, modes=modes)
 
     def _export_norm_stats_for_checkpoint(
         self,

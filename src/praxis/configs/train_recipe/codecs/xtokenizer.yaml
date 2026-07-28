@@ -1,0 +1,16 @@
+# @package _global_
+
+trainer:
+  # Paper-aligned optimizer recipe on the native CodecsTrainer lifecycle.
+  max_steps: 300000
+  batch_size: 256
+  global_batch_size: ${.batch_size}
+  lr: 5.0e-5
+  weight_decay: 0.01
+  betas: [0.9, 0.95]
+  lr_scheduler: cosine
+  warmup_steps: 200
+  max_grad_norm: 1.0
+
+  # MAM is inactive during warm-up, so DDP must tolerate its unused head.
+  find_unused_parameters: true

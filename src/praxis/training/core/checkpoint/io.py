@@ -197,10 +197,17 @@ class DdpCheckpointIO(_CheckpointIOBase):
         if not path.exists():
             return
         data = torch.load(path, map_location="cpu", weights_only=True)
+        load_payload = getattr(model, "_load_normalization_checkpoint_payload", None)
+        if "normalization_kind" in data and callable(load_payload):
+            load_payload(data)
+            return
         stats = data.get("stats", {})
-        modes_raw = data.get("modes", {})
         if not stats:
             return
+        if callable(load_payload):
+            load_payload(data)
+            return
+        modes_raw = data.get("modes", {})
         modes = {key: NormMode(value) for key, value in modes_raw.items()}
         set_fn = getattr(model, "set_normalization_stats", None)
         if callable(set_fn):
