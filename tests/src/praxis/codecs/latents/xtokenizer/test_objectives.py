@@ -15,6 +15,10 @@ import torch
 import torch.distributed as dist
 from torch.multiprocessing.spawn import spawn
 
+from praxis.codecs.latents.xtokenizer import (
+    action_space as action_space_module,
+    objectives as objectives_module,
+)
 from praxis.codecs.latents.xtokenizer.objectives import (
     _gather_distributed_pairs,
     masked_action_l1,
@@ -22,6 +26,13 @@ from praxis.codecs.latents.xtokenizer.objectives import (
     symmetric_global_local_infonce,
 )
 from praxis.core.types import NormMode
+
+
+def test_objectives_reuses_shared_rotation_6d_conversion() -> None:
+    assert (
+        objectives_module._rotation_6d_to_matrix
+        is action_space_module.rotation_6d_to_matrix
+    )
 
 
 def _distributed_infonce_worker(

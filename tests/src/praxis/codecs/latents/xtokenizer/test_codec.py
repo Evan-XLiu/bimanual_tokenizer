@@ -16,8 +16,10 @@ from typing import Any
 
 import pytest
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 
+import praxis.codecs.latents.xtokenizer.codec as codec_module
 from praxis.codecs.latents.xtokenizer import (
     XTokenizerCodec,
     XTokenizerModelConfig,
@@ -30,6 +32,7 @@ from praxis.codecs.latents.xtokenizer.codec import (
     _masked_smoothness_l1,
     _multi_rotation_geodesic_loss,
 )
+from praxis.codecs.latents.xtokenizer.quantizer import ResidualQuantizerOutput
 from praxis.core.types import FeatureSpec, FeatureType, NormMode, PolicyIO
 from praxis.training.core.training_context import TrainingContext
 
@@ -155,17 +158,239 @@ def _has_nonzero_grad(module: torch.nn.Module) -> bool:
     )
 
 
+def _capture_quantizer_gradients(
+    _module: torch.nn.Module,
+    _args: tuple[Tensor, ...],
+    output: ResidualQuantizerOutput,
+) -> None:
+    output.quantized.retain_grad()
+    output.q0_quantized.retain_grad()
+
+
+def test_codec_mam_only_shapes_encoder_without_decoder_or_codebook_gradients(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    torch.manual_seed(41)
+    codec = XTokenizerCodec(
+        config=_tiny_config(
+            kmeans_init=False,
+            reconstruction_weight=0.0,
+            commitment_weight=0.0,
+            rotation_weight=0.0,
+            dct_weight=0.0,
+            smoothness_weight=0.0,
+            mam_weight=1.0,
+            mam_mask_probability=0.5,
+            alignment_weight=0.0,
+            prediction_weight=0.0,
+            state_dropout_probability=0.0,
+            embodiment_dropout_probability=0.0,
+            embodiment_none_probability=0.0,
+        )
+    )
+    batch = _batch()
+    initial_codebooks = codec.quantizer.codebooks.clone()
+    quantizer_outputs: list[ResidualQuantizerOutput] = []
+    mam_inputs: list[Tensor] = []
+    mam_targets: list[Tensor] = []
+
+    def _capture_quantizer(
+        module: torch.nn.Module,
+        args: tuple[Tensor, ...],
+        output: ResidualQuantizerOutput,
+    ) -> None:
+        _capture_quantizer_gradients(module, args, output)
+        quantizer_outputs.append(output)
+
+    quantizer_hook = codec.quantizer.register_forward_hook(_capture_quantizer)
+    mam_hook = codec.mam_head.register_forward_pre_hook(
+        lambda _module, args: mam_inputs.append(args[0].detach().clone())
+    )
+    original_cross_entropy = codec_module._masked_cross_entropy
+
+    def _capture_mam_targets(
+        logits: Tensor,
+        targets: Tensor,
+        valid_mask: Tensor,
+    ) -> Tensor:
+        mam_targets.append(targets.detach().clone())
+        return original_cross_entropy(logits, targets, valid_mask)
+
+    monkeypatch.setattr(
+        codec_module,
+        "_masked_cross_entropy",
+        _capture_mam_targets,
+    )
+
+    loss, metrics = codec(batch)
+    quantizer_hook.remove()
+    mam_hook.remove()
+    loss.backward()
+
+    assert set(metrics) >= {"mam_loss", "mam_loss_weighted", "total_loss"}
+    assert "action_l1_loss" not in metrics
+    assert "commitment_loss" not in metrics
+    assert len(quantizer_outputs) == 1
+    assert len(mam_inputs) == 1
+    assert len(mam_targets) == 1
+    quantized = quantizer_outputs[0]
+    assert torch.equal(mam_targets[0], quantized.indices[..., 0])
+    expected_q0 = F.embedding(
+        quantized.indices[..., 0],
+        initial_codebooks[0],
+    ).to(mam_inputs[0].dtype)
+    torch.testing.assert_close(mam_inputs[0], expected_q0)
+    assert not torch.allclose(mam_inputs[0], quantized.quantized.detach())
+    assert quantized.q0_quantized.grad is not None
+    assert bool(quantized.q0_quantized.grad.abs().sum() > 0)
+    assert quantized.quantized.grad is None
+
+    assert _has_nonzero_grad(codec.mam_head)
+    assert _has_nonzero_grad(codec.encoder)
+    assert not _has_nonzero_grad(codec.decoder)
+    assert codec.quantizer.codebooks.grad is None
+    assert not torch.equal(codec.quantizer.codebooks[0], initial_codebooks[0])
+
+
+@pytest.mark.parametrize(
+    (
+        "objective",
+        "weight_name",
+        "metric_name",
+        "expected_modules",
+        "uses_full_rvq",
+    ),
+    [
+        (
+            "reconstruction",
+            "reconstruction_weight",
+            "action_l1_loss",
+            {"encoder", "decoder"},
+            True,
+        ),
+        ("commitment", "commitment_weight", "commitment_loss", {"encoder"}, False),
+        ("mam", "mam_weight", "mam_loss", {"encoder", "mam_head"}, False),
+        (
+            "alignment",
+            "alignment_weight",
+            "alignment_loss",
+            {"encoder", "alignment_projection"},
+            False,
+        ),
+        (
+            "prediction",
+            "prediction_weight",
+            "prediction_loss",
+            {"encoder", "prediction_head"},
+            True,
+        ),
+        ("dct", "dct_weight", "dct_loss", {"encoder", "decoder"}, True),
+        (
+            "smoothness",
+            "smoothness_weight",
+            "smoothness_loss",
+            {"encoder", "decoder"},
+            True,
+        ),
+        (
+            "rotation",
+            "rotation_weight",
+            "rotation_geodesic_loss",
+            {"encoder", "decoder"},
+            True,
+        ),
+    ],
+)
+def test_each_objective_has_explicit_gradient_ownership(
+    objective: str,
+    weight_name: str,
+    metric_name: str,
+    expected_modules: set[str],
+    uses_full_rvq: bool,
+) -> None:
+    torch.manual_seed(47)
+    weights: dict[str, object] = {
+        "kmeans_init": False,
+        "reconstruction_weight": 0.0,
+        "commitment_weight": 0.0,
+        "rotation_weight": 0.0,
+        "dct_weight": 0.0,
+        "smoothness_weight": 0.0,
+        "mam_weight": 0.0,
+        "alignment_weight": 0.0,
+        "prediction_weight": 0.0,
+        "mam_mask_probability": 0.5,
+        "state_dropout_probability": 0.0,
+        "embodiment_dropout_probability": 0.0,
+        "embodiment_none_probability": 0.0,
+    }
+    weights[weight_name] = 1.0
+    codec = XTokenizerCodec(config=_tiny_config(**weights))
+    batch = _batch()
+    batch["vl_features"] = batch["vl_features"].nan_to_num().requires_grad_()
+    batch["next_vl_features"] = batch["next_vl_features"].requires_grad_()
+    quantizer_outputs: list[ResidualQuantizerOutput] = []
+
+    def _capture_quantizer(
+        module: torch.nn.Module,
+        args: tuple[Tensor, ...],
+        output: ResidualQuantizerOutput,
+    ) -> None:
+        _capture_quantizer_gradients(module, args, output)
+        quantizer_outputs.append(output)
+
+    hook = codec.quantizer.register_forward_hook(_capture_quantizer)
+    loss, metrics = codec(batch)
+    hook.remove()
+    loss.backward()
+
+    modules = {
+        "encoder": codec.encoder,
+        "decoder": codec.decoder,
+        "mam_head": codec.mam_head,
+        "alignment_projection": codec.alignment_projection,
+        "prediction_head": codec.prediction_head,
+    }
+    actual_modules = {
+        name for name, module in modules.items() if _has_nonzero_grad(module)
+    }
+    assert actual_modules == expected_modules
+    assert metric_name in metrics
+    assert codec.quantizer.codebooks.grad is None
+    assert len(quantizer_outputs) == 1
+    full_quantized = quantizer_outputs[0].quantized
+    if uses_full_rvq:
+        assert full_quantized.grad is not None
+        assert bool(full_quantized.grad.abs().sum() > 0)
+    else:
+        assert full_quantized.grad is None
+    assert batch["vl_features"].grad is None
+    assert batch["next_vl_features"].grad is None
+
+    semantic_parameters_have_grad = (
+        codec.logit_scale.grad is not None
+        and bool(codec.logit_scale.grad.abs().sum() > 0)
+        and codec.vl_view_logits.grad is not None
+        and bool(codec.vl_view_logits.grad.abs().sum() > 0)
+    )
+    assert semantic_parameters_have_grad is (objective == "alignment")
+
+
 def test_codec_forward_reports_finite_enabled_metrics_and_updates_all_paths() -> None:
     codec = XTokenizerCodec(config=_tiny_config())
     batch = _batch(requires_grad_target=True)
     initial_codebooks = codec.quantizer.codebooks.clone()
-    quantizer_indices: list[Tensor] = []
+    quantizer_outputs: list[ResidualQuantizerOutput] = []
     mam_inputs: list[Tensor] = []
-    quantizer_hook = codec.quantizer.register_forward_hook(
-        lambda _module, _args, output: quantizer_indices.append(
-            output.indices.detach().clone()
-        )
-    )
+
+    def _capture_quantizer(
+        _module: torch.nn.Module,
+        _args: tuple[Tensor, ...],
+        output: ResidualQuantizerOutput,
+    ) -> None:
+        quantizer_outputs.append(output)
+
+    quantizer_hook = codec.quantizer.register_forward_hook(_capture_quantizer)
     mam_hook = codec.mam_head.register_forward_pre_hook(
         lambda _module, args: mam_inputs.append(args[0].detach().clone())
     )
@@ -204,9 +429,12 @@ def test_codec_forward_reports_finite_enabled_metrics_and_updates_all_paths() ->
     assert torch.isfinite(loss)
     assert expected_metrics <= metrics.keys()
     assert all(torch.isfinite(torch.tensor(value)) for value in metrics.values())
-    assert len(quantizer_indices) == 1
+    assert len(quantizer_outputs) == 1
     assert len(mam_inputs) == 1
-    assert torch.equal(mam_inputs[0], quantizer_indices[0][..., 0])
+    torch.testing.assert_close(
+        mam_inputs[0],
+        quantizer_outputs[0].q0_quantized.detach(),
+    )
     assert not torch.equal(codec.quantizer.codebooks, initial_codebooks)
 
     loss.backward()

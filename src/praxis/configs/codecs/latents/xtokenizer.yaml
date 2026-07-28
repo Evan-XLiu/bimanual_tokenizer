@@ -1,0 +1,57 @@
+# X-Tokenizer latent codec config
+name: xtokenizer
+kind: latents
+pretrained_path: null
+
+# Action/sample geometry
+action_dim: null
+action_horizon: 32
+max_action_horizon: 64
+max_fit_chunks: 50000
+compression_ratio: 4
+
+# Encoder/decoder dimensions
+# Transformer working width for action/state tokens and attention/MLP blocks.
+hidden_dim: 1024
+# Width of compressed latent slots and RVQ codewords; projections bridge it to hidden_dim.
+latent_dim: 1024
+encoder_num_heads: 8
+encoder_depth: 12
+decoder_num_heads: 8
+decoder_depth: 4
+mam_num_heads: 4
+mam_depth: 2
+prediction_num_heads: 4
+prediction_depth: 2
+dropout: 0.1
+
+# Semantic residual quantization
+codebook_size: 2048
+num_quantizers: 4
+ema_decay: 0.8
+dead_code_threshold: 2
+kmeans_init: true
+kmeans_iters: 100
+
+# Embodiment and offline vision-language conditioning
+embodiment_vocab_size: 1024
+vl_feature_dim: 3584
+state_dropout_probability: 0.2
+embodiment_dropout_probability: 0.2
+embodiment_none_probability: 0.1
+
+# Objective weights
+reconstruction_weight: 1.0
+commitment_weight: 0.25
+rotation_weight: 0.2
+dct_weight: 0.5
+smoothness_weight: 0.3
+mam_weight: 0.1
+alignment_weight: 0.5
+prediction_weight: 0.2
+infonce_scale_init: 10.0
+
+# Masked-action-modeling schedule
+mam_mask_probability: 0.15
+mam_warmup_epochs: 10
+mam_warmup_steps: 0
