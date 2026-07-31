@@ -36,6 +36,22 @@ def test_registry_exposes_requested_ki_policy_matrix_without_boat() -> None:
     assert not any(name.startswith("ki_boat_") for name in names)
 
 
+def test_xtokenizer_qwen_uses_offline_targets_without_runtime_checkpoint() -> None:
+    config_dir = Path("src/praxis/configs").resolve()
+    GlobalHydra.instance().clear()
+    with initialize_config_dir(config_dir=str(config_dir), version_base=None):
+        cfg = compose(
+            config_name="train_policy", overrides=["policy=ki_xtokenizer_qwen"]
+        )
+
+    assert cfg.policy.name == "ki_xtokenizer_qwen"
+    assert cfg.policy.action_tokenizer.name == "offline_targets"
+    assert cfg.policy.action_tokenizer.codebook_size == 2048
+    assert list(cfg.policy.action_tokenizer.block_schedule) == [4] * 8
+    assert cfg.policy.action_token_target_key == "action_token_ids"
+    assert "pretrained_path" not in cfg.policy.action_tokenizer
+
+
 @pytest.mark.parametrize("policy_name", _EXPECTED_KI_POLICIES)
 def test_ki_policy_class_imports(policy_name: str) -> None:
     policy_cls = get_policy_class(policy_name)

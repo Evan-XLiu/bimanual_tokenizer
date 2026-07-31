@@ -39,6 +39,7 @@ from praxis.policies.core.vlm.training import (
     build_prepared_action_token_attention_mask,
     compute_prepared_action_token_ce_loss_from_hidden,
     prepare_action_token_ce,
+    prepare_action_token_ce_from_token_targets,
     run_action_token_ce_prefix_forward,
 )
 from praxis.policies.core.vlm.vocab import (
@@ -232,6 +233,44 @@ class PolicyBase(
     def tokenize_actions_to_policy_tokens(self, actions: Tensor) -> list[list[int]]:
         return tokenize_actions(self.action_tokenizer, actions)
 
+    def _prepare_action_token_ce(
+        self,
+        batch: dict[str, Tensor],
+        *,
+        actions: Tensor,
+    ):
+        target_key = self.config.action_token_target_key
+        if target_key is None:
+            return prepare_action_token_ce(
+                self, batch, actions=actions, ignore_index=IGNORE_INDEX
+            )
+        if target_key not in batch:
+            raise KeyError(
+                f"{self.__class__.__name__} requires cached token targets in batch[{target_key!r}]."
+            )
+        targets = batch[target_key]
+        if targets.ndim < 2:
+            raise ValueError(
+                f"Cached action token targets must include batch and token dimensions, got {tuple(targets.shape)}."
+            )
+        token_ids_batch = targets.reshape(targets.shape[0], -1).long().tolist()
+        lengths = None
+        length_key = self.config.action_token_length_key
+        if length_key is not None:
+            if length_key not in batch:
+                raise KeyError(
+                    f"Missing cached token lengths in batch[{length_key!r}]."
+                )
+            lengths = batch[length_key].reshape(-1).long().tolist()
+        return prepare_action_token_ce_from_token_targets(
+            self,
+            batch,
+            token_ids_batch=token_ids_batch,
+            token_lengths=lengths,
+            actions=actions,
+            ignore_index=IGNORE_INDEX,
+        )
+
     def _effective_loss_weights(self) -> tuple[float, float]:
         ce_weight = float(self.config.ce_loss_weight)
         flow_weight = float(self.config.flow_loss_weight)
@@ -252,12 +291,7 @@ class PolicyBase(
         if actions is None:
             actions = self._actions_from_batch(raw_batch)
         prefix_batch = self._observations_for_state_prefix(raw_batch)
-        prepared = prepare_action_token_ce(
-            self,
-            prefix_batch,
-            actions=actions,
-            ignore_index=IGNORE_INDEX,
-        )
+        prepared = self._prepare_action_token_ce(prefix_batch, actions=actions)
         ce_result = run_action_token_ce_prefix_forward(
             self,
             prepared,
@@ -313,12 +347,7 @@ class PolicyBase(
 
         if ce_weight > 0.0 and flow_weight == 0.0:
             prefix_batch = self._observations_for_state_prefix(raw_batch)
-            prepared = prepare_action_token_ce(
-                self,
-                prefix_batch,
-                actions=raw_actions,
-                ignore_index=IGNORE_INDEX,
-            )
+            prepared = self._prepare_action_token_ce(prefix_batch, actions=raw_actions)
             ce_result = run_action_token_ce_prefix_forward(
                 self,
                 prepared,
@@ -362,12 +391,7 @@ class PolicyBase(
         prefix_batch = self._observations_for_state_prefix(
             raw_batch, norm_batch=norm_batch
         )
-        prepared = prepare_action_token_ce(
-            self,
-            prefix_batch,
-            actions=raw_actions,
-            ignore_index=IGNORE_INDEX,
-        )
+        prepared = self._prepare_action_token_ce(prefix_batch, actions=raw_actions)
         sample = sample_flow_training_point(
             norm_actions,
             sampling=self.config.flow_time_sampling,

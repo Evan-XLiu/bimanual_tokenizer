@@ -99,3 +99,11 @@ logs/
 .ipynb_checkpoints/
 profile_default/
 ipython_config.py
+
+# ======================== Local Developer State ========================
+/.cursor/
+/.omc/
+/.omx/
+
+# ======================== CloudML Machine Environment ========================
+/cloudml/

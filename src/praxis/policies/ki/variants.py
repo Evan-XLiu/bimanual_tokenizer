@@ -167,6 +167,31 @@ class OATQwenPolicy(QwenPolicyBase):
     CONFIG_CLASS = OATQwenPolicyConfig
 
 
+def _xtokenizer_target_config() -> dict[str, object]:
+    return {
+        "name": "offline_targets",
+        "kind": "tokens",
+        "codebook_size": 2048,
+        "block_schedule": [1] * 32,
+    }
+
+
+@dataclass
+class XTokenizerQwenPolicyConfig(QwenPolicyConfig):
+    """KI Qwen co-training from offline X-Tokenizer targets."""
+
+    name: str = "ki_xtokenizer_qwen"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=_xtokenizer_target_config
+    )
+    action_token_target_key: str | None = "action_token_ids"
+    action_token_length_key: str | None = "action_token_length"
+
+
+class XTokenizerQwenPolicy(QwenPolicyBase):
+    CONFIG_CLASS = XTokenizerQwenPolicyConfig
+
+
 @dataclass
 class QueSTQwenPolicyConfig(QwenPolicyConfig):
     """Hyperparameters for QueST Qwen co-training."""

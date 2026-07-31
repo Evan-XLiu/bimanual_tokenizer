@@ -25,6 +25,7 @@ from praxis.policies.bar.backbones.smol.smol_config import (
     SmolPolicyConfig as BarSmolPolicyConfig,
 )
 from praxis.policies.catalog import (
+    EXTRA_POLICY_SPECS,
     POLICY_FAMILIES,
     iter_policy_specs,
     policy_name,
@@ -120,8 +121,13 @@ def test_method_axis_policy_yaml_groups_match_catalog() -> None:
         if family.codecs is None:
             assert not codec_root.exists()
         else:
+            extra_codecs = {
+                spec.codec
+                for spec in EXTRA_POLICY_SPECS
+                if spec.method == family.method and spec.codec is not None
+            }
             assert sorted(path.stem for path in codec_root.glob("*.yaml")) == sorted(
-                family.codecs
+                set(family.codecs) | extra_codecs
             )
 
 

@@ -8,3 +8,5 @@ observation_keys:       # null = keep all observation keys from dataset metadata
   - observation.images.image
 video_backend: null     # null = auto-detect
 bypass_force_cache_sync: false  # true = avoid distributed-only forced sync (workaround for startup hangs)
+action_token_cache: null        # offline X-Tokenizer cache for the training split
+val_action_token_cache: null    # optional independently generated validation cache

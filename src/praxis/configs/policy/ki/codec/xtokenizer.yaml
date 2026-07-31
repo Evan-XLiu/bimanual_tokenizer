@@ -1,0 +1,10 @@
+action_tokenizer:
+  name: offline_targets
+  kind: tokens
+  codebook_size: 2048
+  block_schedule: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+action_token_target_key: action_token_ids
+action_token_length_key: action_token_length
+freeze_action_tokenizer: true
+block_ce_weighting: block_mean
+ce_vocab_scope: action

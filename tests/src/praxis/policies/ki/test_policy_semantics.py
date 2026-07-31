@@ -61,6 +61,22 @@ from praxis.training.core.fsdp import validate_fsdp_parameter_group
 from praxis.training.core.training_context import TrainingContext
 
 
+def test_cached_target_policy_fails_closed_when_batch_has_no_targets() -> None:
+    policy = SimpleNamespace(
+        config=SimpleNamespace(
+            action_token_target_key="action_token_ids",
+            action_token_length_key="action_token_length",
+        )
+    )
+
+    with pytest.raises(KeyError, match="requires cached token targets"):
+        PolicyBase._prepare_action_token_ce(
+            policy,
+            {},
+            actions=torch.zeros(1, 32, 7),
+        )
+
+
 class _FakeTokenizer:
     def __init__(self, base_size: int = 8) -> None:
         self.vocab = {f"<tok_{i}>": i for i in range(base_size)}

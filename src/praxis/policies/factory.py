@@ -161,6 +161,9 @@ def validate_tokenizer_cfg(*, policy_name: str, cfg_dict: dict[str, Any]) -> Non
             f"got {action_tokenizer_cfg.get('kind')!r}."
         )
 
+    if action_tokenizer_cfg.get("name") == "offline_targets":
+        return
+
     pretrained_path = action_tokenizer_cfg.get("pretrained_path")
     if not pretrained_path:
         raise ValueError(

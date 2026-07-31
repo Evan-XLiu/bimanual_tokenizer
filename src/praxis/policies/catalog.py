@@ -72,6 +72,7 @@ _CODEC_CLASS_PREFIXES: dict[str, str] = {
     "fast": "FAST",
     "oat": "OAT",
     "quest": "QueST",
+    "xtokenizer": "XTokenizer",
 }
 _BACKBONE_CLASS_NAMES: dict[str, str] = {
     "pali": "Pali",
@@ -88,6 +89,9 @@ POLICY_FAMILIES: tuple[PolicyFamily, ...] = (
 POLICY_FAMILIES_BY_METHOD: dict[str, PolicyFamily] = {
     family.method: family for family in POLICY_FAMILIES
 }
+EXTRA_POLICY_SPECS: tuple[PolicySpec, ...] = (
+    PolicySpec(method="ki", codec="xtokenizer", backbone="qwen"),
+)
 POLICY_METHODS: tuple[str, ...] = tuple(POLICY_FAMILIES_BY_METHOD)
 POLICY_CODECS_BY_METHOD: dict[str, tuple[str, ...]] = {
     method: family.codecs or () for method, family in POLICY_FAMILIES_BY_METHOD.items()
@@ -158,7 +162,7 @@ def iter_policy_specs() -> tuple[PolicySpec, ...]:
                 PolicySpec(method=family.method, codec=codec, backbone=backbone)
                 for codec in family.codecs
             )
-    return tuple(specs)
+    return tuple(specs) + EXTRA_POLICY_SPECS
 
 
 def supported_policy_names() -> tuple[str, ...]:

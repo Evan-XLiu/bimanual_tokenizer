@@ -21,6 +21,7 @@ from praxis_eval.evaluation.config import (
 )
 
 from praxis.core.types import PolicyIO
+from praxis.data.action_token_cache import ActionTokenCache, CachedActionTokenDataset
 from praxis.data.lerobot_adapter import (
     LeRobotDatasetAdapter,
     ensure_lerobot_dataset_available,
@@ -218,6 +219,12 @@ class PolicyTrainer(DefaultTrainer):
                 episodes=train_episodes,
                 video_backend=dc.video_backend,
             )
+            token_cache_root = getattr(dc, "action_token_cache", None)
+            if token_cache_root:
+                self.dataset = CachedActionTokenDataset(
+                    self.dataset,
+                    ActionTokenCache.open(token_cache_root),
+                )
             self.io.fps = self.dataset.fps
 
         tasks_meta = getattr(self.dataset.meta, "tasks", None)
@@ -255,6 +262,12 @@ class PolicyTrainer(DefaultTrainer):
                     root=dc.root,
                     episodes=val_episodes,
                     video_backend=dc.video_backend,
+                )
+            val_token_cache_root = getattr(dc, "val_action_token_cache", None)
+            if val_token_cache_root:
+                self.val_dataset = CachedActionTokenDataset(
+                    self.val_dataset,
+                    ActionTokenCache.open(val_token_cache_root),
                 )
             self.val_dataloader = self.val_dataset.make_dataloader(
                 batch_size=self.val_batch_size,
@@ -329,6 +342,16 @@ class PolicyTrainer(DefaultTrainer):
             batch.get(language_key), torch.Tensor
         ):
             required.add(language_key)
+        target_key = getattr(
+            getattr(self.model, "config", None), "action_token_target_key", None
+        )
+        if isinstance(target_key, str):
+            required.add(target_key)
+        length_key = getattr(
+            getattr(self.model, "config", None), "action_token_length_key", None
+        )
+        if isinstance(length_key, str):
+            required.add(length_key)
         return required
 
     def _periodic_eval_hooks(self):

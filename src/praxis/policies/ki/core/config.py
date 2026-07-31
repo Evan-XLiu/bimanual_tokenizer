@@ -46,6 +46,8 @@ class PolicyConfig(ActionExpertPolicyConfig):
         default_factory=action_tokenizer_config_factory("oat")
     )
     freeze_action_tokenizer: bool = True
+    action_token_target_key: str | None = None
+    action_token_length_key: str | None = None
     num_action_tokens: int | None = None
     action_token_template: str = "<|action_{i}|>"
     action_mask_token_template: str = "<|action_mask|>"
@@ -66,6 +68,13 @@ class PolicyConfig(ActionExpertPolicyConfig):
         self.block_ce_weighting = validate_block_ce_weighting(self.block_ce_weighting)
         self.ce_vocab_scope = validate_ce_vocab_scope(self.ce_vocab_scope)
         self.ce_supervise_eos = bool(self.ce_supervise_eos)
+        if (
+            self.action_token_target_key is not None
+            and not self.action_token_target_key.strip()
+        ):
+            raise ValueError(
+                "action_token_target_key must be non-empty when configured."
+            )
         if self.num_action_tokens is not None:
             self.num_action_tokens = positive_int(
                 self.num_action_tokens, "num_action_tokens"

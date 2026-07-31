@@ -16,6 +16,7 @@ from lerobot.processor import (
     IdentityProcessorStep,
     PolicyAction,
     PolicyProcessorPipeline,
+    TransitionKey,
 )
 from lerobot.processor.converters import (
     batch_to_transition,
@@ -29,6 +30,22 @@ EnvProcessor = PolicyProcessorPipeline[Any, Any]
 EnvProcessorPair = tuple[EnvProcessor, EnvProcessor]
 
 
+def _batch_to_transition_preserving_extra_fields(batch: dict[str, Any]):
+    """Keep dataset-owned supervision fields through LeRobot conversion."""
+    transition = batch_to_transition(batch)
+    converted_keys = transition_to_batch(transition).keys()
+    extra_fields = {
+        key: value for key, value in batch.items() if key not in converted_keys
+    }
+    if extra_fields:
+        complementary_data = dict(
+            transition.get(TransitionKey.COMPLEMENTARY_DATA) or {}
+        )
+        complementary_data.update(extra_fields)
+        transition[TransitionKey.COMPLEMENTARY_DATA] = complementary_data
+    return transition
+
+
 def make_policy_pre_post_processors() -> tuple[
     PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
     PolicyProcessorPipeline[PolicyAction, PolicyAction],
@@ -36,7 +53,7 @@ def make_policy_pre_post_processors() -> tuple[
     """Create default identity policy pre/post processors in LeRobot format."""
     preprocessor = PolicyProcessorPipeline[dict[str, Any], dict[str, Any]](
         steps=[IdentityProcessorStep()],
-        to_transition=batch_to_transition,
+        to_transition=_batch_to_transition_preserving_extra_fields,
         to_output=transition_to_batch,
         name="PolicyPreprocessor",
     )
