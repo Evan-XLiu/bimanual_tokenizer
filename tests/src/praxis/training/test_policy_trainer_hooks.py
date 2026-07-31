@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
+from unittest.mock import Mock
 
 import pytest
 import torch
@@ -17,6 +18,78 @@ from praxis.policies.bar.core.vlm.base import VlmActionTokenPolicyBase
 from praxis.training import inline_policy_eval
 from praxis.training.core.run_context import TrainerRunContext
 from praxis.training.policy_trainer import PolicyTrainer
+
+
+@pytest.mark.parametrize("split", ["train", "val"])
+def test_attach_action_token_cache_binds_trusted_consumer_identity(
+    monkeypatch: pytest.MonkeyPatch,
+    split: str,
+) -> None:
+    trainer = PolicyTrainer.__new__(PolicyTrainer)
+    stub = cast(Any, trainer)
+    stub.cfg = OmegaConf.create(
+        {
+            "seed": 7,
+            "dataset": {
+                "expected_action_tokenizer_artifact_sha256": "a" * 64,
+            },
+        }
+    )
+    stub.tc = SimpleNamespace(split_seed=42, val_ratio=0.05)
+    dataset = object()
+    cache = object()
+    wrapped = object()
+    open_cache = Mock(return_value=cache)
+    wrap_dataset = Mock(return_value=wrapped)
+
+    monkeypatch.setattr(
+        "praxis.training.policy_trainer.ActionTokenCache.open",
+        open_cache,
+    )
+    monkeypatch.setattr(
+        "praxis.training.policy_trainer.CachedActionTokenDataset",
+        wrap_dataset,
+    )
+
+    result = trainer._attach_action_token_cache(
+        dataset,
+        cache_root=f"/cache/{split}",
+        split=split,
+    )
+
+    assert result is wrapped
+    open_cache.assert_called_once_with(f"/cache/{split}")
+    wrap_dataset.assert_called_once_with(
+        dataset,
+        cache,
+        expected_split=split,
+        expected_split_seed=42,
+        expected_val_ratio=0.05,
+        expected_artifact_sha256="a" * 64,
+    )
+
+
+def test_attach_action_token_cache_is_noop_without_cache(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    trainer = PolicyTrainer.__new__(PolicyTrainer)
+    dataset = object()
+    open_cache = Mock(side_effect=AssertionError("unexpected cache open"))
+
+    monkeypatch.setattr(
+        "praxis.training.policy_trainer.ActionTokenCache.open",
+        open_cache,
+    )
+
+    assert (
+        trainer._attach_action_token_cache(
+            dataset,
+            cache_root=None,
+            split="train",
+        )
+        is dataset
+    )
+    open_cache.assert_not_called()
 
 
 class _StatsPolicy:

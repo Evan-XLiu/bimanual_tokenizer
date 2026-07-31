@@ -170,6 +170,35 @@ class PolicyTrainer(DefaultTrainer):
     # DefaultTrainer hooks
     # ------------------------------------------------------------------
 
+    def _attach_action_token_cache(
+        self,
+        dataset: Any,
+        *,
+        cache_root: Any,
+        split: str,
+    ) -> Any:
+        """Attach an authenticated offline target cache for one logical split."""
+        if not cache_root:
+            return dataset
+
+        split_seed = getattr(
+            self.tc,
+            "split_seed",
+            getattr(self.cfg, "seed", 0),
+        )
+        return CachedActionTokenDataset(
+            dataset,
+            ActionTokenCache.open(cache_root),
+            expected_split=split,
+            expected_split_seed=None if split_seed is None else int(split_seed),
+            expected_val_ratio=float(self.tc.val_ratio),
+            expected_artifact_sha256=getattr(
+                self.cfg.dataset,
+                "expected_action_tokenizer_artifact_sha256",
+                None,
+            ),
+        )
+
     def _configure_checkpoint_candidates_before_managers(self) -> None:
         super()._configure_checkpoint_candidates_before_managers()
         self._sim_eval_topk_metric_overridden = (
@@ -219,12 +248,11 @@ class PolicyTrainer(DefaultTrainer):
                 episodes=train_episodes,
                 video_backend=dc.video_backend,
             )
-            token_cache_root = getattr(dc, "action_token_cache", None)
-            if token_cache_root:
-                self.dataset = CachedActionTokenDataset(
-                    self.dataset,
-                    ActionTokenCache.open(token_cache_root),
-                )
+            self.dataset = self._attach_action_token_cache(
+                self.dataset,
+                cache_root=getattr(dc, "action_token_cache", None),
+                split="train",
+            )
             self.io.fps = self.dataset.fps
 
         tasks_meta = getattr(self.dataset.meta, "tasks", None)
@@ -263,12 +291,11 @@ class PolicyTrainer(DefaultTrainer):
                     episodes=val_episodes,
                     video_backend=dc.video_backend,
                 )
-            val_token_cache_root = getattr(dc, "val_action_token_cache", None)
-            if val_token_cache_root:
-                self.val_dataset = CachedActionTokenDataset(
-                    self.val_dataset,
-                    ActionTokenCache.open(val_token_cache_root),
-                )
+            self.val_dataset = self._attach_action_token_cache(
+                self.val_dataset,
+                cache_root=getattr(dc, "val_action_token_cache", None),
+                split="val",
+            )
             self.val_dataloader = self.val_dataset.make_dataloader(
                 batch_size=self.val_batch_size,
                 num_workers=self.tc.num_workers,

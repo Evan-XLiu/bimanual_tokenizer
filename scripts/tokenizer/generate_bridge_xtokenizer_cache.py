@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import time
@@ -171,7 +172,13 @@ def _generate_cache_bundle(
         robot_type_id = tokenizer.embodiment_registry[ROBOT_TYPE]
         codebook_size = tokenizer.codebook_size
         normalization_path = bundle_root / "normalization.json"
-        _write_json(normalization_path, tokenizer.manifest["normalization"])
+        _write_json(
+            normalization_path,
+            _canonicalize_native_normalization(
+                tokenizer.manifest["normalization"],
+                training_data_identity,
+            ),
+        )
         normalization_sha256 = _sha256_file(normalization_path)
         statistics_sha256 = None
     else:
@@ -291,6 +298,54 @@ def _require_native_training_data_identity(
             "xtokenizer_dual_role_v1."
         )
     return identity
+
+
+def _canonicalize_native_normalization(
+    exported: dict[str, Any],
+    training_data_identity: dict[str, Any],
+) -> dict[str, Any]:
+    """Use canonical quantiles in JSON while preserving runtime float32 values."""
+    try:
+        canonical = training_data_identity["canonical_stats_identity"]["normalization"]
+        canonical_stats = {
+            "action": {
+                "min": canonical["predict_action"]["q001"],
+                "max": canonical["predict_action"]["q999"],
+            },
+            "observation.state": {
+                "min": canonical["observation_state"]["q001"],
+                "max": canonical["observation_state"]["q999"],
+            },
+        }
+    except (KeyError, TypeError):
+        raise ValueError(
+            "Native cache canonical normalization identity is malformed."
+        ) from None
+
+    corrected = copy.deepcopy(exported)
+    corrected["stats"] = canonical_stats
+    try:
+        for feature in ("action", "observation.state"):
+            for bound in ("min", "max"):
+                runtime = np.asarray(
+                    exported["stats"][feature][bound],
+                    dtype=np.float32,
+                )
+                source = np.asarray(
+                    canonical_stats[feature][bound],
+                    dtype=np.float32,
+                )
+                if runtime.shape != source.shape or not np.array_equal(
+                    runtime,
+                    source,
+                ):
+                    raise ValueError(
+                        "Canonicalization would change runtime values for "
+                        f"{feature}.{bound}."
+                    )
+    except (KeyError, TypeError):
+        raise ValueError("Native cache exported normalization is malformed.") from None
+    return corrected
 
 
 def _validate_native_dataset_before_data_access(

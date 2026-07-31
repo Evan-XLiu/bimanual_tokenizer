@@ -10,3 +10,4 @@ video_backend: null     # null = auto-detect
 bypass_force_cache_sync: false  # true = avoid distributed-only forced sync (workaround for startup hangs)
 action_token_cache: null        # offline X-Tokenizer cache for the training split
 val_action_token_cache: null    # optional independently generated validation cache
+expected_action_tokenizer_artifact_sha256: null  # tokenizer that produced both caches
