@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import importlib
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic, sleep
-from typing import Any
+from typing import Any, cast
 
+import numpy as np
+import pyarrow as pa
 import torch
 from huggingface_hub import snapshot_download
 from lerobot.datasets.lerobot_dataset import CODEBASE_VERSION, LeRobotDataset
@@ -275,16 +278,48 @@ class LeRobotDatasetAdapter(Dataset):
         )
 
 
+@dataclass
+class _ActionColumnCache:
+    """In-memory action data for arrow-free ``__getitem__``.
+
+    Row-indexed tensors follow the local (possibly episode-filtered) hf_dataset
+    row order; episode bound tensors are indexed by global episode id, matching
+    ``LeRobotDataset._get_query_indices`` semantics.
+    """
+
+    actions: torch.Tensor  # (num_rows, action_dim) float32
+    episode_index: torch.Tensor  # (num_rows,) int64, global episode ids
+    abs_index: torch.Tensor  # (num_rows,) int64, global frame indices
+    rel_of_abs: torch.Tensor | None  # abs frame idx -> local row (None = identity)
+    ep_from: torch.Tensor  # (num_episodes,) int64 global episode start frame
+    ep_to: torch.Tensor  # (num_episodes,) int64 global episode end frame (excl.)
+    action_deltas: torch.Tensor  # (action_horizon,) int64 delta indices
+
+
 class LeRobotActionOnlyDatasetAdapter(LeRobotDatasetAdapter):
     """LeRobot adapter specialized for action-only training.
 
     This path bypasses video decoding in ``LeRobotDataset.__getitem__`` and only
-    returns action tensors needed by tokenizer training.
+    returns action tensors needed by tokenizer training. On construction the
+    action column is materialized into plain in-memory tensors (a few tens of
+    MB even for millions of frames) so per-sample access is pure tensor
+    slicing instead of per-row Arrow queries, which otherwise bottleneck
+    tokenizer training at a few hundred samples per second per worker.
     """
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._prune_hf_columns()
+        self._action_cache: _ActionColumnCache | None = None
+        try:
+            self._action_cache = self._materialize_action_cache()
+        except Exception as exc:
+            logger.warning(
+                "Failed to materialize in-memory action cache (%s: %s); "
+                "falling back to per-row Arrow access.",
+                type(exc).__name__,
+                exc,
+            )
 
     def _prune_hf_columns(self) -> None:
         """Trim HF columns so row fetches don't materialize unused features."""
@@ -303,7 +338,69 @@ class LeRobotActionOnlyDatasetAdapter(LeRobotDatasetAdapter):
             # does not support select_columns.
             return
 
+    def _materialize_action_cache(self) -> _ActionColumnCache:
+        """Load action/episode/index columns into contiguous tensors."""
+        ds = self.lerobot_dataset
+        ds._ensure_hf_dataset_loaded()
+        assert self.io.action_feature is not None  # validated in _prune_hf_columns
+        action_key = self.io.action_feature.key
+        if ds.delta_indices is None or action_key not in ds.delta_indices:
+            raise ValueError("delta_indices for the action key are required.")
+        episodes_meta = ds.meta.episodes
+        if episodes_meta is None:
+            raise ValueError("dataset meta.episodes is unavailable.")
+
+        table = cast(pa.Table, ds.hf_dataset.with_format("arrow")[:])
+        num_rows = table.num_rows
+
+        actions_np = _list_column_to_2d_float32(table.column(action_key), num_rows)
+        episode_index_np = _int64_column(table.column("episode_index"))
+        abs_index_np = _int64_column(table.column("index"))
+
+        rel_of_abs: torch.Tensor | None = None
+        if ds._absolute_to_relative_idx is not None:
+            rel_of_abs_np = np.full(int(abs_index_np.max()) + 1, -1, dtype=np.int64)
+            rel_of_abs_np[abs_index_np] = np.arange(num_rows, dtype=np.int64)
+            rel_of_abs = torch.from_numpy(rel_of_abs_np)
+
+        return _ActionColumnCache(
+            actions=torch.from_numpy(actions_np),
+            episode_index=torch.from_numpy(episode_index_np),
+            abs_index=torch.from_numpy(abs_index_np),
+            rel_of_abs=rel_of_abs,
+            ep_from=torch.tensor(
+                episodes_meta["dataset_from_index"], dtype=torch.int64
+            ),
+            ep_to=torch.tensor(episodes_meta["dataset_to_index"], dtype=torch.int64),
+            action_deltas=torch.tensor(ds.delta_indices[action_key], dtype=torch.int64),
+        )
+
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
+        cache = self._action_cache
+        if cache is None:
+            return self._getitem_arrow(idx)
+
+        assert self.io.action_feature is not None
+        action_key = self.io.action_feature.key
+        ep_idx = int(cache.episode_index[idx])
+        abs_idx = int(cache.abs_index[idx])
+
+        # Mirrors LeRobotDataset._get_query_indices: clamp to episode bounds and
+        # mark out-of-episode steps as padding.
+        ep_start = int(cache.ep_from[ep_idx])
+        ep_end = int(cache.ep_to[ep_idx])
+        shifted = abs_idx + cache.action_deltas
+        query = shifted.clamp(min=ep_start, max=ep_end - 1)
+        is_pad = (shifted < ep_start) | (shifted >= ep_end)
+
+        rows = query if cache.rel_of_abs is None else cache.rel_of_abs[query]
+        return {
+            action_key: cache.actions[rows],
+            f"{action_key}_is_pad": is_pad,
+        }
+
+    def _getitem_arrow(self, idx: int) -> dict[str, torch.Tensor]:
+        """Original per-row Arrow access path, kept as the non-cached fallback."""
         ds = self.lerobot_dataset
         ds._ensure_hf_dataset_loaded()
 
@@ -333,6 +430,30 @@ class LeRobotActionOnlyDatasetAdapter(LeRobotDatasetAdapter):
         if isinstance(action_is_pad, torch.Tensor):
             out[pad_key] = action_is_pad
         return out
+
+
+def _combined_chunks(column: pa.ChunkedArray | pa.Array) -> pa.Array:
+    """Return a single contiguous pyarrow Array for a table column."""
+    if isinstance(column, pa.ChunkedArray):
+        if column.num_chunks == 1:
+            return column.chunk(0)
+        combined = column.combine_chunks()
+        return combined.chunk(0) if isinstance(combined, pa.ChunkedArray) else combined
+    return column
+
+
+def _list_column_to_2d_float32(
+    column: pa.ChunkedArray | pa.Array, num_rows: int
+) -> np.ndarray:
+    """Convert a fixed-width list column to a contiguous (num_rows, dim) array."""
+    array = _combined_chunks(column)
+    flat = array.flatten().to_numpy(zero_copy_only=False)
+    return np.array(flat, dtype=np.float32, copy=True).reshape(num_rows, -1)
+
+
+def _int64_column(column: pa.ChunkedArray | pa.Array) -> np.ndarray:
+    array = _combined_chunks(column)
+    return np.array(array.to_numpy(zero_copy_only=False), dtype=np.int64, copy=True)
 
 
 def _episode_bounds_from_indices(
