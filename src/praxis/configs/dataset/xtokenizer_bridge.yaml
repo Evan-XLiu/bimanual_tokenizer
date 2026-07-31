@@ -1,0 +1,38 @@
+# Bridge X-Tokenizer pretraining data and immutable offline-VL contract.
+name: xtokenizer_bridge
+adapter: xtokenizer_sidecar
+repo_id: chaoqi-liu/bridge_single_view
+
+# Replace these /mnt placeholders with the prepared local artifacts.
+root: /mnt/robot-research-exp-0/user/hxs/datasets/bridge_single_view
+cache_dir: /mnt/robot-research-exp-0/user/hxs/cache/huggingface
+vl_feature_sidecar: /mnt/robot-research-exp-0/user/hxs/xtokenizer/bridge_single_view/vl_features
+xtokenizer_quantile_stats: /mnt/robot-research-exp-0/user/hxs/xtokenizer/bridge_single_view/stats_v3_h32.json
+canonical_stats: ${.xtokenizer_quantile_stats}
+episodes: null
+video_backend: null
+bypass_force_cache_sync: false
+
+# Real preparation replaces these sentinel SHAs with resolved Hub commits.
+dataset_revision: "0000000000000000000000000000000000000000"
+vl_model_id: Qwen/Qwen2.5-VL-7B-Instruct
+vl_model_revision: "0000000000000000000000000000000000000000"
+vl_extractor_revision: praxis-qwen2.5-vl-paper-a3-v2
+vl_image_keys:
+  - observation.images.image
+vl_global_instruction: "Manipulate the scene to complete the requested task."
+vl_local_subtask: "Execute the current Bridge manipulation step."
+
+robot_type: 0
+robot_type_name: WidowX
+action_horizon: 32
+action_layout:
+  convention: absolute
+  dof_dims:
+    follow_left_ee_cartesian_pos: 3
+    follow_left_ee_rotation_6D: 6
+    follow_left_gripper: 1
+  dof_order:
+    - follow_left_ee_cartesian_pos
+    - follow_left_ee_rotation_6D
+    - follow_left_gripper

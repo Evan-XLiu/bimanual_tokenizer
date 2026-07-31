@@ -288,6 +288,50 @@ def test_default_trainer_init_prepares_fresh_output_dir_before_logger(
     assert captured["run_dir"] == str(output_dir)
 
 
+def test_default_trainer_freezes_global_batch_before_per_rank_mutation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_dir = tmp_path / "run"
+    captured: dict[str, Any] = {}
+
+    def _init_eight_rank_runtime(self, *, cfg, requested_device) -> None:
+        del requested_device
+        self.cfg = cfg
+        self.global_rank = 0
+        self.local_rank = 0
+        self.world_size = 8
+        self._micro_step = 0
+        self._owns_process_group = False
+        self.device = torch.device("cpu")
+        self.device_mesh = None
+
+    class _CapturingLogger:
+        def __init__(self, **kwargs) -> None:
+            captured.update(kwargs)
+
+    monkeypatch.setattr(
+        trainer_module.TrainingRuntime,
+        "__init__",
+        _init_eight_rank_runtime,
+    )
+    monkeypatch.setattr(trainer_module, "Logger", _CapturingLogger)
+    cfg = _minimal_default_trainer_cfg(tmp_path)
+    cfg.output_dir = str(output_dir)
+    cfg.trainer.batch_size = 256
+    cfg.trainer.global_batch_size = "${.batch_size}"
+
+    trainer = _MinimalDefaultTrainer(cfg)
+
+    assert trainer.tc.batch_size == 32
+    assert trainer.tc.global_batch_size == 256
+    saved_cfg = OmegaConf.load(output_dir / "train_config.yaml")
+    assert saved_cfg.trainer.batch_size == 32
+    assert saved_cfg.trainer.global_batch_size == 256
+    assert captured["config"]["trainer"]["batch_size"] == 32
+    assert captured["config"]["trainer"]["global_batch_size"] == 256
+
+
 def test_save_checkpoint_only_main_process_writes(tmp_path: Path) -> None:
     trainer = _make_stub_trainer(
         is_main_process=True, checkpoint_dir=tmp_path / "ckpts"

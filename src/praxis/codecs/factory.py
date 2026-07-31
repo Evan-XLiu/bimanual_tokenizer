@@ -16,7 +16,6 @@ from omegaconf import DictConfig, OmegaConf
 
 from praxis.codecs.core import BaseCodec
 from praxis.core.config import config_to_dict, config_values_equal
-from praxis.core.types import NormMode
 
 
 def _ref(module_path: str, class_name: str) -> str:
@@ -36,6 +35,7 @@ _CODEC_REGISTRY: dict[tuple[str, str], str] = {
     ("latents", "acodec"): _ref("latents.acodec.autoencoder", "ActionCodecAutoencoder"),
     ("latents", "oat"): _ref("latents.oat.autoencoder", "OATAutoencoder"),
     ("latents", "quest"): _ref("latents.quest.autoencoder", "QueSTAutoencoder"),
+    ("latents", "xtokenizer"): _ref("latents.xtokenizer.codec", "XTokenizerCodec"),
 }
 _TRAINER_ONLY_CODEC_CFG_KEYS = frozenset({"max_fit_chunks"})
 _CODEC_PATH_BASE: ContextVar[Path | None] = ContextVar(
@@ -254,13 +254,11 @@ def _transplant_pretrained_state(
     if source_io is not None:
         target.set_io(source_io)
 
-    stats, mode_values = source._export_norm_stats_for_checkpoint()
-    if stats:
-        norm_modes = {
-            key: (val if isinstance(val, NormMode) else NormMode(val))
-            for key, val in mode_values.items()
-        }
-        target.set_normalization_stats(stats, modes=norm_modes if norm_modes else None)
+    normalization_payload = source._normalization_checkpoint_payload()
+    if "normalization_kind" in normalization_payload or normalization_payload.get(
+        "stats"
+    ):
+        target._load_normalization_checkpoint_payload(normalization_payload)
 
 
 def _build_codec_from_cfg(

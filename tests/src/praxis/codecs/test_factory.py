@@ -65,6 +65,21 @@ class RuntimeStateTokenizer(DummyTokenizer):
         self.runtime_state = getattr(source, "runtime_state", None)
 
 
+class NormalizationPayloadTokenizer(DummyTokenizer):
+    def __init__(self, config: dict | None = None, **kwargs) -> None:
+        super().__init__(config=config, **kwargs)
+        self.loaded_normalization_payload: dict | None = None
+
+    def _normalization_checkpoint_payload(self) -> dict:
+        payload = super()._normalization_checkpoint_payload()
+        payload["normalization_kind"] = "test_marker_v1"
+        return payload
+
+    def _load_normalization_checkpoint_payload(self, data: dict) -> None:
+        self.loaded_normalization_payload = data
+        super()._load_normalization_checkpoint_payload(data)
+
+
 class TestCodecFactory:
     def test_available_codecs_contains_builtin_types(self):
         assert "tokens/acodec" in available_codecs()
@@ -75,8 +90,10 @@ class TestCodecFactory:
         assert "latents/acodec" in available_codecs()
         assert "latents/oat" in available_codecs()
         assert "latents/quest" in available_codecs()
+        assert "latents/xtokenizer" in available_codecs()
         assert "oat" in available_codecs(kind="tokens")
         assert "oat" in available_codecs(kind="latents")
+        assert "xtokenizer" in available_codecs(kind="latents")
 
     def test_register_codec_and_make(self):
         factory_mod = importlib.import_module("praxis.codecs.factory")
@@ -235,6 +252,120 @@ class TestCodecFactory:
             assert tok.runtime_state is marker
         finally:
             factory_mod._CODEC_REGISTRY.pop(("tokens", "runtime_state"), None)
+
+    def test_make_codec_pretrained_override_uses_normalization_payload_hook(
+        self, monkeypatch
+    ):
+        factory_mod = importlib.import_module("praxis.codecs.factory")
+        register_codec(
+            "normalization_payload",
+            f"{__name__}:NormalizationPayloadTokenizer",
+            kind="tokens",
+        )
+        try:
+
+            @classmethod
+            def _fake_from_pretrained(cls, path):
+                del path
+                source = cls(config={"foo": 1})
+                source.set_normalization_stats(
+                    {
+                        "action": {
+                            "mean": torch.tensor([1.0, 2.0]),
+                            "std": torch.tensor([2.0, 4.0]),
+                        }
+                    }
+                )
+                return source
+
+            monkeypatch.setattr(
+                NormalizationPayloadTokenizer,
+                "from_pretrained",
+                _fake_from_pretrained,
+            )
+            tok = make_codec(
+                {
+                    "name": "normalization_payload",
+                    "kind": "tokens",
+                    "pretrained_path": "/tmp/model",
+                    "foo": 2,
+                }
+            )
+
+            assert isinstance(tok, NormalizationPayloadTokenizer)
+            assert tok.loaded_normalization_payload is not None
+            assert (
+                tok.loaded_normalization_payload["normalization_kind"]
+                == "test_marker_v1"
+            )
+        finally:
+            factory_mod._CODEC_REGISTRY.pop(("tokens", "normalization_payload"), None)
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            pytest.param(
+                {
+                    "normalization_kind": "unknown_v2",
+                    "stats": {},
+                    "modes": {},
+                },
+                id="unknown-marker-empty-stats",
+            ),
+            pytest.param(
+                {
+                    "normalization_kind": "xtokenizer_dual_role_v1",
+                    "stats": {},
+                    "modes": {},
+                },
+                id="dual-role-empty-roles",
+            ),
+            pytest.param(
+                {
+                    "normalization_kind": "xtokenizer_dual_role_v1",
+                    "stats": {"action": {}},
+                    "modes": {"action": "min_max"},
+                },
+                id="dual-role-missing-observation-role",
+            ),
+        ],
+    )
+    def test_transplant_dispatches_empty_marked_normalization_payloads(
+        self,
+        monkeypatch,
+        payload: dict,
+    ) -> None:
+        factory_mod = importlib.import_module("praxis.codecs.factory")
+        source = NormalizationPayloadTokenizer()
+        target = NormalizationPayloadTokenizer()
+        monkeypatch.setattr(
+            source,
+            "_normalization_checkpoint_payload",
+            lambda: payload,
+        )
+
+        factory_mod._transplant_pretrained_state(
+            source=source,
+            target=target,
+            load_id="test-normalization-payload",
+        )
+
+        assert target.loaded_normalization_payload == payload
+
+    def test_transplant_keeps_unmarked_empty_normalization_payload_as_noop(
+        self,
+    ) -> None:
+        factory_mod = importlib.import_module("praxis.codecs.factory")
+        source = DummyTokenizer()
+        target = NormalizationPayloadTokenizer()
+
+        factory_mod._transplant_pretrained_state(
+            source=source,
+            target=target,
+            load_id="test-empty-generic-payload",
+        )
+
+        assert target.loaded_normalization_payload is None
 
     def test_make_fast_codec_pretrained_path_missing_raises(self, monkeypatch):
         factory_mod = importlib.import_module("praxis.codecs.factory")

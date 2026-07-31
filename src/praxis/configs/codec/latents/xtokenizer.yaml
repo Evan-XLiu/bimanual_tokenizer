@@ -1,0 +1,6 @@
+# @package _global_
+
+# Compatibility alias for the documented codec=latents/xtokenizer CLI.
+defaults:
+  - override /codecs@_global_.codec: latents/xtokenizer
+  - _self_

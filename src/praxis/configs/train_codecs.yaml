@@ -4,6 +4,8 @@ defaults:
   - dataset: libero
   - trainer: codecs
   - train_recipe/codecs@_global_: default
+  - optional train_recipe/codecs: null
+  - optional codec@codec: null
   - _self_
 
 name: train_codecs
