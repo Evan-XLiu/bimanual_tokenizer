@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 import hydra
@@ -33,6 +34,7 @@ from praxis_eval.types import Policy
 
 from praxis.core.devices import require_available_device
 from praxis.core.randomness import seed_evaluation
+from praxis.scripts.resilient_simpler import resilient_simpler_commands
 
 CONFIG_PATH = str(Path(__file__).parents[1] / "configs")
 _LOGGER = logging.getLogger(__name__)
@@ -110,6 +112,9 @@ def main(cfg: DictConfig) -> None:
     eval_record_episodes_per_task = int(eval_cfg.record_episodes_per_task)
     eval_debug_verbose = bool(eval_cfg.debug_verbose)
     eval_step_timeout_sec = resolve_optional_positive_timeout_sec(eval_cfg)
+    subprocess_inactivity_timeout_sec = resolve_optional_positive_timeout_sec(
+        eval_cfg, key="subprocess_inactivity_timeout_sec"
+    )
     eval_rollout_failure_retries = resolve_nonnegative_int(
         eval_cfg,
         key="rollout_failure_retries",
@@ -182,29 +187,37 @@ def main(cfg: DictConfig) -> None:
     try:
         assert eval_policy is not None
         env_type = env_type_from_cfg(cfg.env)
-        result = praxis_eval.evaluate(
-            env_type,
-            policy=eval_policy,
-            config=praxis_eval.EvalConfig(
-                num_eval_per_task=num_eval_per_task,
-                output_dir=eval_output_dir,
-                task=optional_env_task(cfg.env),
-                task_ids=optional_env_task_ids(cfg.env),
-                num_parallel_env=num_parallel_env,
-                seed=int(cfg.seed),
-                record_episodes_per_task=eval_record_episodes_per_task,
-                step_timeout_sec=eval_step_timeout_sec,
-                rollout_failure_retries=eval_rollout_failure_retries,
-                debug_verbose=eval_debug_verbose,
-                policy_kwargs=eval_policy_kwargs,
-                env_kwargs=env_kwargs_without_type_task(cfg.env),
-                metadata={"mode": eval_mode},
-                runtime_hooks=praxis_eval.EvalRuntimeHooks(
-                    phase_heartbeat=_phase_heartbeat,
-                    progress_heartbeat=_progress_heartbeat,
-                ),
-            ),
+        resilient_commands = (
+            resilient_simpler_commands(
+                inactivity_timeout_sec=subprocess_inactivity_timeout_sec
+            )
+            if env_type == "simpler" and subprocess_inactivity_timeout_sec is not None
+            else nullcontext()
         )
+        with resilient_commands:
+            result = praxis_eval.evaluate(
+                env_type,
+                policy=eval_policy,
+                config=praxis_eval.EvalConfig(
+                    num_eval_per_task=num_eval_per_task,
+                    output_dir=eval_output_dir,
+                    task=optional_env_task(cfg.env),
+                    task_ids=optional_env_task_ids(cfg.env),
+                    num_parallel_env=num_parallel_env,
+                    seed=int(cfg.seed),
+                    record_episodes_per_task=eval_record_episodes_per_task,
+                    step_timeout_sec=eval_step_timeout_sec,
+                    rollout_failure_retries=eval_rollout_failure_retries,
+                    debug_verbose=eval_debug_verbose,
+                    policy_kwargs=eval_policy_kwargs,
+                    env_kwargs=env_kwargs_without_type_task(cfg.env),
+                    metadata={"mode": eval_mode},
+                    runtime_hooks=praxis_eval.EvalRuntimeHooks(
+                        phase_heartbeat=_phase_heartbeat,
+                        progress_heartbeat=_progress_heartbeat,
+                    ),
+                ),
+            )
     finally:
         close_policy = getattr(policy, "close", None)
         if callable(close_policy):

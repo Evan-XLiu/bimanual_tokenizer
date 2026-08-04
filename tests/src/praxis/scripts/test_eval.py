@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from types import SimpleNamespace
 
 import pytest
@@ -33,6 +34,7 @@ def _eval_cfg(*, mode: str, server_address: str | None = None):
                 "output_dir": "eval/out",
                 "record_episodes_per_task": 0,
                 "step_timeout_sec": 0,
+                "subprocess_inactivity_timeout_sec": None,
                 "rollout_failure_retries": 1,
                 "phase_watchdog_sec": None,
                 "debug_verbose": False,
@@ -138,3 +140,27 @@ def test_local_eval_rejects_server_address() -> None:
         eval_script.main.__wrapped__(
             _eval_cfg(mode="local_inproc", server_address="127.0.0.1:50051")
         )
+
+
+def test_simpler_eval_installs_resilient_subprocess_wrapper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_fake_evaluator(monkeypatch)
+    monkeypatch.setattr(eval_script, "RemotePolicy", _FakeRemotePolicy)
+    entered: list[float] = []
+
+    @contextmanager
+    def fake_resilient_commands(*, inactivity_timeout_sec: float):
+        entered.append(inactivity_timeout_sec)
+        yield
+
+    monkeypatch.setattr(
+        eval_script, "resilient_simpler_commands", fake_resilient_commands
+    )
+    cfg = _eval_cfg(mode="remote_grpc", server_address="127.0.0.1:50051")
+    cfg.env.type = "simpler"
+    cfg.eval.subprocess_inactivity_timeout_sec = 120
+
+    eval_script.main.__wrapped__(cfg)
+
+    assert entered == [120.0]

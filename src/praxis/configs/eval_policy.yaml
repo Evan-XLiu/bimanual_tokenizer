@@ -20,6 +20,7 @@ eval:
   output_dir: ???               # required: user-specified folder for eval artifacts
   record_episodes_per_task: 0
   step_timeout_sec: 600         # fail fast if async env reset/step stalls (0 disables)
+  subprocess_inactivity_timeout_sec: null  # split stalled SIMPLER batches and continue remaining seeds
   rollout_failure_retries: 1    # rebuild/retry a wave after native async worker EOF
   phase_watchdog_sec: null      # watchdog for eval orchestration stalls (null disables)
   debug_verbose: false
