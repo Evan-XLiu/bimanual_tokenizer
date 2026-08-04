@@ -47,7 +47,7 @@ def test_xtokenizer_qwen_uses_offline_targets_without_runtime_checkpoint() -> No
     assert cfg.policy.name == "ki_xtokenizer_qwen"
     assert cfg.policy.action_tokenizer.name == "offline_targets"
     assert cfg.policy.action_tokenizer.codebook_size == 2048
-    assert list(cfg.policy.action_tokenizer.block_schedule) == [4] * 8
+    assert list(cfg.policy.action_tokenizer.block_schedule) == [1] * 32
     assert cfg.policy.action_token_target_key == "action_token_ids"
     assert "pretrained_path" not in cfg.policy.action_tokenizer
 

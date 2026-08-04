@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import json
 import socket
 import threading
 import time
@@ -25,6 +26,7 @@ from praxis.policies.core import BasePolicy
 from praxis.policies.eval_adapter import (
     EnvironmentActionBoundsPolicyAdapter,
     PolicyEvalAdapter,
+    resize_policy_io_images,
 )
 from praxis.serving.server import PolicyServer
 
@@ -121,6 +123,42 @@ class DummyParityPolicy(BasePolicy):
         self._step_index = 0
 
 
+class _ImageShapeRecordingPolicy(BasePolicy):
+    def __init__(self) -> None:
+        super().__init__()
+        self.set_io(
+            PolicyIO(
+                obs_features=[
+                    FeatureSpec(
+                        key="observation.images.image",
+                        type=FeatureType.IMAGE,
+                        shape=(3, 256, 256),
+                        norm_mode=NormMode.NONE,
+                    )
+                ],
+                action_feature=FeatureSpec(
+                    key="action",
+                    type=FeatureType.ACTION,
+                    shape=(1,),
+                    norm_mode=NormMode.NONE,
+                ),
+            )
+        )
+        self.last_image_shape: tuple[int, ...] | None = None
+
+    def forward(self, batch):
+        del batch
+        return torch.tensor(0.0), {}
+
+    def predict_action(self, obs: dict[str, torch.Tensor], **kwargs) -> torch.Tensor:
+        del kwargs
+        image = obs["observation.images.image"]
+        self.last_image_shape = tuple(image.shape)
+        return torch.zeros(
+            (image.shape[0], 1), dtype=torch.float32, device=image.device
+        )
+
+
 class _OverlapDetectingPolicy(DummyParityPolicy):
     """Stateful test policy that records overlapping predict/reset entry."""
 
@@ -204,6 +242,22 @@ class _ChunkQueuePolicy(BasePolicy):
             obs,
             predict_action_chunk=self.predict_action_chunk,
             **kwargs,
+        )
+
+
+class _GeneratorChunkPolicy(_ChunkQueuePolicy):
+    def predict_action_chunk(self, obs: dict[str, torch.Tensor], **kwargs):
+        generator = kwargs.get("generator")
+        assert isinstance(generator, torch.Generator)
+        state = obs["observation.state"]
+        assert generator.device == state.device
+        return (
+            torch.rand(
+                (state.shape[0], 2, 1),
+                generator=generator,
+                device=state.device,
+            ),
+            {},
         )
 
 
@@ -498,6 +552,93 @@ class TestPolicyClients:
             np.asarray([[3.0], [102.0]], dtype=np.float32),
         )
 
+    def test_episode_sampling_is_stable_across_adapters_and_ambient_rng(self):
+        observation = _build_observation(0)
+        first_adapter = PolicyEvalAdapter(
+            policy=_GeneratorChunkPolicy(),
+            device="cpu",
+            sampling_seed=42,
+        )
+        first = first_adapter.act([observation], episode_ids=["task:42"])
+
+        torch.manual_seed(999999)
+        second_adapter = PolicyEvalAdapter(
+            policy=_GeneratorChunkPolicy(),
+            device="cpu",
+            sampling_seed=42,
+        )
+        second = second_adapter.act([observation], episode_ids=["task:42"])
+        other_episode = second_adapter.act([observation], episode_ids=["task:43"])
+
+        np.testing.assert_array_equal(first, second)
+        assert not np.array_equal(first, other_episode)
+
+    def test_episode_sampling_partial_and_full_reset_restart_generator(self):
+        observation = _build_observation(0)
+        adapter = PolicyEvalAdapter(
+            policy=_GeneratorChunkPolicy(),
+            device="cpu",
+            sampling_seed=42,
+        )
+
+        first = adapter.act([observation], episode_ids=["task:42"])
+        queued = adapter.act([observation], episode_ids=["task:42"])
+        assert not np.array_equal(first, queued)
+
+        adapter.reset(episode_ids=["task:42"])
+        after_partial_reset = adapter.act([observation], episode_ids=["task:42"])
+        np.testing.assert_array_equal(first, after_partial_reset)
+
+        adapter.reset()
+        after_full_reset = adapter.act([observation], episode_ids=["task:42"])
+        np.testing.assert_array_equal(first, after_full_reset)
+
+    def test_episode_sampling_is_order_independent_and_trace_is_attributed(
+        self, tmp_path
+    ):
+        class DiagnosticGeneratorPolicy(_GeneratorChunkPolicy):
+            def predict_action_chunk(self, obs, **kwargs):
+                actions, _ = super().predict_action_chunk(obs, **kwargs)
+                return actions, {"flow_action_sample": float(actions[0, 0, 0])}
+
+        observation = _build_observation(0)
+        forward_trace = tmp_path / "forward.jsonl"
+        reverse_trace = tmp_path / "reverse.jsonl"
+        forward = PolicyEvalAdapter(
+            policy=DiagnosticGeneratorPolicy(),
+            device="cpu",
+            sampling_seed=42,
+            inference_trace_path=forward_trace,
+        ).act(
+            [observation, observation],
+            episode_ids=["task:42", "task:43"],
+        )
+        reverse = PolicyEvalAdapter(
+            policy=DiagnosticGeneratorPolicy(),
+            device="cpu",
+            sampling_seed=42,
+            inference_trace_path=reverse_trace,
+        ).act(
+            [observation, observation],
+            episode_ids=["task:43", "task:42"],
+        )
+
+        np.testing.assert_array_equal(forward, reverse[::-1])
+        forward_records = [
+            json.loads(line) for line in forward_trace.read_text().splitlines()
+        ]
+        reverse_records = [
+            json.loads(line) for line in reverse_trace.read_text().splitlines()
+        ]
+        assert [record["episode_id"] for record in forward_records] == [
+            "task:42",
+            "task:43",
+        ]
+        assert [record["episode_id"] for record in reverse_records] == [
+            "task:43",
+            "task:42",
+        ]
+
     def test_concurrent_predict_calls_are_serialized_against_shared_policy(self):
         policy = _OverlapDetectingPolicy()
         port = _get_free_port()
@@ -555,6 +696,122 @@ class TestPolicyClients:
 
 
 class TestPolicyAdapters:
+    def test_local_eval_resizes_images_to_policy_io_shape(self):
+        policy = _ImageShapeRecordingPolicy()
+        adapter = PolicyEvalAdapter(policy=policy, device="cpu")
+
+        adapter.act(
+            [{"observation.images.image": np.zeros((3, 480, 640), dtype=np.uint8)}]
+        )
+
+        assert policy.last_image_shape == (1, 3, 256, 256)
+
+    def test_local_eval_resizes_images_before_model_preprocessing(self):
+        policy = _ImageShapeRecordingPolicy()
+        preprocessor_shapes: list[tuple[int, ...]] = []
+
+        def record_input_shape(batch):
+            preprocessor_shapes.append(tuple(batch["observation.images.image"].shape))
+            return batch
+
+        adapter = PolicyEvalAdapter(
+            policy=policy,
+            device="cpu",
+            preprocessor=record_input_shape,
+        )
+
+        adapter.act(
+            [{"observation.images.image": np.zeros((3, 480, 640), dtype=np.uint8)}]
+        )
+
+        assert preprocessor_shapes == [(1, 3, 256, 256)]
+
+    @pytest.mark.parametrize("dtype", [torch.uint8, torch.float16])
+    def test_policy_io_resize_preserves_history_dimensions_and_dtype(self, dtype):
+        policy = _ImageShapeRecordingPolicy()
+        image = torch.zeros((2, 4, 3, 480, 640), dtype=dtype)
+
+        resized = resize_policy_io_images(
+            {"observation.images.image": image},
+            io=policy.io,
+        )["observation.images.image"]
+
+        assert resized.shape == (2, 4, 3, 256, 256)
+        assert resized.dtype == dtype
+
+    def test_policy_io_resize_is_identity_for_matching_shape(self):
+        policy = _ImageShapeRecordingPolicy()
+        image = torch.zeros((2, 4, 3, 256, 256), dtype=torch.float16)
+        batch = {"observation.images.image": image}
+
+        resized = resize_policy_io_images(batch, io=policy.io)
+
+        assert resized is batch
+        assert resized["observation.images.image"] is image
+
+    def test_local_eval_policy_writes_inference_diagnostics_jsonl(self, tmp_path):
+        class _DiagnosticChunkPolicy(_ChunkQueuePolicy):
+            def predict_action_chunk(self, obs: dict[str, torch.Tensor], **kwargs):
+                actions, _ = super().predict_action_chunk(obs, **kwargs)
+                return actions, {"flow_action_executed_clip_fraction": 0.25}
+
+        trace_path = tmp_path / "inference.jsonl"
+        adapter = PolicyEvalAdapter(
+            policy=_DiagnosticChunkPolicy(),
+            device="cpu",
+            inference_trace_path=trace_path,
+        )
+
+        adapter.act([{"observation.state": np.ones((4,), dtype=np.float32)}])
+
+        records = [json.loads(line) for line in trace_path.read_text().splitlines()]
+        assert records == [{"flow_action_executed_clip_fraction": 0.25}]
+
+    def test_inference_trace_recreates_parent_removed_by_eval_runtime(self, tmp_path):
+        class _DiagnosticChunkPolicy(_ChunkQueuePolicy):
+            def predict_action_chunk(self, obs: dict[str, torch.Tensor], **kwargs):
+                actions, _ = super().predict_action_chunk(obs, **kwargs)
+                return actions, {"flow_action_executed_clip_fraction": 0.25}
+
+        trace_path = tmp_path / "runtime-output" / "inference.jsonl"
+        adapter = PolicyEvalAdapter(
+            policy=_DiagnosticChunkPolicy(),
+            device="cpu",
+            inference_trace_path=trace_path,
+        )
+        trace_path.parent.rmdir()
+
+        adapter.act([{"observation.state": np.ones((4,), dtype=np.float32)}])
+
+        records = [json.loads(line) for line in trace_path.read_text().splitlines()]
+        assert records == [{"flow_action_executed_clip_fraction": 0.25}]
+
+    def test_inference_trace_distinguishes_reused_episode_ids_after_reset(
+        self, tmp_path
+    ):
+        class _DiagnosticGeneratorPolicy(_GeneratorChunkPolicy):
+            def predict_action_chunk(self, obs, **kwargs):
+                actions, _ = super().predict_action_chunk(obs, **kwargs)
+                return actions, {"sample": float(actions[0, 0, 0])}
+
+        trace_path = tmp_path / "inference.jsonl"
+        adapter = PolicyEvalAdapter(
+            policy=_DiagnosticGeneratorPolicy(),
+            device="cpu",
+            sampling_seed=42,
+            inference_trace_path=trace_path,
+        )
+        observation = _build_observation(0)
+
+        adapter.reset(episode_ids=["task:42"])
+        adapter.act([observation], episode_ids=["task:42"])
+        adapter.reset(episode_ids=["task:42"])
+        adapter.act([observation], episode_ids=["task:42"])
+
+        records = [json.loads(line) for line in trace_path.read_text().splitlines()]
+        assert [record["episode_id"] for record in records] == ["task:42", "task:42"]
+        assert [record["reset_generation"] for record in records] == [1, 2]
+
     def test_remote_eval_policy_matches_local_eval_policy_on_batched_input(
         self, serving_stack
     ):

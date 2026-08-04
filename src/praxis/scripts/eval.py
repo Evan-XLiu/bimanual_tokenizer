@@ -32,6 +32,7 @@ from praxis_eval.policies.remote import RemotePolicy
 from praxis_eval.types import Policy
 
 from praxis.core.devices import require_available_device
+from praxis.core.randomness import seed_evaluation
 
 CONFIG_PATH = str(Path(__file__).parents[1] / "configs")
 _LOGGER = logging.getLogger(__name__)
@@ -50,6 +51,7 @@ def main(cfg: DictConfig) -> None:
     """
     print(OmegaConf.to_yaml(cfg))
     process_start_monotonic = time.monotonic()
+    seed_evaluation(int(cfg.seed))
 
     from praxis.policies.eval_adapter import PolicyEvalAdapter
 
@@ -159,6 +161,8 @@ def main(cfg: DictConfig) -> None:
             policy,
             device=eval_device,
             preprocessor=lambda batch: batch,
+            inference_trace_path=os.environ.get("PRAXIS_INFERENCE_TRACE_PATH"),
+            sampling_seed=int(cfg.seed),
         )
     else:
         raise ValueError(
