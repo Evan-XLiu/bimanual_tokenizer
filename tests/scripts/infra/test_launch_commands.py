@@ -71,3 +71,57 @@ def test_python_bin_routes_eval_to_same_env_bin(tmp_path: Path, monkeypatch) -> 
 
     assert cmd[:2] == ["/env/bin/praxis-eval", "env.type=libero"]
     assert "uv" not in cmd
+
+
+def test_robotwin_bin_bootstrap_uses_read_only_dataset_config() -> None:
+    cmd = commands.build_tokenizer_command(
+        codec="bin",
+        dataset="robotwin2_clean",
+        gpus=8,
+        num_nodes=1,
+        main_process_ip=None,
+        main_process_port=29500,
+        run_name="robotwin-bin",
+        output_dir="/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/bin",
+        skip_codec_fit=True,
+        extra_overrides=["codec.action_horizon=32", "trainer.max_steps=1"],
+        python_bin="/env/bin/python",
+    )
+
+    assert "--config-name" in cmd
+    assert "train_codecs" in cmd
+    assert "codecs@codec=tokens/bin" in cmd
+    assert "trainer.skip_codec_fit=true" in cmd
+    assert "dataset=robotwin2_clean" in cmd
+    assert "codec.action_horizon=32" in cmd
+
+
+def test_robotwin_full_ar_uses_bin_artifact_and_explicit_smoke_geometry() -> None:
+    tokenizer = "/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/bin/pretrained_model"
+    cmd = commands.build_policy_command(
+        method="bar",
+        codec="bin",
+        backbone="qwen",
+        dataset="robotwin2_clean",
+        gpus=8,
+        num_nodes=1,
+        main_process_ip=None,
+        main_process_port=29500,
+        run_name="robotwin-ar-smoke",
+        output_dir="/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/ar",
+        tokenizer_ckpt=tokenizer,
+        extra_overrides=[
+            "policy.action_horizon=32",
+            "policy.n_action_steps=16",
+            "trainer.max_steps=10",
+        ],
+        python_bin="/env/bin/python",
+    )
+
+    assert "policy=bar_bin_qwen" in cmd
+    assert "train_recipe/policy@_global_=bar" in cmd
+    assert f"policy.action_tokenizer.pretrained_path={tokenizer}" in cmd
+    assert "dataset=robotwin2_clean" in cmd
+    assert "policy.action_horizon=32" in cmd
+    assert "policy.n_action_steps=16" in cmd
+    assert "trainer.max_steps=10" in cmd

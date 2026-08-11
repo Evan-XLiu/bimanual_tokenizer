@@ -1,0 +1,13 @@
+policy_name: praxis_ar
+task_name: null
+task_config: null
+seed: 0
+instruction_type: unseen
+eval_num_episodes: 100
+
+host: 127.0.0.1
+port: 50051
+timeout: 120.0
+camera_map: null
+action_dim: 14
+skip_get_obs_within_replan: false

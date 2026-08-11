@@ -1,0 +1,13 @@
+# LeRobot RoboTwin 2.0 clean dataset configuration.
+name: robotwin2_clean
+repo_id: local/robotwin2_depth_merged_clean
+root: ${oc.env:ROBOTWIN_DATA_ROOT,/robot/robot-research-cache-0/user/hxs/data/robotwin2.0_depth_merged_clean}
+hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
+episodes: null
+observation_keys:
+  - observation.state
+  - observation.images.cam_high
+  - observation.images.cam_left_wrist
+  - observation.images.cam_right_wrist
+video_backend: null
+bypass_force_cache_sync: true
