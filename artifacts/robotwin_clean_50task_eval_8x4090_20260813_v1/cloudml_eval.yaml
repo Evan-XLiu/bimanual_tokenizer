@@ -1,13 +1,13 @@
-jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-v11
+jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-v13
 description: Official RoboTwin 2.0 demo_clean evaluation of the final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded, eight serial task shards on one 8x RTX 4090 node.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
   imageCommand: |-
     set -Eeuo pipefail
-    COMMIT=5637b6af9297eda39d339c958a4b829e5ceb2553
-    BASE_REPO=/mnt/robot-research-exp-0/user/hxs/praxis-vla
-    export PRAXIS_SOURCE_ROOT=/mnt/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v11/praxis-vla
+    COMMIT=95c4f706da43f0af2a42c0add00c131851df3ea9
+    BASE_REPO=/robot/robot-research-exp-0/user/hxs/praxis-vla
+    export PRAXIS_SOURCE_ROOT=/robot/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v13/praxis-vla
     test -d "$BASE_REPO/.git"
     if ! git -C "$BASE_REPO" cat-file -e "$COMMIT^{commit}" 2>/dev/null; then
       git -C "$BASE_REPO" fetch origin hxs/codex/robotwin-integration
@@ -24,12 +24,12 @@ juiceFsMountConfigs:
   - volume: robot-research-raw-data-0
     juiceFsCluster: bj9-cloudml-ali2
     subPath: /
-    mountPath: /mnt/robot-research-raw-data-0
+    mountPath: /robot/robot-research-raw-data-0
     readOnly: true
   - volume: robot-research-exp-0
     juiceFsCluster: bj9-cloudml-ali2
     subPath: /
-    mountPath: /mnt/robot-research-exp-0
+    mountPath: /robot/robot-research-exp-0
     readOnly: false
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES
