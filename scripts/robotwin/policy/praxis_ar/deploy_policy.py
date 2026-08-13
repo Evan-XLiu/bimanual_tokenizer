@@ -30,7 +30,7 @@ class _PolicyClient(Protocol):
         episode_id: str,
     ) -> Any: ...
 
-    def reset(self) -> bool: ...
+    def reset(self, *, episode_ids: list[str]) -> bool: ...
 
     def close(self) -> None: ...
 
@@ -77,11 +77,13 @@ class PraxisRobotWinPolicy:
         client: _PolicyClient,
         camera_map: dict[str, str] | None = None,
         action_dim: int = 14,
+        episode_namespace: str = "robotwin",
         server_model_info: dict[str, Any] | None = None,
     ) -> None:
         self.client = client
         self.camera_map = dict(camera_map or DEFAULT_CAMERA_MAP)
         self.action_dim = int(action_dim)
+        self.episode_namespace = str(episode_namespace)
         self.server_model_info = dict(server_model_info or {})
         self.episode_index = 0
         self._episode_recorded = False
@@ -123,7 +125,7 @@ class PraxisRobotWinPolicy:
                 state=state,
                 images=images,
                 task_description=instruction,
-                episode_id=f"robotwin-{self.episode_index:06d}",
+                episode_id=self._episode_id,
             ),
             dtype=np.float32,
         )
@@ -140,11 +142,15 @@ class PraxisRobotWinPolicy:
         task_env.take_action(action, action_type="qpos")
 
     def reset(self) -> None:
-        if not self.client.reset():
+        if not self.client.reset(episode_ids=[self._episode_id]):
             raise RuntimeError("Praxis server rejected the episode reset request.")
         if self._episode_recorded:
             self.episode_index += 1
         self._episode_recorded = False
+
+    @property
+    def _episode_id(self) -> str:
+        return f"{self.episode_namespace}:{self.episode_index:06d}"
 
     def close(self) -> None:
         self.client.close()
@@ -170,10 +176,12 @@ def get_model(usr_args: dict[str, Any]) -> PraxisRobotWinPolicy:
             raise RuntimeError("Praxis policy server model info must be a JSON object.")
         camera_map = _parse_camera_map(usr_args.get("camera_map"))
         action_dim = int(usr_args.get("action_dim", 14))
+        episode_namespace = str(usr_args.get("task_name") or "robotwin")
         return PraxisRobotWinPolicy(
             client=client,
             camera_map=camera_map,
             action_dim=action_dim,
+            episode_namespace=episode_namespace,
             server_model_info=parsed_model_info,
         )
     except BaseException:

@@ -21,7 +21,7 @@ from scripts.robotwin.policy.praxis_ar.deploy_policy import (
 class _Client:
     def __init__(self) -> None:
         self.calls: list[dict] = []
-        self.reset_calls = 0
+        self.reset_calls: list[list[str]] = []
         self.close_calls = 0
 
     def health_check(self):
@@ -31,8 +31,8 @@ class _Client:
         self.calls.append(kwargs)
         return np.arange(14, dtype=np.float32)[None, :]
 
-    def reset(self):
-        self.reset_calls += 1
+    def reset(self, *, episode_ids):
+        self.reset_calls.append(list(episode_ids))
         return True
 
     def close(self):
@@ -81,7 +81,7 @@ def test_policy_sends_three_chw_images_and_executes_one_qpos_action() -> None:
     assert all(image.shape == (3, 480, 640) for image in call["images"].values())
     assert all(image.dtype == np.uint8 for image in call["images"].values())
     assert call["task_description"] == "put the apple in the bowl"
-    assert call["episode_id"] == "robotwin-000000"
+    assert call["episode_id"] == "robotwin:000000"
 
 
 def test_policy_initial_reset_keeps_first_episode_index_zero() -> None:
@@ -90,7 +90,7 @@ def test_policy_initial_reset_keeps_first_episode_index_zero() -> None:
 
     policy.reset()
 
-    assert client.reset_calls == 1
+    assert client.reset_calls == [["robotwin:000000"]]
     assert policy.episode_index == 0
 
 
@@ -102,8 +102,25 @@ def test_policy_reset_advances_after_an_episode_was_observed() -> None:
     policy.reset()
     policy.reset()
 
-    assert client.reset_calls == 2
+    assert client.reset_calls == [["robotwin:000000"], ["robotwin:000001"]]
     assert policy.episode_index == 1
+
+
+def test_task_namespace_isolates_shared_server_episode_state() -> None:
+    first_client = _Client()
+    second_client = _Client()
+    first = PraxisRobotWinPolicy(
+        client=first_client, episode_namespace="adjust_bottle"
+    )
+    second = PraxisRobotWinPolicy(client=second_client, episode_namespace="click_bell")
+
+    first.step(_TaskEnv(), _observation())
+    second.step(_TaskEnv(), _observation())
+    first.reset()
+
+    assert first_client.calls[0]["episode_id"] == "adjust_bottle:000000"
+    assert second_client.calls[0]["episode_id"] == "click_bell:000000"
+    assert first_client.reset_calls == [["adjust_bottle:000000"]]
 
 
 def test_get_model_preserves_structured_server_identity(
@@ -115,11 +132,12 @@ def test_get_model_preserves_structured_server_identity(
         lambda **_kwargs: client,
     )
 
-    policy = get_model({})
+    policy = get_model({"task_name": "adjust_bottle"})
 
     assert policy.server_model_info == {
         "checkpoint": {"artifact_sha256": "abc"}
     }
+    assert policy.episode_namespace == "adjust_bottle"
 
 
 @pytest.mark.parametrize(

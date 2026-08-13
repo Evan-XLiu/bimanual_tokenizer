@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-simple-v3-curobo-prebuilt
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-simple-v4-shared-server
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
 POLICY_ENV=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-policy-py310-v1
@@ -12,11 +12,12 @@ CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/rob
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 
-SERVER_PIDS=()
+SERVER_PID=
 WORKER_PIDS=()
 cleanup() {
   local pid
-  for pid in "${WORKER_PIDS[@]:-}" "${SERVER_PIDS[@]:-}"; do
+  for pid in "${WORKER_PIDS[@]:-}" "${SERVER_PID:-}"; do
+    test -n "$pid" || continue
     kill "$pid" 2>/dev/null || true
   done
   wait 2>/dev/null || true
@@ -27,17 +28,15 @@ test ! -e "$OUT"
 mkdir -p "$OUT/_logs"
 cd "$SOURCE_ROOT"
 
-for gpu in $(seq 0 7); do
-  port=$((50051 + gpu))
-  CUDA_VISIBLE_DEVICES=$gpu "$POLICY_PYTHON" -u "$POLICY_SERVER" \
-    policy=bar_bin_qwen \
-    policy.pretrained_path="$CHECKPOINT" \
-    host=127.0.0.1 \
-    port="$port" \
-    device=cuda \
-    >"$OUT/_logs/server-$gpu.log" 2>&1 &
-  SERVER_PIDS+=("$!")
-  "$POLICY_PYTHON" - "$CHECKPOINT" "$port" "$gpu" <<'PY'
+CUDA_VISIBLE_DEVICES=0 "$POLICY_PYTHON" -u "$POLICY_SERVER" \
+  policy=bar_bin_qwen \
+  policy.pretrained_path="$CHECKPOINT" \
+  host=127.0.0.1 \
+  port=50051 \
+  device=cuda \
+  >"$OUT/_logs/server.log" 2>&1 &
+SERVER_PID=$!
+"$POLICY_PYTHON" - "$CHECKPOINT" <<'PY'
 import json
 import sys
 import time
@@ -46,10 +45,8 @@ from pathlib import Path
 from praxis_remote import PolicyClient
 
 expected = Path(sys.argv[1]).resolve()
-port = int(sys.argv[2])
-gpu = int(sys.argv[3])
 for _ in range(120):
-    client = PolicyClient(host="127.0.0.1", port=port, timeout=5.0)
+    client = PolicyClient(host="127.0.0.1", port=50051, timeout=5.0)
     try:
         try:
             ready, model_info = client.health_check()
@@ -57,7 +54,7 @@ for _ in range(120):
                 json.loads(model_info)["serving_artifact"]["checkpoint"]["path"]
             ).resolve()
             if ready and loaded == expected:
-                print(f"ROBOTWIN_POLICY_SERVER_READY gpu={gpu}", flush=True)
+                print("ROBOTWIN_POLICY_SERVER_READY gpu=0 port=50051", flush=True)
                 break
         except Exception:
             pass
@@ -65,19 +62,17 @@ for _ in range(120):
         client.close()
     time.sleep(5)
 else:
-    raise RuntimeError(f"Policy server did not become ready: gpu={gpu}")
+    raise RuntimeError("Policy server did not become ready: gpu=0 port=50051")
 PY
-done
 
 for worker in $(seq 0 7); do
-  port=$((50051 + worker))
   CUDA_VISIBLE_DEVICES=$worker "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py worker \
     --robotwin-root "$ROBOTWIN_ROOT" \
     --tasks "$TASKS" \
     --worker-index "$worker" \
     --worker-count 8 \
     --policy-host 127.0.0.1 \
-    --policy-port "$port" \
+    --policy-port 50051 \
     --output-dir "$OUT" \
     --run-id "$RUN_ID" \
     --expected-checkpoint "$CHECKPOINT" \
