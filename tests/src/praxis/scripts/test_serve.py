@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from praxis.scripts import serve
 from praxis.scripts.serve import _verify_runtime_overlay
 
 
@@ -94,3 +95,33 @@ def test_runtime_overlay_rejects_incomplete_membership(tmp_path: Path) -> None:
         _verify_runtime_overlay(
             repo_root=repo, overlay_path=overlay, expected_sha256=digest
         )
+
+
+def test_installed_source_commit_bypasses_enclosing_checkout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    marker = tmp_path / "SOURCE_COMMIT"
+    marker.write_text("a" * 40 + "\n")
+    monkeypatch.setattr(serve, "_INSTALLED_SOURCE_COMMIT", marker)
+
+    assert serve._source_metadata() == {
+        "repo_root": None,
+        "git_commit": "a" * 40,
+        "git_dirty": False,
+        "source_snapshot_sha256": None,
+        "runtime_overlay_path": None,
+        "runtime_overlay_sha256": None,
+        "runtime_overlay_file_count": None,
+        "runtime_overlay_verified": False,
+    }
+
+
+def test_installed_source_commit_rejects_invalid_value(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    marker = tmp_path / "SOURCE_COMMIT"
+    marker.write_text("not-a-commit\n")
+    monkeypatch.setattr(serve, "_INSTALLED_SOURCE_COMMIT", marker)
+
+    with pytest.raises(RuntimeError, match="Invalid installed Praxis source commit"):
+        serve._source_metadata()

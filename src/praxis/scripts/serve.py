@@ -22,6 +22,9 @@ CONFIG_PATH = str(Path(__file__).parents[1] / "configs")
 
 
 _OVERLAY_ROOTS = ("src", "scripts", "tests")
+_INSTALLED_SOURCE_COMMIT = (
+    Path(__file__).resolve().parents[1] / "serving" / "SOURCE_COMMIT"
+)
 
 
 def _sha256(path: Path) -> str:
@@ -128,6 +131,23 @@ def _verify_runtime_overlay(
 
 
 def _source_metadata() -> dict[str, object]:
+    if _INSTALLED_SOURCE_COMMIT.is_file():
+        commit = _INSTALLED_SOURCE_COMMIT.read_text(encoding="utf-8").strip()
+        if len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit):
+            raise RuntimeError(
+                f"Invalid installed Praxis source commit: {_INSTALLED_SOURCE_COMMIT}."
+            )
+        return {
+            "repo_root": None,
+            "git_commit": commit,
+            "git_dirty": False,
+            "source_snapshot_sha256": None,
+            "runtime_overlay_path": None,
+            "runtime_overlay_sha256": None,
+            "runtime_overlay_file_count": None,
+            "runtime_overlay_verified": False,
+        }
+
     repo_root = Path(__file__).resolve().parents[3]
 
     def git(*args: str) -> str | None:
