@@ -1,24 +1,9 @@
-jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8xh20e-v18
-description: Official RoboTwin 2.0 demo_clean evaluation of the final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded, eight serial task shards on one 8x H20e 141 GB node.
+jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8xh20e-simple-v1
+description: Official RoboTwin 2.0 demo_clean evaluation of final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
-  imageCommand: |-
-    set -Eeuo pipefail
-    COMMIT=9077b0901bc909c3c8206bfb6c9326b1b9e024f7
-    BASE_REPO=/robot/robot-research-exp-0/user/hxs/praxis-vla
-    CHECKOUT=/robot/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v18-h20e/praxis-vla
-    test -d "$BASE_REPO/.git"
-    if ! git -C "$BASE_REPO" cat-file -e "$COMMIT^{commit}" 2>/dev/null; then
-      git -C "$BASE_REPO" fetch origin hxs/codex/robotwin-integration
-    fi
-    test ! -e "$CHECKOUT"
-    mkdir -p "$(dirname "$CHECKOUT")"
-    git clone --no-checkout --shared "$BASE_REPO" "$CHECKOUT"
-    git -C "$CHECKOUT" checkout --detach "$COMMIT"
-    test "$(git -C "$CHECKOUT" rev-parse HEAD)" = "$COMMIT"
-    test -z "$(git -C "$CHECKOUT" status --porcelain --untracked-files=all)"
-    exec bash "$CHECKOUT/artifacts/robotwin_clean_50task_eval_8x4090_20260813_v1/run_eval.sh"
+  imageCommand: exec bash /robot/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-simple-v1/praxis-vla/artifacts/robotwin_clean_50task_eval_8x4090_20260813_v1/run_eval.sh
 modelUri: ""
 juiceFsMountConfigs:
   - volume: robot-research-raw-data-0

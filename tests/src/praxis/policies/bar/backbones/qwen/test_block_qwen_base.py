@@ -93,10 +93,13 @@ class TestBoundedQwenBase:
         policy.set_normalization_stats(stats_for_io(io))
         captured: dict[str, int | float | None] = {}
 
-        def spy_sample(logits, *, temperature, top_k, allowed_token_ids=None):
+        def spy_sample(
+            logits, *, temperature, top_k, allowed_token_ids=None, generator=None
+        ):
             del allowed_token_ids
             captured["decode_temperature"] = temperature
             captured["decode_top_k"] = top_k
+            captured["generator"] = generator
             return torch.zeros(
                 (logits.shape[0], 1), dtype=torch.long, device=logits.device
             )
@@ -112,13 +115,16 @@ class TestBoundedQwenBase:
         )
         assert captured["decode_temperature"] == 0.6
         assert captured["decode_top_k"] == 4
+        assert captured["generator"] is None
 
     def test_bounded_decode_allowlist_excludes_eos(self, monkeypatch):
         policy = make_bounded_policy(monkeypatch, BinQwenPolicy)
         captured: dict[str, list[int]] = {}
 
-        def spy_sample(logits, *, temperature, top_k, allowed_token_ids=None):
-            del temperature, top_k
+        def spy_sample(
+            logits, *, temperature, top_k, allowed_token_ids=None, generator=None
+        ):
+            del temperature, top_k, generator
             assert allowed_token_ids is not None
             allowed = allowed_token_ids.detach().cpu().tolist()
             captured["allowed"] = allowed

@@ -208,6 +208,7 @@ def run_blockwise_token_decode(
     decode_temperature: float | None = None,
     decode_top_k: int | None = None,
     eos_supervision: bool | None = None,
+    generator: torch.Generator | None = None,
 ) -> GeneratedTokenIds:
     """Generate raw action-token ids with the shared blockwise decode mechanics."""
     resolved_keep_k = int(keep_k)
@@ -331,6 +332,7 @@ def run_blockwise_token_decode(
             temperature=resolved_temperature,
             top_k=resolved_top_k,
             allowed_token_ids=allowed_token_ids,
+            generator=generator,
         ).view(batch_size, block_size)
 
         if eos_token_id is not None:
@@ -410,6 +412,7 @@ def run_blockwise_decode(
 
     decode_temperature = decode_kwargs.pop("decode_temperature", None)
     decode_top_k = decode_kwargs.pop("decode_top_k", None)
+    generator = decode_kwargs.pop("generator", None)
     if decode_kwargs:
         unexpected = ", ".join(sorted(str(key) for key in decode_kwargs))
         raise TypeError(f"Unsupported VLM decode kwargs: {unexpected}.")
@@ -421,6 +424,7 @@ def run_blockwise_decode(
         keep_k=resolved_keep_k,
         decode_temperature=decode_temperature,
         decode_top_k=decode_top_k,
+        generator=generator,
     )
     actions = policy._decode_generated_action_tokens(
         decoded.token_ids,

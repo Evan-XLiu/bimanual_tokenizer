@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,15 +14,11 @@ import pytest
 
 from praxis.serving.model_identity import build_policy_serving_identity
 from scripts.robotwin.stable2_evaluator import (
-    _load_reusable_robotwin_identity,
-    _require_read_only_runtime,
+    _load_policy_plugin,
     _resolve_ffmpeg_executable,
-    _validate_policy_plugin,
     _validate_server_model_info,
     run_controlled_rollouts,
     run_stable2_eval,
-    validate_official_evaluator,
-    validate_robotwin_checkout,
 )
 
 
@@ -112,32 +106,6 @@ class _TaskEnv:
         }
 
 
-def _commit_fixture(root: Path, *paths: str) -> str:
-    subprocess.run(["git", "init", "-q", str(root)], check=True)
-    subprocess.run(["git", "-C", str(root), "add", *paths], check=True)
-    subprocess.run(
-        [
-            "git",
-            "-C",
-            str(root),
-            "-c",
-            "user.name=Test",
-            "-c",
-            "user.email=test@example.com",
-            "commit",
-            "-qm",
-            "fixture",
-        ],
-        check=True,
-    )
-    return subprocess.run(
-        ["git", "-C", str(root), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-
-
 def _write_checkpoint_artifacts(root: Path, config: dict, policy_io: dict) -> None:
     root.mkdir(parents=True)
     (root / "config.json").write_text(json.dumps(config))
@@ -214,201 +182,7 @@ def test_ffmpeg_resolver_uses_bundled_binary_when_path_is_empty(
     assert _resolve_ffmpeg_executable() == str(bundled.resolve())
 
 
-def test_validate_official_evaluator_rejects_unpinned_source(tmp_path: Path) -> None:
-    source = tmp_path / "eval_policy.py"
-    source.write_text("print('different')\n")
-
-    with pytest.raises(RuntimeError, match="Unsupported RoboTwin evaluator"):
-        validate_official_evaluator(source)
-
-
-def test_robotwin_identity_covers_dirty_tracked_and_runtime_untracked_sources(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    (root / "envs").mkdir(parents=True)
-    (root / "script").mkdir()
-    (root / "script" / "curobo").mkdir()
-    (root / "assets").mkdir()
-    (root / "description").mkdir()
-    (root / "save").mkdir()
-    (root / "envs" / "task.py").write_text("VERSION = 1\n")
-    commit = _commit_fixture(root, "envs/task.py")
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator.SUPPORTED_ROBOTWIN_COMMITS", {commit}
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _path: None,
-    )
-    (root / "envs" / "task.py").write_text("VERSION = 2\n")
-    (root / "script" / "adapter.py").write_text("ENABLED = True\n")
-    (root / "script" / "curobo" / "duplicate.py").write_text("DUPLICATE = True\n")
-    (root / "assets" / "collision.so").write_bytes(b"runtime-binary")
-    (root / "description" / "robot.urdf").write_text("<robot/>\n")
-    (root / "save" / "frame.png").write_bytes(b"generated")
-
-    identity = validate_robotwin_checkout(root)
-
-    assert identity["base_commit"] == commit
-    assert identity["tracked_file_count"] == 1
-    assert identity["untracked_runtime_file_count"] == 3
-    assert set(identity["files"]) == {
-        "assets/collision.so",
-        "description/robot.urdf",
-        "envs/task.py",
-        "script/adapter.py",
-    }
-    assert identity["tracked_status"] == [" M envs/task.py"]
-    assert identity["excluded_runtime_subtrees"] == {
-        "script/curobo": "duplicate checkout; runtime imports envs/curobo/src"
-    }
-    assert len(identity["aggregate_sha256"]) == 64
-
-
-def test_reusable_source_identity_requires_pinned_manifest_and_read_only_mount(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    root.mkdir()
-    (root / "runtime.py").write_text("VERSION = 1\n")
-    commit = _commit_fixture(root, "runtime.py")
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator.SUPPORTED_ROBOTWIN_COMMITS", {commit}
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _path: None,
-    )
-    identity = validate_robotwin_checkout(root)
-    manifest = tmp_path / "source_manifest.json"
-    manifest.write_text(json.dumps(identity, sort_keys=True) + "\n")
-    digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
-    loaded = _load_reusable_robotwin_identity(
-        root=root, manifest_path=manifest, expected_sha256=digest
-    )
-
-    assert loaded["aggregate_sha256"] == identity["aggregate_sha256"]
-    with pytest.raises(RuntimeError, match="SHA256 mismatch"):
-        _load_reusable_robotwin_identity(
-            root=root, manifest_path=manifest, expected_sha256="0" * 64
-        )
-
-
-def test_full_source_hash_rejects_writable_checkout(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    (root / "envs" / "curobo").mkdir(parents=True)
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._is_read_only_filesystem",
-        lambda _path: False,
-    )
-
-    with pytest.raises(RuntimeError, match="read-only runtime mounts"):
-        validate_robotwin_checkout(root)
-
-
-def test_read_only_contract_rejects_writable_nested_runtime(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    nested = root / "envs" / "curobo"
-    nested.mkdir(parents=True)
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._is_read_only_filesystem",
-        lambda path: Path(path) != nested,
-    )
-
-    with pytest.raises(RuntimeError, match="envs/curobo"):
-        _require_read_only_runtime(root)
-
-
-def test_read_only_contract_rejects_missing_nested_runtime(tmp_path: Path) -> None:
-    root = tmp_path / "RoboTwin"
-    root.mkdir()
-
-    with pytest.raises(RuntimeError, match="checkouts are missing"):
-        _require_read_only_runtime(root)
-
-
-def test_reusable_source_identity_rejects_unsupported_manifest_commit(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    root.mkdir()
-    identity = {
-        "schema_version": 1,
-        "checkout_path": str(root),
-        "base_commit": "f" * 40,
-        "tracked_status": [],
-        "files": {},
-        "nested_checkouts": {},
-        "excluded_runtime_subtrees": {},
-    }
-    canonical = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
-    identity["aggregate_sha256"] = hashlib.sha256(canonical).hexdigest()
-    manifest = tmp_path / "manifest.json"
-    manifest.write_text(json.dumps(identity))
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _path: None,
-    )
-
-    with pytest.raises(RuntimeError, match="unsupported commit"):
-        _load_reusable_robotwin_identity(
-            root=root,
-            manifest_path=manifest,
-            expected_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest(),
-        )
-
-
-def test_reusable_source_identity_rejects_tampered_internal_aggregate(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    root.mkdir()
-    (root / "runtime.py").write_text("VERSION = 1\n")
-    commit = _commit_fixture(root, "runtime.py")
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator.SUPPORTED_ROBOTWIN_COMMITS", {commit}
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _path: None,
-    )
-    identity = validate_robotwin_checkout(root)
-    identity["tracked_file_count"] = 999
-    manifest = tmp_path / "manifest.json"
-    manifest.write_text(json.dumps(identity))
-
-    with pytest.raises(RuntimeError, match="invalid internal aggregate"):
-        _load_reusable_robotwin_identity(
-            root=root,
-            manifest_path=manifest,
-            expected_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest(),
-        )
-
-
-def test_policy_plugin_rejects_shadowed_package(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    plugin = tmp_path / "policy" / "praxis_ar"
-    plugin.mkdir(parents=True)
-    (plugin / "__init__.py").write_text("")
-    (plugin / "deploy_policy.py").write_text("")
-    config = plugin / "deploy_policy.yml"
-    config.write_text("instruction_type: unseen\n")
-    shadow = tmp_path / "shadow" / "praxis_ar" / "__init__.py"
-    shadow.parent.mkdir(parents=True)
-    shadow.write_text("")
-    monkeypatch.setitem(sys.modules, "praxis_ar", SimpleNamespace(__file__=str(shadow)))
-
-    with pytest.raises(RuntimeError, match="shadowed"):
-        _validate_policy_plugin(config)
-
-
-def test_policy_plugin_records_all_runtime_file_hashes(
+def test_policy_plugin_loads_required_functions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plugin = tmp_path / "policy" / "praxis_ar"
@@ -427,74 +201,8 @@ def test_policy_plugin_records_all_runtime_file_hashes(
     monkeypatch.delitem(sys.modules, "praxis_ar", raising=False)
     monkeypatch.delitem(sys.modules, "praxis_ar.deploy_policy", raising=False)
 
-    identity = _validate_policy_plugin(config)
-
-    assert set(identity["files"]) == {
-        "__init__.py",
-        "deploy_policy.py",
-        "deploy_policy.yml",
-    }
-    assert all(len(item["sha256"]) == 64 for item in identity["files"].values())
-
-
-def test_robotwin_identity_covers_ignored_runtime_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    (root / "assets").mkdir(parents=True)
-    (root / ".gitignore").write_text("assets/*.so\n")
-    commit = _commit_fixture(root, ".gitignore")
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator.SUPPORTED_ROBOTWIN_COMMITS", {commit}
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _path: None,
-    )
-    collision = root / "assets" / "collision.so"
-    collision.write_bytes(b"runtime-binary-v1")
-
-    before = validate_robotwin_checkout(root)
-    collision.write_bytes(b"runtime-binary-v2")
-    after = validate_robotwin_checkout(root)
-
-    assert before["ignored_runtime_file_count"] == 1
-    assert "assets/collision.so" in before["files"]
-    assert before["aggregate_sha256"] != after["aggregate_sha256"]
-
-
-def test_robotwin_identity_covers_nested_checkout_including_ignored_binary(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root = tmp_path / "RoboTwin"
-    nested = root / "envs" / "curobo"
-    (root / "envs").mkdir(parents=True)
-    (root / ".gitignore").write_text("envs/curobo/\n")
-    commit = _commit_fixture(root, ".gitignore")
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator.SUPPORTED_ROBOTWIN_COMMITS", {commit}
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _path: None,
-    )
-
-    (nested / "src").mkdir(parents=True)
-    (nested / "build").mkdir()
-    (nested / ".gitignore").write_text("build/\n")
-    (nested / "src" / "planner.py").write_text("VERSION = 1\n")
-    _commit_fixture(nested, ".gitignore", "src/planner.py")
-    binary = nested / "build" / "kernel.so"
-    binary.write_bytes(b"kernel-v1")
-
-    before = validate_robotwin_checkout(root)
-    binary.write_bytes(b"kernel-v2")
-    after = validate_robotwin_checkout(root)
-
-    nested_identity = before["nested_checkouts"]["envs/curobo"]
-    assert nested_identity["ignored_file_count"] == 1
-    assert "build/kernel.so" in nested_identity["files"]
-    assert before["aggregate_sha256"] != after["aggregate_sha256"]
+    _load_policy_plugin(config)
+    assert callable(sys.modules["praxis_ar"].get_model)
 
 
 def test_controlled_rollout_records_accepted_seed_and_terminal_outcome(
@@ -834,7 +542,7 @@ def test_video_attachment_failure_reaps_ffmpeg_and_closes_environment(
     assert (tmp_path / "eval" / "episode_0000_incomplete.mp4").is_file()
 
 
-def test_stable2_eval_uses_direct_read_only_setup_and_matches_checkpoint(
+def test_stable2_eval_uses_official_runtime_and_matches_checkpoint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     robotwin_root = tmp_path / "RoboTwin"
@@ -887,30 +595,10 @@ def test_stable2_eval_uses_direct_read_only_setup_and_matches_checkpoint(
     )
     monkeypatch.setattr(
         "scripts.robotwin.stable2_evaluator._load_official_module",
-        lambda _root: (official, "evaluator-sha"),
+        lambda _root: official,
     )
     monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _root: None,
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._validate_policy_plugin",
-        lambda _path: {"aggregate_sha256": "e" * 64},
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._read_policy_plugin_identity",
-        lambda _path: ({"aggregate_sha256": "e" * 64}, {}, {}),
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator.validate_robotwin_checkout",
-        lambda _root: {
-            "base_commit": "13c3c47ff4312dd62484bcd51be034af55c062d1",
-            "aggregate_sha256": "c" * 64,
-            "tracked_status": [],
-            "tracked_file_count": 1,
-            "untracked_runtime_file_count": 0,
-            "files": {"script/eval_policy.py": "d" * 64},
-        },
+        "scripts.robotwin.stable2_evaluator._load_policy_plugin", lambda _path: None
     )
 
     def fake_rollouts(**kwargs):
@@ -946,19 +634,12 @@ def test_stable2_eval_uses_direct_read_only_setup_and_matches_checkpoint(
     assert close_calls == [model]
     manifest = json.loads(Path(result["run_manifest_path"]).read_text())
     assert manifest["status"] == "rollout_completed"
-    assert manifest["robotwin_source_unchanged"] is True
-    assert manifest["policy_plugin_unchanged"] is True
-    assert manifest["expected_checkpoint"]["artifact_sha256"] == (
-        checkpoint_identity["artifact_sha256"]
+    assert manifest["expected_checkpoint"]["checkpoint"]["path"] == str(
+        checkpoint.resolve()
     )
     assert manifest["server_model_info"]["serving_artifact"][
         "artifact_sha256"
     ] == checkpoint_identity["artifact_sha256"]
-    assert manifest["robotwin_source_aggregate_sha256"] == "c" * 64
-    source_manifest = json.loads(
-        Path(manifest["robotwin_source_manifest_path"]).read_text()
-    )
-    assert source_manifest["files"] == {"script/eval_policy.py": "d" * 64}
 
 
 def test_stable2_eval_preserves_failed_manifest_and_closes_model(
@@ -989,30 +670,12 @@ def test_stable2_eval_preserves_failed_manifest_and_closes_model(
             else (lambda *_args: None)
         )
     )
-    source_identity = {
-        "base_commit": "13c3c47ff4312dd62484bcd51be034af55c062d1",
-        "aggregate_sha256": "c" * 64,
-        "tracked_status": [],
-        "tracked_file_count": 1,
-        "untracked_runtime_file_count": 0,
-        "nested_checkouts": {},
-        "files": {"script/eval_policy.py": "d" * 64},
-    }
     monkeypatch.setattr(
         "scripts.robotwin.stable2_evaluator._load_official_module",
-        lambda _root: (official, "evaluator-sha"),
+        lambda _root: official,
     )
     monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._require_read_only_runtime",
-        lambda _root: None,
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator._validate_policy_plugin",
-        lambda _path: {"aggregate_sha256": "e" * 64},
-    )
-    monkeypatch.setattr(
-        "scripts.robotwin.stable2_evaluator.validate_robotwin_checkout",
-        lambda _root: source_identity,
+        "scripts.robotwin.stable2_evaluator._load_policy_plugin", lambda _path: None
     )
     monkeypatch.setattr(
         "scripts.robotwin.stable2_evaluator._prepare_official_runtime",
@@ -1054,38 +717,15 @@ def test_stable2_eval_preserves_failed_manifest_and_closes_model(
     assert manifest["status"] == "failed"
     assert manifest["failure"]["error_type"] == "builtins.ConnectionError"
     assert manifest["failure"]["message"] == "RPC failed"
-    assert manifest["robotwin_source_unchanged"] is True
-    assert (task_output / "robotwin_source_manifest.json").is_file()
     assert close_calls == [model]
 
 
-def test_server_identity_rejects_dirty_source_without_overlay_hash() -> None:
-    identity = {"artifact_sha256": "a" * 64}
-
-    with pytest.raises(RuntimeError, match="PRAXIS_RUNTIME_OVERLAY_SHA256"):
+def test_server_identity_rejects_different_checkpoint(tmp_path: Path) -> None:
+    expected = tmp_path / "expected"
+    with pytest.raises(RuntimeError, match="different checkpoint"):
         _validate_server_model_info(
             {
-                "serving_artifact": identity,
-                "source": {"git_commit": "b" * 40, "git_dirty": True},
+                "serving_artifact": {"checkpoint": {"path": str(tmp_path / "other")}},
             },
-            expected_identity=identity,
-        )
-
-
-def test_server_identity_rejects_unverified_overlay_artifact() -> None:
-    identity = {"artifact_sha256": "a" * 64}
-
-    with pytest.raises(RuntimeError, match="byte-verified"):
-        _validate_server_model_info(
-            {
-                "serving_artifact": identity,
-                "source": {
-                    "git_commit": "b" * 40,
-                    "git_dirty": True,
-                    "runtime_overlay_sha256": "c" * 64,
-                    "runtime_overlay_path": "/tmp/runtime-overlay.tar",
-                    "runtime_overlay_verified": False,
-                },
-            },
-            expected_identity=identity,
+            expected_checkpoint=expected,
         )

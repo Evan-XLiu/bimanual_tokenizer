@@ -29,6 +29,24 @@ def test_sample_next_token_ids_top_k_restricts_candidates():
     assert set(samples).issubset({0, 1})
 
 
+def test_sample_next_token_ids_uses_explicit_generator():
+    logits = torch.tensor([[1.0, 2.0, 3.0]])
+    first = sample_next_token_ids(
+        logits,
+        temperature=1.0,
+        top_k=None,
+        generator=torch.Generator().manual_seed(42),
+    )
+    torch.manual_seed(999)
+    second = sample_next_token_ids(
+        logits,
+        temperature=1.0,
+        top_k=None,
+        generator=torch.Generator().manual_seed(42),
+    )
+    assert torch.equal(first, second)
+
+
 def test_sample_next_token_ids_invalid_args_raise():
     logits = torch.randn(2, 5)
     with pytest.raises(ValueError):

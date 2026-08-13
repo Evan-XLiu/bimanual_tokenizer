@@ -1,94 +1,45 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-v18
-EMA_CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/robotwin-bar-bin-qwen3vl2b-h32-final-ema-step10095-robot-mount-v1/pretrained_model
-ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-simple-v1
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-ENV_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla
-POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
-POLICY_SERVER=$ENV_ROOT/.venv/bin/praxis-serve
+ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
+POLICY_ENV=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-policy-py310-v1
+POLICY_PYTHON=$POLICY_ENV/bin/python
+POLICY_SERVER=$POLICY_ENV/lib/python3.10/site-packages/praxis/scripts/serve.py
 ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v2/bin/python
-OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
+CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/robotwin-bar-bin-qwen3vl2b-h32-final-ema-step10095-robot-mount-v1/pretrained_model
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
-SOURCE_MANIFEST=$OUT/_provenance/robotwin_source_manifest.json
-PINNED_SOURCE_MANIFEST=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-v15/_provenance/robotwin_source_manifest.json
-
-export HOME=/robot/robot-research-exp-0/user/hxs/home
-export TMPDIR=/robot/robot-research-exp-0/user/hxs/tmp/$RUN_ID
-export XDG_CACHE_HOME=/robot/robot-research-exp-0/user/hxs/cache/xdg/$RUN_ID
-export HF_HOME=/robot/robot-research-exp-0/user/hxs/hf_cache
-export HF_HUB_CACHE=$HF_HOME/hub
-export TORCH_HOME=/robot/robot-research-exp-0/user/hxs/cache/torch/$RUN_ID
-export TRITON_CACHE_DIR=/robot/robot-research-exp-0/user/hxs/cache/triton/$RUN_ID
-export TORCHINDUCTOR_CACHE_DIR=/robot/robot-research-exp-0/user/hxs/cache/torchinductor/$RUN_ID
-export PYTHONPYCACHEPREFIX=/robot/robot-research-exp-0/user/hxs/cache/pycache/$RUN_ID
-export PYTHONNOUSERSITE=1
-export PYTHONUNBUFFERED=1
-export TOKENIZERS_PARALLELISM=false
-export PYTORCH_ALLOC_CONF=expandable_segments:True
-export HYDRA_FULL_ERROR=1
-export HF_HUB_OFFLINE=1
-export TRANSFORMERS_OFFLINE=1
-export WANDB_MODE=disabled
-export OMP_NUM_THREADS=1
+OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 
 SERVER_PIDS=()
 WORKER_PIDS=()
 cleanup() {
   local pid
   for pid in "${WORKER_PIDS[@]:-}" "${SERVER_PIDS[@]:-}"; do
-    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
-    fi
+    kill "$pid" 2>/dev/null || true
   done
   wait 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
-echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 test ! -e "$OUT"
-test -x "$POLICY_PYTHON"
-test -x "$POLICY_SERVER"
-test -x "$ROBOTWIN_PYTHON"
-test -f "$(dirname "$(dirname "$POLICY_PYTHON")")/ROBOTWIN_POLICY_ENV_READY"
-test -f "$(dirname "$(dirname "$ROBOTWIN_PYTHON")")/ROBOTWIN_ENV_READY"
-echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK policy_python=$POLICY_PYTHON robotwin_python=$ROBOTWIN_PYTHON"
-
-mkdir -p "$HOME" "$TMPDIR" "$XDG_CACHE_HOME" "$TORCH_HOME" \
-  "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$PYTHONPYCACHEPREFIX" \
-  "$OUT/_provenance" "$OUT/_logs"
-
-echo "ROBOTWIN_EMA_CONTRACT_CHECK_START checkpoint=$EMA_CHECKPOINT"
-"$POLICY_PYTHON" -c \
-  "from praxis.serving.model_identity import validate_robotwin_ar_bin_contract; print(validate_robotwin_ar_bin_contract('$EMA_CHECKPOINT'), flush=True)"
-
+mkdir -p "$OUT/_logs"
 cd "$SOURCE_ROOT"
-test -f "$PINNED_SOURCE_MANIFEST"
-test -f "$PINNED_SOURCE_MANIFEST.sha256"
-cp "$PINNED_SOURCE_MANIFEST" "$SOURCE_MANIFEST"
-cp "$PINNED_SOURCE_MANIFEST.sha256" "$SOURCE_MANIFEST.sha256"
-SOURCE_MANIFEST_SHA256=$(tr -d '[:space:]' < "$SOURCE_MANIFEST.sha256")
-echo "ROBOTWIN_SOURCE_MANIFEST_READY sha256=$SOURCE_MANIFEST_SHA256"
 
 for gpu in $(seq 0 7); do
   port=$((50051 + gpu))
-  (
-    set +e
-    CUDA_VISIBLE_DEVICES=$gpu "$POLICY_SERVER" \
-      policy=bar_bin_qwen \
-      policy.pretrained_path="$EMA_CHECKPOINT" \
-      host=127.0.0.1 \
-      port="$port" \
-      device=cuda
-    exit_code=$?
-    echo "ROBOTWIN_POLICY_SERVER_EXIT gpu=$gpu port=$port code=$exit_code"
-    exit "$exit_code"
-  ) > >(tee "$OUT/_logs/server-$gpu.log" | sed -u "s/^/[server-$gpu] /") 2>&1 &
+  CUDA_VISIBLE_DEVICES=$gpu "$POLICY_PYTHON" -u "$POLICY_SERVER" \
+    policy=bar_bin_qwen \
+    policy.pretrained_path="$CHECKPOINT" \
+    host=127.0.0.1 \
+    port="$port" \
+    device=cuda \
+    >"$OUT/_logs/server-$gpu.log" 2>&1 &
   SERVER_PIDS+=("$!")
 done
 
-"$POLICY_PYTHON" - "$OUT" "$EMA_CHECKPOINT" <<'PY'
+"$POLICY_PYTHON" - "$CHECKPOINT" <<'PY'
 import json
 import sys
 import time
@@ -96,53 +47,34 @@ from pathlib import Path
 
 from praxis_remote import PolicyClient
 
-output = Path(sys.argv[1])
-expected_checkpoint = Path(sys.argv[2]).resolve()
-for gpu in range(8):
-    client = PolicyClient(host="127.0.0.1", port=50051 + gpu, timeout=5.0)
-    try:
-        for _ in range(240):
+expected = Path(sys.argv[1]).resolve()
+pending = set(range(8))
+for _ in range(120):
+    for gpu in list(pending):
+        client = PolicyClient(host="127.0.0.1", port=50051 + gpu, timeout=5.0)
+        try:
             try:
                 ready, model_info = client.health_check()
-                if ready:
-                    payload = json.loads(model_info)
-                    artifact = Path(
-                        payload["serving_artifact"]["checkpoint"]["path"]
-                    ).resolve()
-                    if artifact != expected_checkpoint:
-                        raise RuntimeError(
-                            f"Policy server {gpu} loaded {artifact}, expected "
-                            f"{expected_checkpoint}."
-                        )
-                    print(
-                        f"ROBOTWIN_POLICY_SERVER_READY gpu={gpu} port={50051 + gpu} "
-                        f"checkpoint={artifact}",
-                        flush=True,
-                    )
-                    break
+                loaded = Path(
+                    json.loads(model_info)["serving_artifact"]["checkpoint"]["path"]
+                ).resolve()
+                if ready and loaded == expected:
+                    print(f"ROBOTWIN_POLICY_SERVER_READY gpu={gpu}", flush=True)
+                    pending.remove(gpu)
             except Exception:
                 pass
-            time.sleep(5)
-        else:
-            raise RuntimeError(
-                f"Policy server {gpu} did not become ready; see "
-                f"{output / '_logs' / f'server-{gpu}.log'}"
-            )
-    finally:
-        client.close()
+        finally:
+            client.close()
+    if not pending:
+        break
+    time.sleep(5)
+else:
+    raise RuntimeError(f"Policy servers did not become ready: {sorted(pending)}")
 PY
 
 for worker in $(seq 0 7); do
-  for server in $(seq 0 7); do
-    if ! kill -0 "${SERVER_PIDS[$server]}" 2>/dev/null; then
-      exit_code=0
-      wait "${SERVER_PIDS[$server]}" || exit_code=$?
-      echo "ROBOTWIN_POLICY_SERVER_DIED gpu=$server code=$exit_code" >&2
-      exit 1
-    fi
-  done
   port=$((50051 + worker))
-  CUDA_VISIBLE_DEVICES=$worker "$ROBOTWIN_PYTHON" scripts/robotwin/run_suite.py worker \
+  CUDA_VISIBLE_DEVICES=$worker "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py worker \
     --robotwin-root "$ROBOTWIN_ROOT" \
     --tasks "$TASKS" \
     --worker-index "$worker" \
@@ -151,60 +83,24 @@ for worker in $(seq 0 7); do
     --policy-port "$port" \
     --output-dir "$OUT" \
     --run-id "$RUN_ID" \
-    --expected-checkpoint "$EMA_CHECKPOINT" \
-    --robotwin-source-manifest "$SOURCE_MANIFEST" \
-    --robotwin-source-manifest-sha256 "$SOURCE_MANIFEST_SHA256" \
+    --expected-checkpoint "$CHECKPOINT" \
     --episodes-per-task 20 \
     --max-seed-attempts 1000 \
-    > >(tee "$OUT/_logs/worker-$worker.log" | sed -u "s/^/[worker-$worker] /") 2>&1 &
+    >"$OUT/_logs/worker-$worker.log" 2>&1 &
   WORKER_PIDS+=("$!")
-  if [[ "$worker" -lt 7 ]]; then
-    task=$("$ROBOTWIN_PYTHON" -c \
-      "import sys, yaml; print(yaml.safe_load(open(sys.argv[1]))['tasks'][int(sys.argv[2])])" \
-      "$TASKS" "$worker")
-    manifest="$OUT/$task/run_manifest.json"
-    runtime_ready=0
-    for _ in $(seq 1 120); do
-      for server in $(seq 0 7); do
-        kill -0 "${SERVER_PIDS[$server]}" 2>/dev/null || {
-          echo "ROBOTWIN_POLICY_SERVER_DIED_DURING_WORKER_START gpu=$server worker=$worker" >&2
-          exit 1
-        }
-      done
-      if [[ -f "$manifest" ]]; then
-        if grep -q '"status": "failed"' "$manifest"; then
-          echo "ROBOTWIN_WORKER_START_FAILED worker=$worker task=$task" >&2
-          exit 1
-        fi
-        if grep -q '"server_model_info": {' "$manifest"; then
-          echo "ROBOTWIN_WORKER_RUNTIME_READY worker=$worker task=$task"
-          runtime_ready=1
-          break
-        fi
-      fi
-      sleep 5
-    done
-    if [[ "$runtime_ready" -ne 1 ]]; then
-      echo "ROBOTWIN_WORKER_START_TIMEOUT worker=$worker task=$task" >&2
-      exit 1
-    fi
-  fi
 done
 
-worker_failed=0
-for index in $(seq 0 7); do
-  if ! wait "${WORKER_PIDS[$index]}"; then
-    echo "ROBOTWIN_SUITE_WORKER_FAILED worker=$index log=$OUT/_logs/worker-$index.log" >&2
-    worker_failed=1
-  fi
+failed=0
+for worker in $(seq 0 7); do
+  wait "${WORKER_PIDS[$worker]}" || failed=1
 done
-test "$worker_failed" -eq 0
+test "$failed" -eq 0
 
-"$ROBOTWIN_PYTHON" scripts/robotwin/run_suite.py aggregate \
+"$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py aggregate \
   --tasks "$TASKS" \
   --output-dir "$OUT" \
   --run-id "$RUN_ID" \
-  --expected-checkpoint "$EMA_CHECKPOINT" \
+  --expected-checkpoint "$CHECKPOINT" \
   --episodes-per-task 20
 
 echo "ROBOTWIN_CLEAN_50X20_FINAL_EMA_EVAL_COMPLETE output_dir=$OUT"

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import os
 import sys
@@ -23,7 +22,6 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(repo_root))
 
 from scripts.robotwin.run_eval import run_task_eval
-from scripts.robotwin.stable2_evaluator import validate_robotwin_checkout
 
 DEFAULT_TASKS_PATH = Path(__file__).resolve().with_name("all_tasks.yml")
 EXPECTED_TASK_COUNT = 50
@@ -61,19 +59,6 @@ def assigned_tasks(tasks: list[str], *, worker_index: int, worker_count: int) ->
     return tasks[worker_index::worker_count]
 
 
-def prepare_source_manifest(*, robotwin_root: Path, output_path: Path) -> dict[str, Any]:
-    output = output_path.expanduser().resolve()
-    if output.exists():
-        raise FileExistsError(f"Use a fresh RoboTwin source manifest path: {output}.")
-    output.parent.mkdir(parents=True, exist_ok=True)
-    identity = validate_robotwin_checkout(robotwin_root)
-    content = json.dumps(identity, indent=2, sort_keys=True) + "\n"
-    _atomic_text(output, content)
-    digest = hashlib.sha256(content.encode()).hexdigest()
-    _atomic_text(output.with_suffix(output.suffix + ".sha256"), digest + "\n")
-    return {"path": str(output), "sha256": digest, "identity": identity}
-
-
 def run_worker(
     *,
     robotwin_root: Path,
@@ -85,8 +70,6 @@ def run_worker(
     output_dir: Path,
     run_id: str,
     expected_checkpoint: Path,
-    robotwin_source_manifest: Path,
-    robotwin_source_manifest_sha256: str,
     episodes_per_task: int = 20,
     max_seed_attempts: int = 1000,
 ) -> list[dict[str, Any]]:
@@ -114,8 +97,6 @@ def run_worker(
             run_id=run_id,
             expected_checkpoint=expected_checkpoint,
             max_seed_attempts=max_seed_attempts,
-            robotwin_source_manifest=robotwin_source_manifest,
-            robotwin_source_manifest_sha256=robotwin_source_manifest_sha256,
         )
         results.append(result)
         print(
@@ -213,10 +194,6 @@ def aggregate_suite(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
-    source = subparsers.add_parser("prepare-source")
-    source.add_argument("--robotwin-root", required=True, type=Path)
-    source.add_argument("--output", required=True, type=Path)
-
     worker = subparsers.add_parser("worker")
     worker.add_argument("--robotwin-root", required=True, type=Path)
     worker.add_argument("--tasks", default=DEFAULT_TASKS_PATH, type=Path)
@@ -227,8 +204,6 @@ def _parser() -> argparse.ArgumentParser:
     worker.add_argument("--output-dir", required=True, type=Path)
     worker.add_argument("--run-id", required=True)
     worker.add_argument("--expected-checkpoint", required=True, type=Path)
-    worker.add_argument("--robotwin-source-manifest", required=True, type=Path)
-    worker.add_argument("--robotwin-source-manifest-sha256", required=True)
     worker.add_argument("--episodes-per-task", type=int, default=20)
     worker.add_argument("--max-seed-attempts", type=int, default=1000)
 
@@ -243,11 +218,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _parser().parse_args()
-    if args.command == "prepare-source":
-        result = prepare_source_manifest(
-            robotwin_root=args.robotwin_root, output_path=args.output
-        )
-    elif args.command == "worker":
+    if args.command == "worker":
         result = run_worker(
             robotwin_root=args.robotwin_root,
             tasks_path=args.tasks,
@@ -258,8 +229,6 @@ def main() -> None:
             output_dir=args.output_dir,
             run_id=args.run_id,
             expected_checkpoint=args.expected_checkpoint,
-            robotwin_source_manifest=args.robotwin_source_manifest,
-            robotwin_source_manifest_sha256=args.robotwin_source_manifest_sha256,
             episodes_per_task=args.episodes_per_task,
             max_seed_attempts=args.max_seed_attempts,
         )

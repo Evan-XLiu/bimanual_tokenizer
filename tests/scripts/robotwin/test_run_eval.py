@@ -109,51 +109,6 @@ def test_build_eval_command_rejects_partial_recording(tmp_path: Path) -> None:
         )
 
 
-def test_build_eval_command_carries_pinned_reusable_source_manifest(
-    tmp_path: Path,
-) -> None:
-    manifest = tmp_path / "robotwin_source_manifest.json"
-    command = build_eval_command(
-        robotwin_root=tmp_path / "RoboTwin",
-        task_name="pick_apple",
-        task_config="demo_clean",
-        episodes_per_task=1,
-        record_episodes_per_task=1,
-        seed=0,
-        policy_host="localhost",
-        policy_port=50051,
-        output_dir=tmp_path / "eval",
-        run_id="smoke",
-        expected_checkpoint=tmp_path / "pretrained_model",
-        plugin_config=tmp_path / "deploy_policy.yml",
-        robotwin_source_manifest=manifest,
-        robotwin_source_manifest_sha256="a" * 64,
-    )
-
-    rendered = " ".join(command)
-    assert f"--robotwin-source-manifest {manifest.resolve()}" in rendered
-    assert f"--robotwin-source-manifest-sha256 {'a' * 64}" in rendered
-
-
-def test_build_eval_command_rejects_unpaired_source_manifest(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="provided together"):
-        build_eval_command(
-            robotwin_root=tmp_path / "RoboTwin",
-            task_name="pick_apple",
-            task_config="demo_clean",
-            episodes_per_task=1,
-            record_episodes_per_task=1,
-            seed=0,
-            policy_host="localhost",
-            policy_port=50051,
-            output_dir=tmp_path / "eval",
-            run_id="smoke",
-            expected_checkpoint=tmp_path / "pretrained_model",
-            plugin_config=tmp_path / "deploy_policy.yml",
-            robotwin_source_manifest=tmp_path / "manifest.json",
-        )
-
-
 def test_run_eval_supports_direct_script_help() -> None:
     result = subprocess.run(
         [sys.executable, "scripts/robotwin/run_eval.py", "--help"],

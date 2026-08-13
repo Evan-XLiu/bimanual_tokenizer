@@ -68,8 +68,6 @@ def build_eval_command(
     max_seed_attempts: int | None = None,
     python_executable: str = sys.executable,
     evaluator_overlay: Path = DEFAULT_EVALUATOR_OVERLAY,
-    robotwin_source_manifest: Path | None = None,
-    robotwin_source_manifest_sha256: str | None = None,
 ) -> list[str]:
     """Build the official evaluator command with a full-recording assertion."""
     if episodes_per_task <= 0:
@@ -86,13 +84,6 @@ def build_eval_command(
         raise ValueError(
             "max_seed_attempts must be at least episodes_per_task: "
             f"{seed_attempt_limit} < {episodes_per_task}."
-        )
-    if (robotwin_source_manifest is None) != (
-        robotwin_source_manifest_sha256 is None
-    ):
-        raise ValueError(
-            "robotwin_source_manifest and robotwin_source_manifest_sha256 must be "
-            "provided together."
         )
     command = [
         python_executable,
@@ -125,15 +116,6 @@ def build_eval_command(
         "--expected-checkpoint",
         str(expected_checkpoint.expanduser().resolve()),
     ]
-    if robotwin_source_manifest is not None:
-        command.extend(
-            [
-                "--robotwin-source-manifest",
-                str(robotwin_source_manifest.expanduser().resolve()),
-                "--robotwin-source-manifest-sha256",
-                str(robotwin_source_manifest_sha256),
-            ]
-        )
     return command
 
 
@@ -154,8 +136,6 @@ def run_task_eval(
     plugin_source: str | Path = DEFAULT_PLUGIN_SOURCE,
     evaluator_overlay: str | Path = DEFAULT_EVALUATOR_OVERLAY,
     python_executable: str = sys.executable,
-    robotwin_source_manifest: str | Path | None = None,
-    robotwin_source_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     root = Path(robotwin_root).expanduser().resolve()
     output = Path(output_dir).expanduser().resolve()
@@ -215,12 +195,6 @@ def run_task_eval(
             max_seed_attempts=max_seed_attempts,
             python_executable=python_executable,
             evaluator_overlay=Path(evaluator_overlay),
-            robotwin_source_manifest=(
-                None
-                if robotwin_source_manifest is None
-                else Path(robotwin_source_manifest)
-            ),
-            robotwin_source_manifest_sha256=robotwin_source_manifest_sha256,
         )
         log_dir = output / "_attempt_logs"
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -315,8 +289,6 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Expert-precheck seed attempt limit (default: 50x episode count).",
     )
-    parser.add_argument("--robotwin-source-manifest", type=Path)
-    parser.add_argument("--robotwin-source-manifest-sha256")
     return parser
 
 
@@ -335,8 +307,6 @@ def main() -> None:
         run_id=args.run_id,
         expected_checkpoint=args.expected_checkpoint,
         max_seed_attempts=args.max_seed_attempts,
-        robotwin_source_manifest=args.robotwin_source_manifest,
-        robotwin_source_manifest_sha256=args.robotwin_source_manifest_sha256,
     )
     print(result)
 

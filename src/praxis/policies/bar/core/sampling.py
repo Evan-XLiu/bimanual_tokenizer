@@ -16,6 +16,7 @@ def sample_next_token_ids(
     temperature: float | None,
     top_k: int | None,
     allowed_token_ids: Tensor | list[int] | None = None,
+    generator: torch.Generator | None = None,
 ) -> Tensor:
     """Sample or greedily select next-token ids from logits."""
     if logits.ndim != 2:
@@ -63,4 +64,4 @@ def sample_next_token_ids(
         top_values, _ = torch.topk(scores, k=k, dim=-1)
         scores = scores.masked_fill(scores < top_values[:, [-1]], float("-inf"))
     probs = torch.softmax(scores, dim=-1)
-    return torch.multinomial(probs, num_samples=1)
+    return torch.multinomial(probs, num_samples=1, generator=generator)
