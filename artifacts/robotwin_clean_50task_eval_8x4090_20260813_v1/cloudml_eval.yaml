@@ -1,13 +1,13 @@
-jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-v4
+jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-v5
 description: Official RoboTwin 2.0 demo_clean evaluation of the final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded, eight serial task shards on one 8x RTX 4090 node.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
   imageCommand: |-
     set -Eeuo pipefail
-    COMMIT=a1a22fb4bc2a31bc022664d67085b55c821085cc
+    COMMIT=602064a6fa6615d20561d0348eef3b6b25df8699
     BASE_REPO=/mnt/robot-research-exp-0/user/hxs/praxis-vla
-    export PRAXIS_SOURCE_ROOT=/mnt/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v4/praxis-vla
+    export PRAXIS_SOURCE_ROOT=/mnt/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v5/praxis-vla
     test -d "$BASE_REPO/.git"
     if ! git -C "$BASE_REPO" cat-file -e "$COMMIT^{commit}" 2>/dev/null; then
       git -C "$BASE_REPO" fetch origin hxs/codex/robotwin-integration

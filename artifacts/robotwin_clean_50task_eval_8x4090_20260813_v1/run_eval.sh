@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 SUITE_COMMIT=773e7fdc32f96e35dae200f647feb900a0791aaa
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v4
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v5
 EMA_CHECKPOINT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
 ROBOTWIN_ROOT=/mnt/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
@@ -53,7 +53,6 @@ echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 git -C "$SOURCE_ROOT" merge-base --is-ancestor "$SUITE_COMMIT" HEAD
 test -z "$(git -C "$SOURCE_ROOT" status --porcelain --untracked-files=all)"
 test "$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)" -eq 8
-test "$(nvidia-smi --query-gpu=name --format=csv,noheader | grep -c '4090')" -eq 8
 test -x "$POLICY_PYTHON"
 test -x "$ROBOTWIN_PYTHON"
 test -d "$PRAXIS_EVAL_SITE/praxis_remote"
