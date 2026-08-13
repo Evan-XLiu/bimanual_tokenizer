@@ -48,6 +48,7 @@ echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 test ! -e "$OUT"
 test -x "$POLICY_PYTHON"
 test -x "$ROBOTWIN_PYTHON"
+test -f "$(dirname "$(dirname "$POLICY_PYTHON")")/ROBOTWIN_POLICY_ENV_READY"
 test -f "$(dirname "$(dirname "$ROBOTWIN_PYTHON")")/ROBOTWIN_ENV_READY"
 echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK policy_python=$POLICY_PYTHON robotwin_python=$ROBOTWIN_PYTHON"
 
