@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-simple-v1
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-simple-v2
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
 POLICY_ENV=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-policy-py310-v1
@@ -37,9 +37,7 @@ for gpu in $(seq 0 7); do
     device=cuda \
     >"$OUT/_logs/server-$gpu.log" 2>&1 &
   SERVER_PIDS+=("$!")
-done
-
-"$POLICY_PYTHON" - "$CHECKPOINT" <<'PY'
+  "$POLICY_PYTHON" - "$CHECKPOINT" "$port" "$gpu" <<'PY'
 import json
 import sys
 import time
@@ -48,29 +46,28 @@ from pathlib import Path
 from praxis_remote import PolicyClient
 
 expected = Path(sys.argv[1]).resolve()
-pending = set(range(8))
+port = int(sys.argv[2])
+gpu = int(sys.argv[3])
 for _ in range(120):
-    for gpu in list(pending):
-        client = PolicyClient(host="127.0.0.1", port=50051 + gpu, timeout=5.0)
+    client = PolicyClient(host="127.0.0.1", port=port, timeout=5.0)
+    try:
         try:
-            try:
-                ready, model_info = client.health_check()
-                loaded = Path(
-                    json.loads(model_info)["serving_artifact"]["checkpoint"]["path"]
-                ).resolve()
-                if ready and loaded == expected:
-                    print(f"ROBOTWIN_POLICY_SERVER_READY gpu={gpu}", flush=True)
-                    pending.remove(gpu)
-            except Exception:
-                pass
-        finally:
-            client.close()
-    if not pending:
-        break
+            ready, model_info = client.health_check()
+            loaded = Path(
+                json.loads(model_info)["serving_artifact"]["checkpoint"]["path"]
+            ).resolve()
+            if ready and loaded == expected:
+                print(f"ROBOTWIN_POLICY_SERVER_READY gpu={gpu}", flush=True)
+                break
+        except Exception:
+            pass
+    finally:
+        client.close()
     time.sleep(5)
 else:
-    raise RuntimeError(f"Policy servers did not become ready: {sorted(pending)}")
+    raise RuntimeError(f"Policy server did not become ready: gpu={gpu}")
 PY
+done
 
 for worker in $(seq 0 7); do
   port=$((50051 + worker))

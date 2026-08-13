@@ -1,4 +1,4 @@
-jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-simple-v1
+jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-simple-v2
 description: Official RoboTwin 2.0 demo_clean evaluation of final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded.
 accessType: PRIVATE
 imageConfig:
