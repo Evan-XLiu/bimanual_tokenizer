@@ -2,14 +2,16 @@
 set -Eeuo pipefail
 
 SUITE_COMMIT=773e7fdc32f96e35dae200f647feb900a0791aaa
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v3
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v4
 EMA_CHECKPOINT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
 ROBOTWIN_ROOT=/mnt/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
 ENV_ROOT=/mnt/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
 ROBOTWIN_PYTHON=/root/miniforge3/envs/RoboTwin/bin/python
-PRAXIS_EVAL_SITE=$ENV_ROOT/.venv-robotwin/lib/python3.10/site-packages
+PRAXIS_EVAL_PYTHON=$ENV_ROOT/.venv-robotwin/bin/python
+test -x "$PRAXIS_EVAL_PYTHON"
+PRAXIS_EVAL_SITE=$($PRAXIS_EVAL_PYTHON -c 'import sysconfig; print(sysconfig.get_path("purelib"))')
 OUT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 SOURCE_MANIFEST=$OUT/_provenance/robotwin_source_manifest.json
@@ -47,6 +49,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 git -C "$SOURCE_ROOT" merge-base --is-ancestor "$SUITE_COMMIT" HEAD
 test -z "$(git -C "$SOURCE_ROOT" status --porcelain --untracked-files=all)"
 test "$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)" -eq 8
@@ -61,6 +64,7 @@ test -f "$EMA_CHECKPOINT/norm_stats.pt"
 test -d "$ROBOTWIN_ROOT/.git"
 test "$(git -C "$ROBOTWIN_ROOT" rev-parse HEAD)" = 5fafb0efb7bab9678796642b05a8939ca1068a47
 test ! -e "$OUT"
+echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK praxis_eval_site=$PRAXIS_EVAL_SITE"
 
 mkdir -p "$HOME" "$TMPDIR" "$XDG_CACHE_HOME" "$TORCH_HOME" \
   "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$PYTHONPYCACHEPREFIX" \
@@ -69,14 +73,17 @@ mkdir -p "$HOME" "$TMPDIR" "$XDG_CACHE_HOME" "$TORCH_HOME" \
 CUDA_VISIBLE_DEVICES=0 "$ROBOTWIN_PYTHON" -c \
   "import av, sapien, yaml; from praxis_remote import PolicyClient; del av, yaml, PolicyClient; sapien.SapienRenderer(); print('ROBOTWIN_4090_SAPIEN_RENDERER_OK', flush=True)"
 
+echo "ROBOTWIN_EMA_CONTRACT_CHECK_START checkpoint=$EMA_CHECKPOINT"
 "$POLICY_PYTHON" -c \
   "from praxis.serving.model_identity import validate_robotwin_ar_bin_contract; print(validate_robotwin_ar_bin_contract('$EMA_CHECKPOINT'), flush=True)"
 
 cd "$SOURCE_ROOT"
+echo "ROBOTWIN_SOURCE_MANIFEST_START root=$ROBOTWIN_ROOT"
 "$ROBOTWIN_PYTHON" scripts/robotwin/run_suite.py prepare-source \
   --robotwin-root "$ROBOTWIN_ROOT" \
   --output "$SOURCE_MANIFEST"
 SOURCE_MANIFEST_SHA256=$(tr -d '[:space:]' < "$SOURCE_MANIFEST.sha256")
+echo "ROBOTWIN_SOURCE_MANIFEST_READY sha256=$SOURCE_MANIFEST_SHA256"
 
 for gpu in $(seq 0 7); do
   port=$((50051 + gpu))
