@@ -4,7 +4,20 @@ accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
   imageCommand: |-
-    export PRAXIS_SOURCE_ROOT=/ml-engine/code/0ac89a7120b29d5fc7a93ed284280566c1de435a
+    set -Eeuo pipefail
+    COMMIT=c0c6a0b5234df37cca6084d5e189ce3a5ec1e792
+    BASE_REPO=/mnt/robot-research-exp-0/user/hxs/praxis-vla
+    export PRAXIS_SOURCE_ROOT=/mnt/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v1/praxis-vla
+    test -d "$BASE_REPO/.git"
+    if ! git -C "$BASE_REPO" cat-file -e "$COMMIT^{commit}" 2>/dev/null; then
+      git -C "$BASE_REPO" fetch origin hxs/codex/robotwin-integration
+    fi
+    test ! -e "$PRAXIS_SOURCE_ROOT"
+    mkdir -p "$(dirname "$PRAXIS_SOURCE_ROOT")"
+    git clone --no-checkout --shared "$BASE_REPO" "$PRAXIS_SOURCE_ROOT"
+    git -C "$PRAXIS_SOURCE_ROOT" checkout --detach "$COMMIT"
+    test "$(git -C "$PRAXIS_SOURCE_ROOT" rev-parse HEAD)" = "$COMMIT"
+    test -z "$(git -C "$PRAXIS_SOURCE_ROOT" status --porcelain --untracked-files=all)"
     exec bash "$PRAXIS_SOURCE_ROOT/artifacts/robotwin_clean_50task_eval_8x4090_20260813_v1/run_eval.sh"
 modelUri: ""
 juiceFsMountConfigs:
@@ -18,10 +31,6 @@ juiceFsMountConfigs:
     subPath: /
     mountPath: /mnt/robot-research-exp-0
     readOnly: false
-codeConfig:
-  codeUrl: https://git.n.xiaomi.com/hanxiaoshen/tokenizer-training.git
-  codeBranch: hxs/codex/robotwin-integration
-  codeCommit: 0ac89a7120b29d5fc7a93ed284280566c1de435a
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES
     value: all
