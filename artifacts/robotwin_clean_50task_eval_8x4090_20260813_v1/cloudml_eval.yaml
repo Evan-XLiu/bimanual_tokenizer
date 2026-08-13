@@ -1,10 +1,13 @@
-jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-simple-v5-remote-h20-server
+jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-simple-v6-graphics
 description: Official RoboTwin 2.0 demo_clean evaluation of final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
   imageCommand: exec bash /robot/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-simple-v1/praxis-vla/artifacts/robotwin_clean_50task_eval_8x4090_20260813_v1/run_eval.sh
 modelUri: ""
+envConfigs:
+  - key: NVIDIA_DRIVER_CAPABILITIES
+    value: all
 juiceFsMountConfigs:
   - volume: robot-research-raw-data-0
     juiceFsCluster: bj9-cloudml-ali2
