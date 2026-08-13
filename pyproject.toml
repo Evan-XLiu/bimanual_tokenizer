@@ -151,6 +151,7 @@ praxis = [
     "configs/*.yaml",
     "configs/*/*.yaml",
     "configs/*/*/*.yaml",
+    "configs/*/*/*/*.yaml",
 ]
 
 [tool.ruff]
