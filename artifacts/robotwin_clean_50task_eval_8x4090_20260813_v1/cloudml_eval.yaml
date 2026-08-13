@@ -1,4 +1,4 @@
-jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8xh20e-simple-v1
+jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-simple-v1
 description: Official RoboTwin 2.0 demo_clean evaluation of final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded.
 accessType: PRIVATE
 imageConfig:
@@ -16,7 +16,7 @@ juiceFsMountConfigs:
     subPath: /
     mountPath: /robot/robot-research-exp-0
     readOnly: false
-queueId: "3649"
+queueId: "12580"
 priority: 8
 preemptible: false
 framework: pytorch
@@ -25,7 +25,7 @@ resourceConfigs:
     nodeNumber: 1
     perNodeResourceSpec:
       resourcePriority: GUARANTEED_PUBLIC
-      resourceName: cloudml.ng1h20e-8-8.20-224
+      resourceName: cloudml.nv1r49-8-8.13-112
       resourceNumber: 8
     elastic: false
     preemptible: false
