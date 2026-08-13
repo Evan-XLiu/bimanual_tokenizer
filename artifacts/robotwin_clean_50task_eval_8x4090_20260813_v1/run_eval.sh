@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-v15
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-v16
 EMA_CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/robotwin-bar-bin-qwen3vl2b-h32-final-ema-step10095-robot-mount-v1/pretrained_model
 ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
-SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
+SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 ENV_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
 ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v2/bin/python
 OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 SOURCE_MANIFEST=$OUT/_provenance/robotwin_source_manifest.json
+PINNED_SOURCE_MANIFEST=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-v15/_provenance/robotwin_source_manifest.json
 
 export HOME=/robot/robot-research-exp-0/user/hxs/home
 export TMPDIR=/robot/robot-research-exp-0/user/hxs/tmp/$RUN_ID
@@ -61,22 +62,27 @@ echo "ROBOTWIN_EMA_CONTRACT_CHECK_START checkpoint=$EMA_CHECKPOINT"
   "from praxis.serving.model_identity import validate_robotwin_ar_bin_contract; print(validate_robotwin_ar_bin_contract('$EMA_CHECKPOINT'), flush=True)"
 
 cd "$SOURCE_ROOT"
-echo "ROBOTWIN_SOURCE_MANIFEST_START root=$ROBOTWIN_ROOT"
-"$ROBOTWIN_PYTHON" scripts/robotwin/run_suite.py prepare-source \
-  --robotwin-root "$ROBOTWIN_ROOT" \
-  --output "$SOURCE_MANIFEST"
+test -f "$PINNED_SOURCE_MANIFEST"
+test -f "$PINNED_SOURCE_MANIFEST.sha256"
+cp "$PINNED_SOURCE_MANIFEST" "$SOURCE_MANIFEST"
+cp "$PINNED_SOURCE_MANIFEST.sha256" "$SOURCE_MANIFEST.sha256"
 SOURCE_MANIFEST_SHA256=$(tr -d '[:space:]' < "$SOURCE_MANIFEST.sha256")
 echo "ROBOTWIN_SOURCE_MANIFEST_READY sha256=$SOURCE_MANIFEST_SHA256"
 
 for gpu in $(seq 0 7); do
   port=$((50051 + gpu))
-  CUDA_VISIBLE_DEVICES=$gpu "$POLICY_PYTHON" -m praxis.scripts.serve \
-    policy=bar_bin_qwen \
-    policy.pretrained_path="$EMA_CHECKPOINT" \
-    host=127.0.0.1 \
-    port="$port" \
-    device=cuda \
-    >"$OUT/_logs/server-$gpu.log" 2>&1 &
+  (
+    set +e
+    CUDA_VISIBLE_DEVICES=$gpu "$POLICY_PYTHON" -m praxis.scripts.serve \
+      policy=bar_bin_qwen \
+      policy.pretrained_path="$EMA_CHECKPOINT" \
+      host=127.0.0.1 \
+      port="$port" \
+      device=cuda
+    exit_code=$?
+    echo "ROBOTWIN_POLICY_SERVER_EXIT gpu=$gpu port=$port code=$exit_code"
+    exit "$exit_code"
+  ) > >(tee "$OUT/_logs/server-$gpu.log" | sed -u "s/^/[server-$gpu] /") 2>&1 &
   SERVER_PIDS+=("$!")
 done
 
@@ -113,7 +119,8 @@ for gpu in range(8):
                     )
                     break
             except Exception:
-                time.sleep(5)
+                pass
+            time.sleep(5)
         else:
             raise RuntimeError(
                 f"Policy server {gpu} did not become ready; see "
@@ -124,6 +131,14 @@ for gpu in range(8):
 PY
 
 for worker in $(seq 0 7); do
+  for server in $(seq 0 7); do
+    if ! kill -0 "${SERVER_PIDS[$server]}" 2>/dev/null; then
+      exit_code=0
+      wait "${SERVER_PIDS[$server]}" || exit_code=$?
+      echo "ROBOTWIN_POLICY_SERVER_DIED gpu=$server code=$exit_code" >&2
+      exit 1
+    fi
+  done
   port=$((50051 + worker))
   CUDA_VISIBLE_DEVICES=$worker "$ROBOTWIN_PYTHON" scripts/robotwin/run_suite.py worker \
     --robotwin-root "$ROBOTWIN_ROOT" \
@@ -141,6 +156,37 @@ for worker in $(seq 0 7); do
     --max-seed-attempts 1000 \
     > >(tee "$OUT/_logs/worker-$worker.log" | sed -u "s/^/[worker-$worker] /") 2>&1 &
   WORKER_PIDS+=("$!")
+  if [[ "$worker" -lt 7 ]]; then
+    task=$("$ROBOTWIN_PYTHON" -c \
+      "import sys, yaml; print(yaml.safe_load(open(sys.argv[1]))['tasks'][int(sys.argv[2])])" \
+      "$TASKS" "$worker")
+    manifest="$OUT/$task/run_manifest.json"
+    runtime_ready=0
+    for _ in $(seq 1 120); do
+      for server in $(seq 0 7); do
+        kill -0 "${SERVER_PIDS[$server]}" 2>/dev/null || {
+          echo "ROBOTWIN_POLICY_SERVER_DIED_DURING_WORKER_START gpu=$server worker=$worker" >&2
+          exit 1
+        }
+      done
+      if [[ -f "$manifest" ]]; then
+        if grep -q '"status": "failed"' "$manifest"; then
+          echo "ROBOTWIN_WORKER_START_FAILED worker=$worker task=$task" >&2
+          exit 1
+        fi
+        if grep -q '"server_model_info": {' "$manifest"; then
+          echo "ROBOTWIN_WORKER_RUNTIME_READY worker=$worker task=$task"
+          runtime_ready=1
+          break
+        fi
+      fi
+      sleep 5
+    done
+    if [[ "$runtime_ready" -ne 1 ]]; then
+      echo "ROBOTWIN_WORKER_START_TIMEOUT worker=$worker task=$task" >&2
+      exit 1
+    fi
+  fi
 done
 
 worker_failed=0
