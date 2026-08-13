@@ -1,0 +1,49 @@
+{
+  "action_dim": 14,
+  "action_embed_init": "normal",
+  "action_horizon": 32,
+  "action_mask_token_template": "<|action_mask|>",
+  "action_token_template": "<|action_{i}|>",
+  "action_tokenizer": {
+    "kind": "tokens",
+    "name": "bin",
+    "pretrained_path": "/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/bin_h32_smoke_v2/checkpoints/latest/pretrained_model"
+  },
+  "block_ce_weighting": "block_mean",
+  "ce_vocab_scope": "action",
+  "decode_keep_k": null,
+  "decode_stop_mode": "fixed_budget",
+  "decode_temperature": null,
+  "decode_top_k": null,
+  "default_instruction": "Analyze the input image(s) and predict robot actions.",
+  "freeze_action_tokenizer": true,
+  "freeze_vision_encoder": false,
+  "gradient_checkpointing": true,
+  "lora_alpha": 16,
+  "lora_dropout": 0.05,
+  "lora_modules_to_save": [
+    "lm_head",
+    "embed_tokens"
+  ],
+  "lora_r": 64,
+  "lora_target_modules": [
+    "q_proj",
+    "v_proj",
+    "k_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj"
+  ],
+  "max_new_tokens": null,
+  "n_action_steps": 16,
+  "n_obs_steps": 1,
+  "name": "bar_bin_qwen",
+  "num_action_tokens": null,
+  "pretrained_path": null,
+  "state_prefix_encoding": "discrete_text",
+  "state_prefix_num_bins": 256,
+  "use_lora": false,
+  "vlm_dtype": "bfloat16",
+  "vlm_model_name": "/robot/robot-research-exp-0/user/hxs/hf_cache/hub/models--Qwen--Qwen3-VL-2B-Instruct/snapshots/89644892e4d85e24eaac8bacfd4f463576704203"
+}

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v12
-EMA_CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v13
+EMA_CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/robotwin-bar-bin-qwen3vl2b-h32-final-ema-step10095-robot-mount-v1/pretrained_model
 ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
 ENV_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
-ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v1/bin/python
+ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v2/bin/python
 OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 SOURCE_MANIFEST=$OUT/_provenance/robotwin_source_manifest.json
@@ -48,6 +48,7 @@ echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 test ! -e "$OUT"
 test -x "$POLICY_PYTHON"
 test -x "$ROBOTWIN_PYTHON"
+test -f "$(dirname "$(dirname "$ROBOTWIN_PYTHON")")/ROBOTWIN_ENV_READY"
 echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK policy_python=$POLICY_PYTHON robotwin_python=$ROBOTWIN_PYTHON"
 
 mkdir -p "$HOME" "$TMPDIR" "$XDG_CACHE_HOME" "$TORCH_HOME" \
