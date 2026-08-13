@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-v16
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8xh20e-20260813-v18
 EMA_CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/robotwin-bar-bin-qwen3vl2b-h32-final-ema-step10095-robot-mount-v1/pretrained_model
 ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 ENV_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
+POLICY_SERVER=$ENV_ROOT/.venv/bin/praxis-serve
 ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v2/bin/python
 OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
@@ -48,6 +49,7 @@ trap cleanup EXIT INT TERM
 echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 test ! -e "$OUT"
 test -x "$POLICY_PYTHON"
+test -x "$POLICY_SERVER"
 test -x "$ROBOTWIN_PYTHON"
 test -f "$(dirname "$(dirname "$POLICY_PYTHON")")/ROBOTWIN_POLICY_ENV_READY"
 test -f "$(dirname "$(dirname "$ROBOTWIN_PYTHON")")/ROBOTWIN_ENV_READY"
@@ -73,7 +75,7 @@ for gpu in $(seq 0 7); do
   port=$((50051 + gpu))
   (
     set +e
-    CUDA_VISIBLE_DEVICES=$gpu "$POLICY_PYTHON" -m praxis.scripts.serve \
+    CUDA_VISIBLE_DEVICES=$gpu "$POLICY_SERVER" \
       policy=bar_bin_qwen \
       policy.pretrained_path="$EMA_CHECKPOINT" \
       host=127.0.0.1 \
