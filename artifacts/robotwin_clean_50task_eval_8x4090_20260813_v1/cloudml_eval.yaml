@@ -1,13 +1,13 @@
-jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8x4090-v13
-description: Official RoboTwin 2.0 demo_clean evaluation of the final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded, eight serial task shards on one 8x RTX 4090 node.
+jobName: praxis-robotwin-clean-50x20-ar-bin-final-ema-step10095-8xh20e-v14
+description: Official RoboTwin 2.0 demo_clean evaluation of the final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0, all 1000 episodes recorded, eight serial task shards on one 8x H20e 141 GB node.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
   imageCommand: |-
     set -Eeuo pipefail
-    COMMIT=85321c674f3e3601624f2b949d497e3c4665d502
+    COMMIT=a2839204ecf44b19d7e2414e918595f3f8d1ad49
     BASE_REPO=/robot/robot-research-exp-0/user/hxs/praxis-vla
-    export PRAXIS_SOURCE_ROOT=/robot/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v13/praxis-vla
+    export PRAXIS_SOURCE_ROOT=/robot/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v14-h20e/praxis-vla
     test -d "$BASE_REPO/.git"
     if ! git -C "$BASE_REPO" cat-file -e "$COMMIT^{commit}" 2>/dev/null; then
       git -C "$BASE_REPO" fetch origin hxs/codex/robotwin-integration
@@ -34,7 +34,7 @@ juiceFsMountConfigs:
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES
     value: all
-queueId: "12580"
+queueId: "3649"
 priority: 8
 preemptible: false
 framework: pytorch
@@ -43,7 +43,7 @@ resourceConfigs:
     nodeNumber: 1
     perNodeResourceSpec:
       resourcePriority: GUARANTEED_PUBLIC
-      resourceName: cloudml.nv1r49-8-8.13-112
+      resourceName: cloudml.ng1h20e-8-8.20-224
       resourceNumber: 8
     elastic: false
     preemptible: false
