@@ -2,13 +2,14 @@
 set -Eeuo pipefail
 
 SUITE_COMMIT=773e7fdc32f96e35dae200f647feb900a0791aaa
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v1
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v2
 EMA_CHECKPOINT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
 ROBOTWIN_ROOT=/mnt/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
 ENV_ROOT=/mnt/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
 ROBOTWIN_PYTHON=$ENV_ROOT/.venv-robotwin/bin/python
+ROBOTWIN_SITE=/root/miniforge3/envs/RoboTwin/lib/python3.10/site-packages
 OUT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 SOURCE_MANIFEST=$OUT/_provenance/robotwin_source_manifest.json
@@ -22,7 +23,7 @@ export TORCH_HOME=/mnt/robot-research-exp-0/user/hxs/cache/torch/$RUN_ID
 export TRITON_CACHE_DIR=/mnt/robot-research-exp-0/user/hxs/cache/triton/$RUN_ID
 export TORCHINDUCTOR_CACHE_DIR=/mnt/robot-research-exp-0/user/hxs/cache/torchinductor/$RUN_ID
 export PYTHONPYCACHEPREFIX=/mnt/robot-research-exp-0/user/hxs/cache/pycache/$RUN_ID
-export PYTHONPATH=$SOURCE_ROOT/src:$SOURCE_ROOT:$ROBOTWIN_ROOT/envs/curobo/src
+export PYTHONPATH=$SOURCE_ROOT/src:$SOURCE_ROOT:$ROBOTWIN_ROOT/envs/curobo/src:$ROBOTWIN_SITE
 export PYTHONNOUSERSITE=1
 export PYTHONUNBUFFERED=1
 export TOKENIZERS_PARALLELISM=false
@@ -52,6 +53,7 @@ test "$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)" -eq 8
 test "$(nvidia-smi --query-gpu=name --format=csv,noheader | grep -c '4090')" -eq 8
 test -x "$POLICY_PYTHON"
 test -x "$ROBOTWIN_PYTHON"
+test -d "$ROBOTWIN_SITE/sapien"
 test -f "$EMA_CHECKPOINT/model.safetensors"
 test -f "$EMA_CHECKPOINT/config.json"
 test -f "$EMA_CHECKPOINT/policy_io.json"
