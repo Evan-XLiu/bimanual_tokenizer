@@ -2,7 +2,7 @@ policy_name: praxis_ar
 task_name: null
 task_config: null
 seed: 0
-instruction_type: unseen
+instruction_type: seen
 eval_num_episodes: 100
 
 host: 127.0.0.1

@@ -881,7 +881,7 @@ def test_stable2_eval_uses_direct_read_only_setup_and_matches_checkpoint(
         get_embodiment_config=lambda _path: {
             "arm_joints_name": [["left"], ["right"]]
         },
-        class_decorator=lambda _task: object(),
+        class_decorator=lambda _task: SimpleNamespace(step_lim=None),
         eval_function_decorator=decorated,
         main=lambda config: main_calls.append(config),
     )
@@ -915,6 +915,7 @@ def test_stable2_eval_uses_direct_read_only_setup_and_matches_checkpoint(
 
     def fake_rollouts(**kwargs):
         output = Path(kwargs["output_dir"])
+        kwargs["task_env"].step_lim = 400
         assert kwargs["output_dir_precreated"] is True
         assert output.is_dir()
         (output / "episode_records.jsonl").write_text("")
@@ -1016,7 +1017,7 @@ def test_stable2_eval_preserves_failed_manifest_and_closes_model(
     monkeypatch.setattr(
         "scripts.robotwin.stable2_evaluator._prepare_official_runtime",
         lambda **_kwargs: (
-            object(),
+            SimpleNamespace(step_lim=None),
             {"eval_video_log": True},
             model,
             "2x2",
@@ -1025,7 +1026,10 @@ def test_stable2_eval_preserves_failed_manifest_and_closes_model(
     )
     monkeypatch.setattr(
         "scripts.robotwin.stable2_evaluator.run_controlled_rollouts",
-        lambda **_kwargs: (_ for _ in ()).throw(ConnectionError("RPC failed")),
+        lambda **_kwargs: (
+            setattr(_kwargs["task_env"], "step_lim", 400),
+            (_ for _ in ()).throw(ConnectionError("RPC failed")),
+        )[1],
     )
 
     with pytest.raises(ConnectionError, match="RPC failed"):

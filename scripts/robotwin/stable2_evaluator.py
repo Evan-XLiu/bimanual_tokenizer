@@ -1013,13 +1013,25 @@ def _run_stable2_eval_impl(
         raise ValueError(f"{task_config_path} must set eval_video_log: true.")
 
     config = _load_yaml_mapping(plugin_config_path)
+    instruction_type = config.get("instruction_type")
+    if not isinstance(instruction_type, str) or not instruction_type:
+        raise ValueError("Praxis RoboTwin plugin must set instruction_type.")
+    official_instruction_type = task_args.get("eval_instruction")
+    if (
+        official_instruction_type is not None
+        and instruction_type != official_instruction_type
+    ):
+        raise ValueError(
+            "Praxis RoboTwin instruction_type must match the official task config: "
+            f"{instruction_type!r} != {official_instruction_type!r}."
+        )
     config.update(
         {
             "task_name": task_name,
             "task_config": task_config,
             "ckpt_setting": run_id,
             "policy_name": "praxis_ar",
-            "instruction_type": config.get("instruction_type", "unseen"),
+            "instruction_type": instruction_type,
             "seed": int(seed),
             "host": policy_host,
             "port": int(policy_port),
@@ -1064,6 +1076,9 @@ def _run_stable2_eval_impl(
         "episodes_per_task": episodes_per_task,
         "record_episodes_per_task": record_episodes_per_task,
         "seed": seed,
+        "instruction_type": instruction_type,
+        "official_eval_instruction": official_instruction_type,
+        "task_step_limit": None,
         "instruction_selection": {
             "algorithm": "numpy.default_rng/PCG64",
             "rng_seed": instruction_rng_seed,
@@ -1121,6 +1136,13 @@ def _run_stable2_eval_impl(
             instruction_rng_seed=instruction_rng_seed,
             output_dir_precreated=True,
         )
+        task_step_limit = getattr(task_env, "step_lim", None)
+        if not isinstance(task_step_limit, int) or task_step_limit <= 0:
+            raise RuntimeError(
+                f"RoboTwin task {task_name!r} has invalid step limit "
+                f"{task_step_limit!r}."
+            )
+        run_manifest["task_step_limit"] = task_step_limit
         close_model = official.eval_function_decorator("praxis_ar", "close_model")
         close_model(model)
         model = None
