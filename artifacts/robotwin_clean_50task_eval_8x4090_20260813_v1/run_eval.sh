@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v9
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v10
 EMA_CHECKPOINT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
 ROBOTWIN_ROOT=/mnt/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
 ENV_ROOT=/mnt/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
 ROBOTWIN_PYTHON=/root/miniforge3/envs/RoboTwin/bin/python
-PRAXIS_REMOTE_PACKAGE=$($POLICY_PYTHON -c 'import pathlib, praxis_remote.client; print(pathlib.Path(praxis_remote.client.__file__).resolve().parent)')
-PYTHON_BRIDGE=/mnt/robot-research-exp-0/user/hxs/tmp/$RUN_ID/python-bridge
 OUT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 SOURCE_MANIFEST=$OUT/_provenance/robotwin_source_manifest.json
@@ -23,7 +21,7 @@ export TORCH_HOME=/mnt/robot-research-exp-0/user/hxs/cache/torch/$RUN_ID
 export TRITON_CACHE_DIR=/mnt/robot-research-exp-0/user/hxs/cache/triton/$RUN_ID
 export TORCHINDUCTOR_CACHE_DIR=/mnt/robot-research-exp-0/user/hxs/cache/torchinductor/$RUN_ID
 export PYTHONPYCACHEPREFIX=/mnt/robot-research-exp-0/user/hxs/cache/pycache/$RUN_ID
-export PYTHONPATH=$SOURCE_ROOT/src:$SOURCE_ROOT:$ROBOTWIN_ROOT/envs/curobo/src:$PYTHON_BRIDGE
+export PYTHONPATH=$SOURCE_ROOT/src:$SOURCE_ROOT:$ROBOTWIN_ROOT/envs/curobo/src
 export PYTHONNOUSERSITE=1
 export PYTHONUNBUFFERED=1
 export TOKENIZERS_PARALLELISM=false
@@ -49,9 +47,8 @@ trap cleanup EXIT INT TERM
 
 echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 test ! -e "$OUT"
-mkdir -p "$PYTHON_BRIDGE"
-ln -s "$PRAXIS_REMOTE_PACKAGE" "$PYTHON_BRIDGE/praxis_remote"
-echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK praxis_remote=$PRAXIS_REMOTE_PACKAGE"
+"$ROBOTWIN_PYTHON" -m pip install --no-deps praxis-remote==0.1.1
+echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK praxis_remote=0.1.1"
 
 mkdir -p "$HOME" "$TMPDIR" "$XDG_CACHE_HOME" "$TORCH_HOME" \
   "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$PYTHONPYCACHEPREFIX" \
