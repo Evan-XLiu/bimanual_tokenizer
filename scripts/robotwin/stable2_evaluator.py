@@ -266,8 +266,6 @@ def run_controlled_rollouts(
                     is_test=True,
                     **args,
                 )
-                episode_info = task_env.play_once()
-                task_env.close_env()
             except official.UnStableError as exc:
                 task_env.close_env()
                 attempts.write(
@@ -292,6 +290,31 @@ def run_controlled_rollouts(
                 task_env.close_env()
                 args["render_freq"] = render_freq
                 raise
+
+            try:
+                episode_info = task_env.play_once()
+                task_env.close_env()
+            except Exception as exc:
+                task_env.close_env()
+                attempts.write(
+                    json.dumps(
+                        {
+                            "attempt_index": seed_attempts - 1,
+                            "seed": attempted_seed,
+                            "accepted": False,
+                            "reason": "expert_precheck_error",
+                            "error_type": type(exc).__qualname__,
+                            "detail": str(exc),
+                        },
+                        sort_keys=True,
+                    )
+                    + "\n"
+                )
+                attempts.flush()
+                os.fsync(attempts.fileno())
+                now_seed += 1
+                args["render_freq"] = render_freq
+                continue
 
             if not (task_env.plan_success and task_env.check_success()):
                 attempts.write(

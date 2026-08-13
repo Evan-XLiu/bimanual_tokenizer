@@ -65,6 +65,8 @@ class _TaskEnv:
         self.close_calls = 0
         self.unstable_seeds = {100000}
         self.unexpected_error: Exception | None = None
+        self.expert_errors: dict[int, Exception] = {}
+        self.current_seed: int | None = None
         self.expert_success = True
 
     def setup_demo(self, *, now_ep_num, seed, **args):
@@ -74,11 +76,14 @@ class _TaskEnv:
             raise self.unexpected_error
         if seed in self.unstable_seeds:
             raise _UnstableError("rejected seed")
+        self.current_seed = seed
         self.eval_video_path = Path(args["eval_video_save_dir"])
         self.take_action_cnt = 0
         self.eval_success = False
 
     def play_once(self):
+        if self.current_seed in self.expert_errors:
+            raise self.expert_errors[self.current_seed]
         return {"info": {"object": "apple"}}
 
     def close_env(self, **_kwargs):
@@ -398,6 +403,66 @@ def test_controlled_rollout_reraises_unexpected_precheck_error(
         )
 
     assert env.setup_seeds == [100000]
+
+
+def test_controlled_rollout_skips_official_expert_play_error(tmp_path: Path) -> None:
+    def policy_eval(task_env, _model, _observation):
+        frame = np.zeros((2, 2, 3), dtype=np.uint8).tobytes()
+        task_env.eval_video_ffmpeg.stdin.write(frame)
+        task_env.take_action_cnt += 1
+        task_env.eval_success = True
+        task_env.eval_video_ffmpeg.stdin.write(frame)
+
+    official = SimpleNamespace(
+        UnStableError=_UnstableError,
+        generate_episode_descriptions=lambda *_args: [
+            {"unseen": ["put the apple in the bowl"]}
+        ],
+        eval_function_decorator=lambda _policy, name: (
+            policy_eval if name == "eval" else lambda _model: None
+        ),
+    )
+    env = _TaskEnv()
+    env.unstable_seeds = set()
+    env.expert_errors[100000] = TypeError("grasp pose is unavailable")
+    output_dir = tmp_path / "eval"
+
+    _, successes = run_controlled_rollouts(
+        official=official,
+        task_name="pick_apple",
+        task_env=env,
+        args={
+            "task_name": "pick_apple",
+            "policy_name": "praxis_ar",
+            "clear_cache_freq": 5,
+            "render_freq": 0,
+            "eval_video_log": True,
+        },
+        model=object(),
+        start_seed=100000,
+        episodes=1,
+        video_size="2x2",
+        instruction_type="unseen",
+        output_dir=output_dir,
+        max_seed_attempts=2,
+        popen_factory=_FakeProcess,
+    )
+
+    assert successes == 1
+    assert env.setup_seeds == [100000, 100001, 100001]
+    attempts = [
+        json.loads(line)
+        for line in (output_dir / "seed_attempts.jsonl").read_text().splitlines()
+    ]
+    assert attempts[0] == {
+        "accepted": False,
+        "attempt_index": 0,
+        "detail": "grasp pose is unavailable",
+        "error_type": "TypeError",
+        "reason": "expert_precheck_error",
+        "seed": 100000,
+    }
+    assert attempts[1]["accepted"] is True
 
 
 def test_rollout_failure_reaps_video_and_closes_environment(tmp_path: Path) -> None:

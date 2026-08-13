@@ -25,16 +25,19 @@ def test_official_clean_task_set_has_exactly_50_unique_tasks() -> None:
     assert tasks[-1] == "turn_switch"
 
 
-def test_eight_way_assignment_covers_each_task_once_without_seed_sharding() -> None:
+def test_twenty_four_way_assignment_covers_each_task_once_without_seed_sharding() -> None:
     tasks = load_official_tasks()
     assignments = [
-        assigned_tasks(tasks, worker_index=index, worker_count=8) for index in range(8)
+        assigned_tasks(tasks, worker_index=index, worker_count=24) for index in range(24)
     ]
 
     assert sorted(task for assignment in assignments for task in assignment) == sorted(
         tasks
     )
-    assert [len(assignment) for assignment in assignments] == [7, 7, 6, 6, 6, 6, 6, 6]
+    assert [len(assignment) for assignment in assignments] == [
+        *([3] * 2),
+        *([2] * 22),
+    ]
 
 
 def test_plugin_matches_official_demo_clean_seen_protocol() -> None:
