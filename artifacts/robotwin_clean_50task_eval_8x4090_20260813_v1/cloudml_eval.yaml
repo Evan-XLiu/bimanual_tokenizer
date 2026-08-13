@@ -5,7 +5,7 @@ imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
   imageCommand: |-
     set -Eeuo pipefail
-    COMMIT=95c4f709adfec3e0625301cad7ee3b1cea54dacf
+    COMMIT=85321c674f3e3601624f2b949d497e3c4665d502
     BASE_REPO=/robot/robot-research-exp-0/user/hxs/praxis-vla
     export PRAXIS_SOURCE_ROOT=/robot/robot-research-exp-0/user/hxs/source-runs/robotwin-clean-50x20-final-ema-20260813-v13/praxis-vla
     test -d "$BASE_REPO/.git"
