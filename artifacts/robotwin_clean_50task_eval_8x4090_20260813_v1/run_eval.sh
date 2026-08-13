@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v7
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v8
 EMA_CHECKPOINT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
 ROBOTWIN_ROOT=/mnt/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
 ENV_ROOT=/mnt/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
 ROBOTWIN_PYTHON=/root/miniforge3/envs/RoboTwin/bin/python
-PRAXIS_REMOTE_PACKAGE=$($POLICY_PYTHON -c 'import pathlib, praxis_remote; print(pathlib.Path(praxis_remote.__file__).resolve().parent)')
+POLICY_SITE=$($POLICY_PYTHON -c 'import sysconfig; print(sysconfig.get_path("purelib"))')
+PRAXIS_REMOTE_PACKAGE=$POLICY_SITE/praxis_remote
 PYTHON_BRIDGE=/mnt/robot-research-exp-0/user/hxs/tmp/$RUN_ID/python-bridge
 OUT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
