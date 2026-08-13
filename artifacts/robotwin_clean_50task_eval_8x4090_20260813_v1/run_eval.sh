@@ -1,29 +1,26 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v11
-EMA_CHECKPOINT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
-ROBOTWIN_ROOT=/mnt/robot-research-raw-data-0/user/lqw/code/RoboTwin
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-8x4090-20260813-v12
+EMA_CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/robotwin-bar-bin-qwen3vl2b-h32-10ep-128ppu-gb512-s42-20260812-v1/checkpoints/recent/step_10095/pretrained_model
+ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
 SOURCE_ROOT=${PRAXIS_SOURCE_ROOT:?CloudML code checkout path is required}
-ENV_ROOT=/mnt/robot-research-exp-0/user/hxs/praxis-vla
+ENV_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla
 POLICY_PYTHON=$ENV_ROOT/.venv/bin/python
-ROBOTWIN_PYTHON=/root/miniforge3/envs/RoboTwin/bin/python
-PRAXIS_REMOTE_PACKAGE=$($POLICY_PYTHON -c 'from importlib import metadata; print(metadata.distribution("praxis-remote").locate_file("praxis_remote"))')
-PYTHON_BRIDGE=/mnt/robot-research-exp-0/user/hxs/tmp/$RUN_ID/python-bridge
-OUT=/mnt/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
+ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v1/bin/python
+OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 SOURCE_MANIFEST=$OUT/_provenance/robotwin_source_manifest.json
 
-export HOME=/mnt/robot-research-exp-0/user/hxs/home
-export TMPDIR=/mnt/robot-research-exp-0/user/hxs/tmp/$RUN_ID
-export XDG_CACHE_HOME=/mnt/robot-research-exp-0/user/hxs/cache/xdg/$RUN_ID
-export HF_HOME=/mnt/robot-research-exp-0/user/hxs/hf_cache
+export HOME=/robot/robot-research-exp-0/user/hxs/home
+export TMPDIR=/robot/robot-research-exp-0/user/hxs/tmp/$RUN_ID
+export XDG_CACHE_HOME=/robot/robot-research-exp-0/user/hxs/cache/xdg/$RUN_ID
+export HF_HOME=/robot/robot-research-exp-0/user/hxs/hf_cache
 export HF_HUB_CACHE=$HF_HOME/hub
-export TORCH_HOME=/mnt/robot-research-exp-0/user/hxs/cache/torch/$RUN_ID
-export TRITON_CACHE_DIR=/mnt/robot-research-exp-0/user/hxs/cache/triton/$RUN_ID
-export TORCHINDUCTOR_CACHE_DIR=/mnt/robot-research-exp-0/user/hxs/cache/torchinductor/$RUN_ID
-export PYTHONPYCACHEPREFIX=/mnt/robot-research-exp-0/user/hxs/cache/pycache/$RUN_ID
-export PYTHONPATH=$SOURCE_ROOT/src:$SOURCE_ROOT:$ROBOTWIN_ROOT/envs/curobo/src:$PYTHON_BRIDGE
+export TORCH_HOME=/robot/robot-research-exp-0/user/hxs/cache/torch/$RUN_ID
+export TRITON_CACHE_DIR=/robot/robot-research-exp-0/user/hxs/cache/triton/$RUN_ID
+export TORCHINDUCTOR_CACHE_DIR=/robot/robot-research-exp-0/user/hxs/cache/torchinductor/$RUN_ID
+export PYTHONPYCACHEPREFIX=/robot/robot-research-exp-0/user/hxs/cache/pycache/$RUN_ID
 export PYTHONNOUSERSITE=1
 export PYTHONUNBUFFERED=1
 export TOKENIZERS_PARALLELISM=false
@@ -49,16 +46,13 @@ trap cleanup EXIT INT TERM
 
 echo "ROBOTWIN_LAUNCH_PREFLIGHT_START source=$SOURCE_ROOT output=$OUT"
 test ! -e "$OUT"
-mkdir -p "$PYTHON_BRIDGE"
-ln -s "$PRAXIS_REMOTE_PACKAGE" "$PYTHON_BRIDGE/praxis_remote"
-echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK praxis_remote=$PRAXIS_REMOTE_PACKAGE"
+test -x "$POLICY_PYTHON"
+test -x "$ROBOTWIN_PYTHON"
+echo "ROBOTWIN_LAUNCH_PREFLIGHT_OK policy_python=$POLICY_PYTHON robotwin_python=$ROBOTWIN_PYTHON"
 
 mkdir -p "$HOME" "$TMPDIR" "$XDG_CACHE_HOME" "$TORCH_HOME" \
   "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$PYTHONPYCACHEPREFIX" \
   "$OUT/_provenance" "$OUT/_logs"
-
-CUDA_VISIBLE_DEVICES=0 "$ROBOTWIN_PYTHON" -c \
-  "import av, sapien, yaml; from praxis_remote import PolicyClient; del av, yaml, PolicyClient; sapien.SapienRenderer(); print('ROBOTWIN_4090_SAPIEN_RENDERER_OK', flush=True)"
 
 echo "ROBOTWIN_EMA_CONTRACT_CHECK_START checkpoint=$EMA_CHECKPOINT"
 "$POLICY_PYTHON" -c \

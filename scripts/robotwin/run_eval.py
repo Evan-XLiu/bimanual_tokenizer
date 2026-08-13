@@ -51,24 +51,6 @@ def _terminate_process(process: subprocess.Popen[str], *, timeout: float = 10.0)
         process.wait(timeout=timeout)
 
 
-def _build_eval_environment(
-    *,
-    plugin_source: Path,
-    evaluator_overlay: Path,
-    base_environment: dict[str, str] | None = None,
-) -> dict[str, str]:
-    env = dict(os.environ if base_environment is None else base_environment)
-    env["PYTHONUNBUFFERED"] = "1"
-    repo_root = evaluator_overlay.expanduser().resolve().parents[2]
-    python_paths = [repo_root / "src", repo_root, plugin_source.resolve().parent]
-    existing_pythonpath = env.get("PYTHONPATH")
-    entries = [str(path) for path in python_paths]
-    if existing_pythonpath:
-        entries.extend(existing_pythonpath.split(os.pathsep))
-    env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys(entries))
-    return env
-
-
 def build_eval_command(
     *,
     robotwin_root: Path,
@@ -240,10 +222,6 @@ def run_task_eval(
             ),
             robotwin_source_manifest_sha256=robotwin_source_manifest_sha256,
         )
-        env = _build_eval_environment(
-            plugin_source=source,
-            evaluator_overlay=Path(evaluator_overlay),
-        )
         log_dir = output / "_attempt_logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / f"{task_name}.log"
@@ -252,7 +230,6 @@ def run_task_eval(
             process = subprocess.Popen(
                 command,
                 cwd=root,
-                env=env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,

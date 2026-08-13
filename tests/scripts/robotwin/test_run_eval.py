@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 
 from scripts.robotwin.run_eval import (
-    _build_eval_environment,
     build_eval_command,
     run_task_eval,
 )
@@ -165,28 +164,6 @@ def test_run_eval_supports_direct_script_help() -> None:
 
     assert result.returncode == 0, result.stderr
     assert "--expected-checkpoint" in result.stdout
-
-
-def test_eval_environment_includes_repo_src_root_plugin_and_existing_path(
-    tmp_path: Path,
-) -> None:
-    repo = tmp_path / "repo"
-    overlay = repo / "scripts" / "robotwin" / "stable2_evaluator.py"
-    plugin = repo / "scripts" / "robotwin" / "policy" / "praxis_ar"
-
-    env = _build_eval_environment(
-        plugin_source=plugin,
-        evaluator_overlay=overlay,
-        base_environment={"PYTHONPATH": "/existing"},
-    )
-
-    assert env["PYTHONPATH"].split(":") == [
-        str(repo / "src"),
-        str(repo),
-        str(plugin.parent),
-        "/existing",
-    ]
-    assert env["PYTHONUNBUFFERED"] == "1"
 
 
 def test_parent_marks_completed_only_after_media_verification(
