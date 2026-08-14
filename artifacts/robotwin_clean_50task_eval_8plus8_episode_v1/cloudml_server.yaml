@@ -1,5 +1,5 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-8xh20-policy-server-episode-v1
-description: RoboTwin demo_clean final EMA step10095 AR H32 BIN policy server; 8 H20 GPUs, one gRPC server per GPU, for the independent 8+8 episode-parallel evaluation.
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-8xh20e-policy-server-episode-v1
+description: RoboTwin demo_clean final EMA step10095 AR H32 BIN policy server; 8 H20E GPUs, one gRPC server per GPU, for the independent 8+8 episode-parallel evaluation.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-hxs/bsp-base-common-exp:3055471-verified-1
@@ -14,7 +14,7 @@ juiceFsMountConfigs:
     subPath: /
     mountPath: /robot/robot-research-exp-0
     readOnly: false
-queueId: "9543"
+queueId: "3649"
 priority: 8
 preemptible: false
 framework: pytorch
@@ -23,7 +23,7 @@ resourceConfigs:
     nodeNumber: 1
     perNodeResourceSpec:
       resourcePriority: GUARANTEED_PUBLIC
-      resourceName: cloudml.nv1h20-8-8.21-225
+      resourceName: cloudml.ng1h20e-8-8.20-224
       resourceNumber: 8
     elastic: false
     preemptible: false

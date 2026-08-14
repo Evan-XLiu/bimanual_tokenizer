@@ -1,5 +1,5 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-8xh20-24sim-episode-client-v1
-description: Official RoboTwin demo_clean final EMA step10095 AR H32 BIN evaluation; 50 tasks x 20 episodes, seen instructions, seed group 0; 24 episode-parallel simulators on 8 H20 GPUs, served by the separate 8-H20 policy task.
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-8xh20e-24sim-episode-client-v1
+description: Official RoboTwin demo_clean final EMA step10095 AR H32 BIN evaluation; 50 tasks x 20 episodes, seen instructions, seed group 0; 24 episode-parallel simulators on 8 H20E GPUs, served by the separate 8-H20E policy task.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-hxs/bsp-base-common-exp:3055471-verified-1
@@ -19,7 +19,7 @@ juiceFsMountConfigs:
     subPath: /
     mountPath: /robot/robot-research-exp-0
     readOnly: false
-queueId: "9543"
+queueId: "3649"
 priority: 8
 preemptible: false
 framework: pytorch
@@ -28,7 +28,7 @@ resourceConfigs:
     nodeNumber: 1
     perNodeResourceSpec:
       resourcePriority: GUARANTEED_PUBLIC
-      resourceName: cloudml.nv1h20-8-8.21-225
+      resourceName: cloudml.ng1h20e-8-8.20-224
       resourceNumber: 8
     elastic: false
     preemptible: false
