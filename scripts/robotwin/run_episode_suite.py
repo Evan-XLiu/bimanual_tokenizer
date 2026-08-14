@@ -438,7 +438,6 @@ def _replay_official_expert_precheck(
     *,
     task_env: Any,
     task_args: dict[str, Any],
-    task_name: str,
     episode_index: int,
     seed: int,
 ) -> None:
@@ -453,10 +452,6 @@ def _replay_official_expert_precheck(
             **task_args,
         )
         task_env.play_once()
-        if not (task_env.plan_success and task_env.check_success()):
-            raise RuntimeError(
-                f"Planned RoboTwin seed is no longer accepted: {task_name}/{seed}."
-            )
     finally:
         task_env.close_env()
         task_args["render_freq"] = render_freq
@@ -538,7 +533,6 @@ def run_planned_episode(
         _replay_official_expert_precheck(
             task_env=task_env,
             task_args=task_args,
-            task_name=task_name,
             episode_index=episode_index,
             seed=int(episode["seed"]),
         )

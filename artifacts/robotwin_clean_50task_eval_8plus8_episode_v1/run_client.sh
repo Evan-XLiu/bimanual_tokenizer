@@ -37,6 +37,13 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+wait_for_workers() {
+  local _
+  for _ in "${PIDS[@]}"; do
+    wait -n || return 1
+  done
+}
+
 # RoboTwin imports asset manifests through paths relative to its repository root.
 cd "$ROBOTWIN_ROOT"
 echo "ROBOTWIN_PLANNING_PHASE_START workers=$WORKER_COUNT tasks=50 episodes_per_task=$EPISODES_PER_TASK"
@@ -56,11 +63,7 @@ for worker in $(seq 0 $((WORKER_COUNT - 1))); do
     2>&1 | sed -u "s/^/[planner-$worker] /" | tee -a "$OUT/_logs/planner-$worker.log" &
   PIDS+=("$!")
 done
-failed=0
-for pid in "${PIDS[@]}"; do
-  wait "$pid" || failed=1
-done
-test "$failed" -eq 0
+wait_for_workers
 PIDS=()
 echo "ROBOTWIN_PLANNING_PHASE_COMPLETE tasks=50 plans=1000"
 
@@ -140,11 +143,7 @@ for worker in $(seq 0 $((WORKER_COUNT - 1))); do
     2>&1 | sed -u "s/^/[episode-$worker] /" | tee -a "$OUT/_logs/episode-$worker.log" &
   PIDS+=("$!")
 done
-failed=0
-for pid in "${PIDS[@]}"; do
-  wait "$pid" || failed=1
-done
-test "$failed" -eq 0
+wait_for_workers
 PIDS=()
 echo "ROBOTWIN_ROLLOUT_PHASE_COMPLETE episodes=1000"
 

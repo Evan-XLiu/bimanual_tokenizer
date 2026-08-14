@@ -318,7 +318,6 @@ def test_rollout_replays_official_precheck_on_same_task_instance() -> None:
     module._replay_official_expert_precheck(
         task_env=task_env,
         task_args=task_args,
-        task_name="open_laptop",
         episode_index=3,
         seed=100007,
     )
