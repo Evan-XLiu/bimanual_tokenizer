@@ -1,9 +1,9 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-24xh20-48sim-client-v11
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-24xh20-48sim-client-v12
 description: Official RoboTwin 2.0 demo_clean evaluation of final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0; 48 simulator workers on 24 H20 GPUs, policy served by separate 16-GPU task.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-hxs/bsp-base-common-exp:3055471-verified-1
-  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh | sed s/20260814-v7/20260814-v11/ > /tmp/robotwin_client_v11.sh && sed -i "s@>\\\"\\$OUT/_logs/worker-\\$global_worker\\.log\\\" 2>&1 @@" /tmp/robotwin_client_v11.sh && chmod +x /tmp/robotwin_client_v11.sh && exec bash /tmp/robotwin_client_v11.sh'
+  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh | sed s/20260814-v7/20260814-v12/ > /tmp/robotwin_client_v12.sh && chmod +x /tmp/robotwin_client_v12.sh; bash /tmp/robotwin_client_v12.sh; rc=$?; for log in /robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/*v12/_logs/*.log; do [ -f "$log" ] || continue; echo "===== $log ====="; tail -n 240 "$log"; done; exit $rc'
 modelUri: ""
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES
