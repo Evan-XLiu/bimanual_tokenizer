@@ -1,9 +1,9 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-24xh20-48sim-client-v7
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-24xh20-48sim-client-v8
 description: Official RoboTwin 2.0 demo_clean evaluation of final EMA step10095 AR H32 BIN policy; 50 tasks, 20 episodes per task, seen instructions, seed group 0; 48 simulator workers on 24 H20 GPUs, policy served by separate 16-GPU task.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-hxs/bsp-base-common-exp:3055471-verified-1
-  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && while [ ! -s .robotwin_eval_code_ready_f893416 ]; do sleep 2; done; exec bash artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh'
+  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && READY=.robotwin_eval_code_ready_86ebaf1; while [ ! -s "$READY" ]; do sleep 2; done; git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh | sed s/20260814-v7/20260814-v8/ > /tmp/robotwin_client_v8.sh; chmod +x /tmp/robotwin_client_v8.sh; exec bash /tmp/robotwin_client_v8.sh'
 modelUri: ""
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES

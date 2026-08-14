@@ -1,9 +1,9 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-16xh20-policy-server-v7
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-16xh20-policy-server-v8
 description: RoboTwin demo_clean final EMA step10095 AR H32 BIN policy server; 16 physical H20 GPUs, one gRPC replica per GPU; waits for matching client completion.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-hxs/bsp-base-common-exp:3055471-verified-1
-  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && NODE_RANK=${MLP_ROLE_INDEX:-${ARNOLD_ID:-${RANK:-0}}}; if [ "$NODE_RANK" = 0 ]; then git fetch origin hxs/codex/robotwin-integration; READY=.robotwin_eval_code_ready_f893416; rm -f "$READY"; mkdir -p artifacts/robotwin_clean_50task_eval_16xh20e_server_v1 artifacts/robotwin_clean_50task_eval_48sim_client_v1; git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh > artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh.tmp; mv artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh.tmp artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh; git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh > artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh.tmp; mv artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh.tmp artifacts/robotwin_clean_50task_eval_48sim_client_v1/run_client.sh; printf ready > "$READY.tmp"; mv "$READY.tmp" "$READY"; fi; while [ ! -s .robotwin_eval_code_ready_f893416 ]; do sleep 2; done; exec bash artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh'
+  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && NODE_RANK=${MLP_ROLE_INDEX:-${ARNOLD_ID:-${RANK:-0}}}; READY=.robotwin_eval_code_ready_86ebaf1; if [ "$NODE_RANK" = 0 ]; then rm -f "$READY"; git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh | sed s/20260814-v7/20260814-v8/ > /tmp/robotwin_server_v8.sh; chmod +x /tmp/robotwin_server_v8.sh; printf ready > "$READY.tmp"; mv "$READY.tmp" "$READY"; fi; while [ ! -s "$READY" ]; do sleep 2; done; exec bash /tmp/robotwin_server_v8.sh'
 modelUri: ""
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES
