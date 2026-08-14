@@ -27,12 +27,13 @@ class _UnstableError(Exception):
 class _PlanningTask:
     def __init__(self) -> None:
         self.plan_success = False
-        self.step_lim = 700
+        self.step_lim: int | None = None
         self.setup_seeds: list[int] = []
 
-    def setup_demo(self, *, seed: int, **_kwargs: object) -> None:
+    def setup_demo(self, *, seed: int, **kwargs: object) -> None:
         self.setup_seeds.append(seed)
         self.plan_success = seed >= 100002
+        self.step_lim = 700 if kwargs.get("eval_mode") is True else None
 
     def play_once(self) -> dict[str, object]:
         seed = self.setup_seeds[-1]

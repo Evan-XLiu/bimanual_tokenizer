@@ -206,6 +206,7 @@ def plan_task_episodes(
             task_config_path=task_config_path,
             config=config,
         )
+        task_args["eval_mode"] = True
         if start_seed != 100000:
             raise RuntimeError(f"Unexpected seed-group start seed: {start_seed}.")
         with (
