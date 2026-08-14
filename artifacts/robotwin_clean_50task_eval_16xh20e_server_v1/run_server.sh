@@ -13,11 +13,12 @@ test -x "$POLICY_PYTHON"; test -f "$POLICY_SERVER"; test -f "$CHECKPOINT/config.
 mkdir -p "$RDZ_ROOT"
 hostname_value="${HOSTNAME:-}"
 test -n "$hostname_value"
-host=$(getent ahostsv4 "$hostname_value" | awk '$1 !~ /^127\\./ { print $1; exit }')
-if [ -z "$host" ]; then
-  host=$(awk -v name="$hostname_value" '$2 == name && $1 !~ /^127\\./ { print $1; exit }' /etc/hosts)
-fi
-test -n "$host"
+namespace_file=/var/run/secrets/kubernetes.io/serviceaccount/namespace
+namespace=$(cat "$namespace_file" 2>/dev/null || true)
+test -n "$namespace"
+host="$hostname_value.$namespace.svc.cluster.local"
+host_ip=$(getent ahostsv4 "$host" | awk '$1 !~ /^127\\./ { print $1; exit }')
+test -n "$host_ip"
 if [ "$NODE_RANK" = 0 ]; then
   generation="${CLOUDML_JOB_ID:-robotwin-server}-${RUN_ID}-$(date -u +%Y%m%dT%H%M%SZ)-$$"
   printf '%s\n' "$generation" >"$RDZ_ROOT/server_generation.tmp"; mv "$RDZ_ROOT/server_generation.tmp" "$RDZ_ROOT/server_generation"
@@ -29,7 +30,7 @@ endpoint_file="$RDZ_ROOT/server-${NODE_RANK}.endpoint"
 ready_file="$RDZ_ROOT/server-${NODE_RANK}.ready"
 rm -f "$endpoint_file" "$ready_file"
 printf '%s %s %s\n' "$generation" "$host" "$((BASE_PORT + NODE_RANK * GPU_COUNT))" >"$endpoint_file"
-echo "ROBOTWIN_POLICY_SERVER_ENDPOINT node=$NODE_RANK hostname=$hostname_value host=$host base_port=$((BASE_PORT + NODE_RANK * GPU_COUNT))"
+echo "ROBOTWIN_POLICY_SERVER_ENDPOINT node=$NODE_RANK hostname=$hostname_value host=$host ip=$host_ip base_port=$((BASE_PORT + NODE_RANK * GPU_COUNT))"
 PIDS=()
 cleanup() { for pid in "${PIDS[@]:-}"; do kill "$pid" 2>/dev/null || true; done; wait 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
