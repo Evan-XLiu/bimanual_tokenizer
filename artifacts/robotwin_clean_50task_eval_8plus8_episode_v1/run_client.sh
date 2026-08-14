@@ -61,6 +61,38 @@ test "$failed" -eq 0
 PIDS=()
 echo "ROBOTWIN_PLANNING_PHASE_COMPLETE tasks=50 plans=1000"
 
+policy_endpoints_healthy() {
+  "$ROBOTWIN_PYTHON" - "$1" "$2" "$CHECKPOINT" "$SERVER_COUNT" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+from praxis_remote import PolicyClient
+
+host, base_port = sys.argv[1], int(sys.argv[2])
+expected = Path(sys.argv[3]).resolve()
+server_count = int(sys.argv[4])
+try:
+    for server_index in range(server_count):
+        port = base_port + server_index
+        client = PolicyClient(host=host, port=port, timeout=10.0)
+        try:
+            ready, info = client.health_check()
+            loaded = Path(json.loads(info)["serving_artifact"]["checkpoint"]["path"]).resolve()
+            if not ready or loaded != expected:
+                raise RuntimeError(f"Policy endpoint is not ready: {host}:{port}")
+        finally:
+            client.close()
+except Exception:
+    raise SystemExit(1)
+for server_index in range(server_count):
+    print(
+        f"ROBOTWIN_CLIENT_POLICY_HEALTH_OK host={host} port={base_port + server_index}",
+        flush=True,
+    )
+PY
+}
+
 deadline=$(($(date +%s) + 86400))
 while :; do
   if [ -s "$RDZ_ROOT/server_generation" ] && [ -s "$RDZ_ROOT/server.endpoint" ] && [ -s "$RDZ_ROOT/server.ready" ]; then
@@ -68,38 +100,20 @@ while :; do
     read -r candidate_endpoint_generation candidate_host candidate_port <"$RDZ_ROOT/server.endpoint"
     candidate_ready_generation=$(tr -d '[:space:]' <"$RDZ_ROOT/server.ready")
     if [ "$candidate_generation" = "$candidate_endpoint_generation" ] && [ "$candidate_generation" = "$candidate_ready_generation" ]; then
-      GENERATION=$candidate_generation
-      POLICY_HOST=$candidate_host
-      BASE_PORT=$candidate_port
-      break
+      candidate_ip=$(getent ahostsv4 "$candidate_host" | awk '$1 !~ /^127\./ { print $1; exit }' || true)
+      if [ -n "$candidate_ip" ] && policy_endpoints_healthy "$candidate_host" "$candidate_port"; then
+        GENERATION=$candidate_generation
+        POLICY_HOST=$candidate_host
+        BASE_PORT=$candidate_port
+        policy_ip=$candidate_ip
+        break
+      fi
     fi
   fi
   [ "$(date +%s)" -lt "$deadline" ] || { echo "Timed out waiting for policy server" >&2; exit 1; }
   sleep 5
 done
-policy_ip=$(getent ahostsv4 "$POLICY_HOST" | awk '$1 !~ /^127\./ { print $1; exit }')
-test -n "$policy_ip"
 echo "ROBOTWIN_CLIENT_POLICY_ENDPOINTS generation=$GENERATION host=$POLICY_HOST ip=$policy_ip ports=$BASE_PORT-$((BASE_PORT + SERVER_COUNT - 1))"
-
-for server_index in $(seq 0 $((SERVER_COUNT - 1))); do
-  port=$((BASE_PORT + server_index))
-  "$ROBOTWIN_PYTHON" - "$POLICY_HOST" "$port" "$CHECKPOINT" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-from praxis_remote import PolicyClient
-
-client = PolicyClient(host=sys.argv[1], port=int(sys.argv[2]), timeout=30.0)
-try:
-    ready, info = client.health_check()
-    loaded = Path(json.loads(info)["serving_artifact"]["checkpoint"]["path"]).resolve()
-    assert ready and loaded == Path(sys.argv[3]).resolve()
-    print(f"ROBOTWIN_CLIENT_POLICY_HEALTH_OK host={sys.argv[1]} port={sys.argv[2]}", flush=True)
-finally:
-    client.close()
-PY
-done
 
 echo "ROBOTWIN_ROLLOUT_PHASE_START workers=$WORKER_COUNT simulators_per_gpu=$SIMULATORS_PER_GPU"
 for worker in $(seq 0 $((WORKER_COUNT - 1))); do
