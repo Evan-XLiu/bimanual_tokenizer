@@ -24,10 +24,7 @@ test -f "$TASKS"
 test -f "$PLUGIN"
 mkdir -p "$RDZ_ROOT" "$OUT/_logs"
 
-RESUME_FLAG=()
-if [ -e "$OUT/progress.jsonl" ] || [ -e "$OUT/adjust_bottle/episode_plan.json" ]; then
-  RESUME_FLAG+=(--resume)
-fi
+RESUME_FLAG=(--resume)
 
 PIDS=()
 cleanup() {
@@ -65,15 +62,21 @@ PIDS=()
 echo "ROBOTWIN_PLANNING_PHASE_COMPLETE tasks=50 plans=1000"
 
 deadline=$(($(date +%s) + 86400))
-while [ ! -s "$RDZ_ROOT/server_generation" ] || [ ! -s "$RDZ_ROOT/server.endpoint" ] || [ ! -s "$RDZ_ROOT/server.ready" ]; do
+while :; do
+  if [ -s "$RDZ_ROOT/server_generation" ] && [ -s "$RDZ_ROOT/server.endpoint" ] && [ -s "$RDZ_ROOT/server.ready" ]; then
+    candidate_generation=$(tr -d '[:space:]' <"$RDZ_ROOT/server_generation")
+    read -r candidate_endpoint_generation candidate_host candidate_port <"$RDZ_ROOT/server.endpoint"
+    candidate_ready_generation=$(tr -d '[:space:]' <"$RDZ_ROOT/server.ready")
+    if [ "$candidate_generation" = "$candidate_endpoint_generation" ] && [ "$candidate_generation" = "$candidate_ready_generation" ]; then
+      GENERATION=$candidate_generation
+      POLICY_HOST=$candidate_host
+      BASE_PORT=$candidate_port
+      break
+    fi
+  fi
   [ "$(date +%s)" -lt "$deadline" ] || { echo "Timed out waiting for policy server" >&2; exit 1; }
   sleep 5
 done
-GENERATION=$(tr -d '[:space:]' <"$RDZ_ROOT/server_generation")
-read -r endpoint_generation POLICY_HOST BASE_PORT <"$RDZ_ROOT/server.endpoint"
-ready_generation=$(tr -d '[:space:]' <"$RDZ_ROOT/server.ready")
-[ "$endpoint_generation" = "$GENERATION" ]
-[ "$ready_generation" = "$GENERATION" ]
 policy_ip=$(getent ahostsv4 "$POLICY_HOST" | awk '$1 !~ /^127\./ { print $1; exit }')
 test -n "$policy_ip"
 echo "ROBOTWIN_CLIENT_POLICY_ENDPOINTS generation=$GENERATION host=$POLICY_HOST ip=$policy_ip ports=$BASE_PORT-$((BASE_PORT + SERVER_COUNT - 1))"

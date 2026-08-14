@@ -23,11 +23,11 @@ host="${HOSTNAME}.${namespace}.svc.cluster.local"
 host_ip=$(getent ahostsv4 "$host" | awk '$1 !~ /^127\./ { print $1; exit }')
 test -n "$host_ip"
 generation="${CLOUDML_JOB_ID:-robotwin-server}-${RUN_ID}-$(date -u +%Y%m%dT%H%M%SZ)-$$"
+rm -f "$RDZ_ROOT/server.endpoint" "$RDZ_ROOT/server.ready"
 printf '%s\n' "$generation" >"$RDZ_ROOT/server_generation.tmp"
 mv "$RDZ_ROOT/server_generation.tmp" "$RDZ_ROOT/server_generation"
 printf '%s %s %s\n' "$generation" "$host" "$BASE_PORT" >"$RDZ_ROOT/server.endpoint.tmp"
 mv "$RDZ_ROOT/server.endpoint.tmp" "$RDZ_ROOT/server.endpoint"
-rm -f "$RDZ_ROOT/server.ready"
 echo "ROBOTWIN_POLICY_SERVER_ENDPOINT generation=$generation host=$host ip=$host_ip base_port=$BASE_PORT count=$GPU_COUNT"
 
 PIDS=()
