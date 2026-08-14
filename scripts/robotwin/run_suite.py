@@ -72,6 +72,7 @@ def run_worker(
     expected_checkpoint: Path,
     episodes_per_task: int = 20,
     max_seed_attempts: int = 1000,
+    resume: bool = False,
 ) -> list[dict[str, Any]]:
     tasks = assigned_tasks(
         load_official_tasks(tasks_path),
@@ -80,6 +81,15 @@ def run_worker(
     )
     results = []
     for task in tasks:
+        task_dir = output_dir.expanduser().resolve() / task
+        completed_manifest = task_dir / "run_manifest.json"
+        completed_result = task_dir / "comparison.json"
+        if resume and completed_manifest.is_file() and completed_result.is_file():
+            manifest = json.loads(completed_manifest.read_text())
+            if manifest.get("status") == "completed":
+                results.append(json.loads(completed_result.read_text()))
+                print(f"ROBOTWIN_SUITE_TASK_RESUME_SKIP worker={worker_index} task={task}", flush=True)
+                continue
         print(
             f"ROBOTWIN_SUITE_TASK_START worker={worker_index} task={task}",
             flush=True,
@@ -97,6 +107,7 @@ def run_worker(
             run_id=run_id,
             expected_checkpoint=expected_checkpoint,
             max_seed_attempts=max_seed_attempts,
+            resume=resume,
         )
         results.append(result)
         print(
@@ -206,6 +217,7 @@ def _parser() -> argparse.ArgumentParser:
     worker.add_argument("--expected-checkpoint", required=True, type=Path)
     worker.add_argument("--episodes-per-task", type=int, default=20)
     worker.add_argument("--max-seed-attempts", type=int, default=1000)
+    worker.add_argument("--resume", action="store_true")
 
     aggregate = subparsers.add_parser("aggregate")
     aggregate.add_argument("--tasks", default=DEFAULT_TASKS_PATH, type=Path)
@@ -231,6 +243,7 @@ def main() -> None:
             expected_checkpoint=args.expected_checkpoint,
             episodes_per_task=args.episodes_per_task,
             max_seed_attempts=args.max_seed_attempts,
+            resume=args.resume,
         )
     else:
         result = aggregate_suite(

@@ -1,0 +1,36 @@
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-16xh20e-policy-server-v1
+description: RoboTwin demo_clean final EMA step10095 AR H32 BIN policy server; 16 physical H20E GPUs, one gRPC replica per GPU; waits for matching client completion.
+accessType: PRIVATE
+imageConfig:
+  imageUrl: micr.cloud.mioffice.cn/robot-rfm-lqw/lingbot:3055471-sim-test
+  imageCommand: exec bash /robot/robot-research-exp-0/user/hxs/praxis-vla/artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh
+modelUri: ""
+envConfigs:
+  - key: NVIDIA_DRIVER_CAPABILITIES
+    value: all
+juiceFsMountConfigs:
+  - volume: robot-research-exp-0
+    juiceFsCluster: bj9-cloudml-ali2
+    subPath: /
+    mountPath: /robot/robot-research-exp-0
+    readOnly: false
+queueId: "3649"
+priority: 8
+preemptible: false
+framework: pytorch
+resourceConfigs:
+  - nodeRole: worker
+    nodeNumber: 2
+    perNodeResourceSpec:
+      resourcePriority: GUARANTEED_PUBLIC
+      resourceName: cloudml.ng1h20e-8-8.20-224
+      resourceNumber: 8
+    elastic: false
+    preemptible: false
+enableTensorboard: false
+enableMetrics: false
+retryConfig:
+  enableRetry: false
+  maxRetryTimes: 0
+  policySets: []
+rdma: false

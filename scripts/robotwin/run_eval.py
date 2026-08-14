@@ -68,6 +68,7 @@ def build_eval_command(
     max_seed_attempts: int | None = None,
     python_executable: str = sys.executable,
     evaluator_overlay: Path = DEFAULT_EVALUATOR_OVERLAY,
+    resume: bool = False,
 ) -> list[str]:
     """Build the official evaluator command with a full-recording assertion."""
     if episodes_per_task <= 0:
@@ -116,6 +117,8 @@ def build_eval_command(
         "--expected-checkpoint",
         str(expected_checkpoint.expanduser().resolve()),
     ]
+    if resume:
+        command.append("--resume")
     return command
 
 
@@ -136,13 +139,14 @@ def run_task_eval(
     plugin_source: str | Path = DEFAULT_PLUGIN_SOURCE,
     evaluator_overlay: str | Path = DEFAULT_EVALUATOR_OVERLAY,
     python_executable: str = sys.executable,
+    resume: bool = False,
 ) -> dict[str, Any]:
     root = Path(robotwin_root).expanduser().resolve()
     output = Path(output_dir).expanduser().resolve()
     task_output = output / task_name
-    if task_output.exists():
-        raise FileExistsError(f"Use a fresh task eval output directory: {task_output}")
-    task_output.mkdir(parents=True, exist_ok=False)
+    if task_output.exists() and not resume:
+        raise FileExistsError(f"Use --resume for an existing task eval output directory: {task_output}")
+    task_output.mkdir(parents=True, exist_ok=resume)
     run_manifest_path = task_output / "run_manifest.json"
     _atomic_json(
         run_manifest_path,
@@ -195,12 +199,13 @@ def run_task_eval(
             max_seed_attempts=max_seed_attempts,
             python_executable=python_executable,
             evaluator_overlay=Path(evaluator_overlay),
+            resume=resume,
         )
         log_dir = output / "_attempt_logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / f"{task_name}.log"
         stage = "rollout"
-        with log_path.open("x", encoding="utf-8") as log_handle:
+        with log_path.open("a" if resume else "x", encoding="utf-8") as log_handle:
             process = subprocess.Popen(
                 command,
                 cwd=root,
@@ -289,6 +294,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Expert-precheck seed attempt limit (default: 50x episode count).",
     )
+    parser.add_argument("--resume", action="store_true")
     return parser
 
 
@@ -307,6 +313,7 @@ def main() -> None:
         run_id=args.run_id,
         expected_checkpoint=args.expected_checkpoint,
         max_seed_attempts=args.max_seed_attempts,
+        resume=args.resume,
     )
     print(result)
 

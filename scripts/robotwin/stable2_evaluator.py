@@ -204,6 +204,7 @@ def run_controlled_rollouts(
     max_seed_attempts: int,
     instruction_rng_seed: int | None = None,
     output_dir_precreated: bool = False,
+    resume: bool = False,
     popen_factory: Callable[[list[str]], Any] = _default_popen,
 ) -> tuple[int, int]:
     """Run stable_2.0 episodes while recording accepted seeds and outcomes."""
@@ -225,28 +226,67 @@ def run_controlled_rollouts(
         if not root.is_dir():
             raise FileNotFoundError(f"Pre-created eval output directory is missing: {root}.")
     else:
-        root.mkdir(parents=True, exist_ok=False)
+        root.mkdir(parents=True, exist_ok=resume)
     args["eval_video_save_dir"] = root
     records_path = root / "episode_records.jsonl"
     attempts_path = root / "seed_attempts.jsonl"
     eval_func = official.eval_function_decorator(args["policy_name"], "eval")
     reset_func = official.eval_function_decorator(args["policy_name"], "reset_model")
 
-    task_env.suc = 0
-    task_env.test_num = 0
-    accepted = 0
-    episode_index = 0
-    now_seed = int(start_seed)
+    existing_records: list[dict[str, Any]] = []
+    if resume and records_path.is_file():
+        for line in records_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                value = json.loads(line)
+                if not isinstance(value, dict):
+                    raise ValueError(f"Invalid episode record in {records_path}.")
+                existing_records.append(value)
+    completed_indices = {int(item["episode_index"]) for item in existing_records}
+    if len(completed_indices) != len(existing_records) or any(
+        index < 0 or index >= episodes for index in completed_indices
+    ):
+        raise ValueError(f"Duplicate or out-of-range episode index in {records_path}.")
+    task_env.suc = sum(bool(item.get("success")) for item in existing_records)
+    task_env.test_num = len(existing_records)
+    accepted = len(existing_records)
+    episode_index = next(
+        (index for index in range(episodes) if index not in completed_indices), episodes
+    )
+    if resume and attempts_path.is_file():
+        attempt_lines = [
+            line for line in attempts_path.read_text(encoding="utf-8").splitlines() if line.strip()
+        ]
+        attempted_seeds = [
+            int(json.loads(line)["seed"])
+            for line in attempt_lines
+        ]
+        now_seed = max(attempted_seeds, default=int(start_seed) - 1) + 1
+        seed_attempts = len(attempt_lines)
+    else:
+        now_seed = int(start_seed)
+        seed_attempts = 0
+    pending_path = root / "pending_episode.json"
+    if resume and pending_path.is_file():
+        pending = _load_json_mapping(pending_path)
+        if pending.get("task") != task_name:
+            raise ValueError(f"Pending episode belongs to another task: {pending_path}.")
+        pending_index = int(pending["episode_index"])
+        if pending_index in completed_indices:
+            pending_path.unlink()
+        else:
+            episode_index = pending_index
+            now_seed = int(pending["seed"])
     resolved_instruction_rng_seed = (
         int(start_seed) if instruction_rng_seed is None else int(instruction_rng_seed)
     )
     instruction_rng = np.random.default_rng(resolved_instruction_rng_seed)
     args["eval_mode"] = True
 
-    seed_attempts = 0
+    records_mode = "a" if resume and records_path.exists() else "x"
+    attempts_mode = "a" if resume and attempts_path.exists() else "x"
     with (
-        records_path.open("x", encoding="utf-8") as records,
-        attempts_path.open("x", encoding="utf-8") as attempts,
+        records_path.open(records_mode, encoding="utf-8") as records,
+        attempts_path.open(attempts_mode, encoding="utf-8") as attempts,
     ):
         while accepted < episodes:
             if seed_attempts >= max_seed_attempts:
@@ -286,10 +326,27 @@ def run_controlled_rollouts(
                 now_seed += 1
                 args["render_freq"] = render_freq
                 continue
-            except Exception:
+            except Exception as exc:
                 task_env.close_env()
+                attempts.write(
+                    json.dumps(
+                        {
+                            "attempt_index": seed_attempts - 1,
+                            "seed": attempted_seed,
+                            "accepted": False,
+                            "reason": "expert_precheck_error",
+                            "error_type": type(exc).__qualname__,
+                            "detail": str(exc),
+                        },
+                        sort_keys=True,
+                    )
+                    + "\n"
+                )
+                attempts.flush()
+                os.fsync(attempts.fileno())
+                now_seed += 1
                 args["render_freq"] = render_freq
-                raise
+                continue
 
             try:
                 episode_info = task_env.play_once()
@@ -351,6 +408,15 @@ def run_controlled_rollouts(
             accepted += 1
             args["render_freq"] = render_freq
             pending_video = root / f"episode_{episode_index:04d}_pending.mp4"
+            _atomic_json(
+                root / "pending_episode.json",
+                {
+                    "task": task_name,
+                    "episode_index": episode_index,
+                    "seed": now_seed,
+                    "server_generation": args.get("server_generation"),
+                },
+            )
             ffmpeg: Any | None = None
             try:
                 task_env.setup_demo(
@@ -441,6 +507,10 @@ def run_controlled_rollouts(
                 records.write(json.dumps(record, sort_keys=True) + "\n")
                 records.flush()
                 os.fsync(records.fileno())
+                completed_indices.add(episode_index)
+                pending_path = root / "pending_episode.json"
+                if pending_path.exists():
+                    pending_path.unlink()
             except BaseException:
                 try:
                     if ffmpeg is not None:
@@ -635,6 +705,7 @@ def _run_stable2_eval_impl(
     run_id: str,
     max_seed_attempts: int,
     expected_checkpoint: str | Path,
+    resume: bool,
 ) -> dict[str, Any]:
     if record_episodes_per_task != episodes_per_task:
         raise ValueError(
@@ -747,6 +818,7 @@ def _run_stable2_eval_impl(
             max_seed_attempts=max_seed_attempts,
             instruction_rng_seed=instruction_rng_seed,
             output_dir_precreated=True,
+            resume=resume,
         )
         task_step_limit = getattr(task_env, "step_lim", None)
         if not isinstance(task_step_limit, int) or task_step_limit <= 0:
@@ -813,6 +885,7 @@ def run_stable2_eval(
     run_id: str,
     max_seed_attempts: int,
     expected_checkpoint: str | Path,
+    resume: bool = False,
 ) -> dict[str, Any]:
     """Create a durable preflight manifest before entering the heavy evaluator setup."""
     task_output = Path(output_dir).expanduser().resolve() / task_name
@@ -823,8 +896,10 @@ def run_stable2_eval(
                 f"Use a fresh task eval output directory: {task_output}."
             )
         preflight = _load_json_mapping(run_manifest_path)
+        allowed_statuses = {"preflight", "failed", "running", "rollout_completed"}
         if (
-            preflight.get("status") != "preflight"
+            not resume
+            or preflight.get("status") not in allowed_statuses
             or preflight.get("task") != task_name
             or preflight.get("run_id") != run_id
         ):
@@ -862,6 +937,7 @@ def run_stable2_eval(
             run_id=run_id,
             max_seed_attempts=max_seed_attempts,
             expected_checkpoint=expected_checkpoint,
+            resume=resume,
         )
     except BaseException as exc:
         current = _load_json_mapping(run_manifest_path)
@@ -897,6 +973,7 @@ def main() -> None:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--max-seed-attempts", required=True, type=int)
     parser.add_argument("--expected-checkpoint", required=True, type=Path)
+    parser.add_argument("--resume", action="store_true")
     cli = parser.parse_args()
     result = run_stable2_eval(
         robotwin_root=cli.robotwin_root,
@@ -912,6 +989,7 @@ def main() -> None:
         run_id=cli.run_id,
         max_seed_attempts=cli.max_seed_attempts,
         expected_checkpoint=cli.expected_checkpoint,
+        resume=cli.resume,
     )
     print(json.dumps(result, indent=2, sort_keys=True))
 

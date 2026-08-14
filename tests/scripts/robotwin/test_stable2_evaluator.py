@@ -369,7 +369,7 @@ def test_controlled_rollout_fails_at_seed_attempt_limit(tmp_path: Path) -> None:
     assert all(item["reason"] == "expert_plan_failed" for item in attempts)
 
 
-def test_controlled_rollout_reraises_unexpected_precheck_error(
+def test_controlled_rollout_skips_generic_official_precheck_error(
     tmp_path: Path,
 ) -> None:
     official = SimpleNamespace(
@@ -380,7 +380,7 @@ def test_controlled_rollout_reraises_unexpected_precheck_error(
     env.unstable_seeds = set()
     env.unexpected_error = OSError("renderer failed")
 
-    with pytest.raises(OSError, match="renderer failed"):
+    with pytest.raises(RuntimeError, match="exhausted max_seed_attempts=50"):
         run_controlled_rollouts(
             official=official,
             task_name="pick_apple",
@@ -402,7 +402,13 @@ def test_controlled_rollout_reraises_unexpected_precheck_error(
             popen_factory=_FakeProcess,
         )
 
-    assert env.setup_seeds == [100000]
+    assert env.setup_seeds == list(range(100000, 100050))
+    attempts = [
+        json.loads(line)
+        for line in (tmp_path / "eval" / "seed_attempts.jsonl").read_text().splitlines()
+    ]
+    assert len(attempts) == 50
+    assert all(item["reason"] == "expert_precheck_error" for item in attempts)
 
 
 def test_controlled_rollout_skips_official_expert_play_error(tmp_path: Path) -> None:
