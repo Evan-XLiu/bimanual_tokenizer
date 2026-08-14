@@ -306,8 +306,8 @@ def run_controlled_rollouts(
                     is_test=True,
                     **args,
                 )
+                episode_info = task_env.play_once()
             except official.UnStableError as exc:
-                task_env.close_env()
                 attempts.write(
                     json.dumps(
                         {
@@ -324,54 +324,10 @@ def run_controlled_rollouts(
                 attempts.flush()
                 os.fsync(attempts.fileno())
                 now_seed += 1
-                args["render_freq"] = render_freq
                 continue
-            except Exception as exc:
+            finally:
                 task_env.close_env()
-                attempts.write(
-                    json.dumps(
-                        {
-                            "attempt_index": seed_attempts - 1,
-                            "seed": attempted_seed,
-                            "accepted": False,
-                            "reason": "expert_precheck_error",
-                            "error_type": type(exc).__qualname__,
-                            "detail": str(exc),
-                        },
-                        sort_keys=True,
-                    )
-                    + "\n"
-                )
-                attempts.flush()
-                os.fsync(attempts.fileno())
-                now_seed += 1
                 args["render_freq"] = render_freq
-                continue
-
-            try:
-                episode_info = task_env.play_once()
-                task_env.close_env()
-            except Exception as exc:
-                task_env.close_env()
-                attempts.write(
-                    json.dumps(
-                        {
-                            "attempt_index": seed_attempts - 1,
-                            "seed": attempted_seed,
-                            "accepted": False,
-                            "reason": "expert_precheck_error",
-                            "error_type": type(exc).__qualname__,
-                            "detail": str(exc),
-                        },
-                        sort_keys=True,
-                    )
-                    + "\n"
-                )
-                attempts.flush()
-                os.fsync(attempts.fileno())
-                now_seed += 1
-                args["render_freq"] = render_freq
-                continue
 
             if not (task_env.plan_success and task_env.check_success()):
                 attempts.write(
@@ -389,7 +345,6 @@ def run_controlled_rollouts(
                 attempts.flush()
                 os.fsync(attempts.fileno())
                 now_seed += 1
-                args["render_freq"] = render_freq
                 continue
             attempts.write(
                 json.dumps(
@@ -406,7 +361,6 @@ def run_controlled_rollouts(
             attempts.flush()
             os.fsync(attempts.fileno())
             accepted += 1
-            args["render_freq"] = render_freq
             pending_video = root / f"episode_{episode_index:04d}_pending.mp4"
             _atomic_json(
                 root / "pending_episode.json",

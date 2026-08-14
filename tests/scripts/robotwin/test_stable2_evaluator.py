@@ -369,7 +369,7 @@ def test_controlled_rollout_fails_at_seed_attempt_limit(tmp_path: Path) -> None:
     assert all(item["reason"] == "expert_plan_failed" for item in attempts)
 
 
-def test_controlled_rollout_skips_generic_official_precheck_error(
+def test_controlled_rollout_raises_generic_official_setup_error(
     tmp_path: Path,
 ) -> None:
     official = SimpleNamespace(
@@ -380,7 +380,7 @@ def test_controlled_rollout_skips_generic_official_precheck_error(
     env.unstable_seeds = set()
     env.unexpected_error = OSError("renderer failed")
 
-    with pytest.raises(RuntimeError, match="exhausted max_seed_attempts=50"):
+    with pytest.raises(OSError, match="renderer failed"):
         run_controlled_rollouts(
             official=official,
             task_name="pick_apple",
@@ -402,73 +402,44 @@ def test_controlled_rollout_skips_generic_official_precheck_error(
             popen_factory=_FakeProcess,
         )
 
-    assert env.setup_seeds == list(range(100000, 100050))
-    attempts = [
-        json.loads(line)
-        for line in (tmp_path / "eval" / "seed_attempts.jsonl").read_text().splitlines()
-    ]
-    assert len(attempts) == 50
-    assert all(item["reason"] == "expert_precheck_error" for item in attempts)
+    assert env.setup_seeds == [100000]
+    assert (tmp_path / "eval" / "seed_attempts.jsonl").read_text() == ""
 
 
-def test_controlled_rollout_skips_official_expert_play_error(tmp_path: Path) -> None:
-    def policy_eval(task_env, _model, _observation):
-        frame = np.zeros((2, 2, 3), dtype=np.uint8).tobytes()
-        task_env.eval_video_ffmpeg.stdin.write(frame)
-        task_env.take_action_cnt += 1
-        task_env.eval_success = True
-        task_env.eval_video_ffmpeg.stdin.write(frame)
-
+def test_controlled_rollout_raises_official_expert_play_error(tmp_path: Path) -> None:
     official = SimpleNamespace(
         UnStableError=_UnstableError,
-        generate_episode_descriptions=lambda *_args: [
-            {"unseen": ["put the apple in the bowl"]}
-        ],
-        eval_function_decorator=lambda _policy, name: (
-            policy_eval if name == "eval" else lambda _model: None
-        ),
+        eval_function_decorator=lambda *_args: lambda *_unused: None,
     )
     env = _TaskEnv()
     env.unstable_seeds = set()
     env.expert_errors[100000] = TypeError("grasp pose is unavailable")
     output_dir = tmp_path / "eval"
 
-    _, successes = run_controlled_rollouts(
-        official=official,
-        task_name="pick_apple",
-        task_env=env,
-        args={
-            "task_name": "pick_apple",
-            "policy_name": "praxis_ar",
-            "clear_cache_freq": 5,
-            "render_freq": 0,
-            "eval_video_log": True,
-        },
-        model=object(),
-        start_seed=100000,
-        episodes=1,
-        video_size="2x2",
-        instruction_type="unseen",
-        output_dir=output_dir,
-        max_seed_attempts=2,
-        popen_factory=_FakeProcess,
-    )
+    with pytest.raises(TypeError, match="grasp pose is unavailable"):
+        run_controlled_rollouts(
+            official=official,
+            task_name="pick_apple",
+            task_env=env,
+            args={
+                "task_name": "pick_apple",
+                "policy_name": "praxis_ar",
+                "clear_cache_freq": 5,
+                "render_freq": 0,
+                "eval_video_log": True,
+            },
+            model=object(),
+            start_seed=100000,
+            episodes=1,
+            video_size="2x2",
+            instruction_type="unseen",
+            output_dir=output_dir,
+            max_seed_attempts=2,
+            popen_factory=_FakeProcess,
+        )
 
-    assert successes == 1
-    assert env.setup_seeds == [100000, 100001, 100001]
-    attempts = [
-        json.loads(line)
-        for line in (output_dir / "seed_attempts.jsonl").read_text().splitlines()
-    ]
-    assert attempts[0] == {
-        "accepted": False,
-        "attempt_index": 0,
-        "detail": "grasp pose is unavailable",
-        "error_type": "TypeError",
-        "reason": "expert_precheck_error",
-        "seed": 100000,
-    }
-    assert attempts[1]["accepted"] is True
+    assert env.setup_seeds == [100000]
+    assert (output_dir / "seed_attempts.jsonl").read_text() == ""
 
 
 def test_rollout_failure_reaps_video_and_closes_environment(tmp_path: Path) -> None:
