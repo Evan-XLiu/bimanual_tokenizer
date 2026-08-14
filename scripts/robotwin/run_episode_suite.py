@@ -434,6 +434,34 @@ def _episode_record_path(output_dir: Path, task_name: str, episode_index: int) -
     return output_dir / task_name / "_episode_records" / f"episode_{episode_index:04d}.json"
 
 
+def _replay_official_expert_precheck(
+    *,
+    task_env: Any,
+    task_args: dict[str, Any],
+    task_name: str,
+    episode_index: int,
+    seed: int,
+) -> None:
+    """Restore task state that the official evaluator keeps from play_once()."""
+    render_freq = task_args["render_freq"]
+    task_args["render_freq"] = 0
+    try:
+        task_env.setup_demo(
+            now_ep_num=episode_index,
+            seed=seed,
+            is_test=True,
+            **task_args,
+        )
+        task_env.play_once()
+        if not (task_env.plan_success and task_env.check_success()):
+            raise RuntimeError(
+                f"Planned RoboTwin seed is no longer accepted: {task_name}/{seed}."
+            )
+    finally:
+        task_env.close_env()
+        task_args["render_freq"] = render_freq
+
+
 def run_planned_episode(
     *,
     robotwin_root: Path,
@@ -507,6 +535,13 @@ def run_planned_episode(
         )
         task_args["eval_mode"] = True
         task_args["eval_video_save_dir"] = task_dir
+        _replay_official_expert_precheck(
+            task_env=task_env,
+            task_args=task_args,
+            task_name=task_name,
+            episode_index=episode_index,
+            seed=int(episode["seed"]),
+        )
         task_env.setup_demo(
             now_ep_num=episode_index,
             seed=int(episode["seed"]),

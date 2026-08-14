@@ -289,6 +289,51 @@ def test_progress_is_deduplicated_and_printed_live(
     assert "ROBOTWIN_PROGRESS completed=2/1000 successes=1 Success=0.500000" in capsys.readouterr().out
 
 
+def test_rollout_replays_official_precheck_on_same_task_instance() -> None:
+    class RuntimeTask:
+        def __init__(self) -> None:
+            self.plan_success = False
+            self.arm_tag: str | None = None
+            self.calls: list[tuple[str, int | None, int | None]] = []
+
+        def setup_demo(
+            self, *, now_ep_num: int, seed: int, **_kwargs: object
+        ) -> None:
+            self.calls.append(("setup", now_ep_num, seed))
+
+        def play_once(self) -> None:
+            self.calls.append(("play_once", None, None))
+            self.arm_tag = "left"
+            self.plan_success = True
+
+        def check_success(self) -> bool:
+            return self.arm_tag == "left"
+
+        def close_env(self) -> None:
+            self.calls.append(("close", None, None))
+
+    task_env = RuntimeTask()
+    task_args: dict[str, object] = {"render_freq": 1, "eval_mode": True}
+
+    module._replay_official_expert_precheck(
+        task_env=task_env,
+        task_args=task_args,
+        task_name="open_laptop",
+        episode_index=3,
+        seed=100007,
+    )
+    task_env.setup_demo(now_ep_num=3, seed=100007, **task_args)
+
+    assert task_env.arm_tag == "left"
+    assert task_args["render_freq"] == 1
+    assert task_env.calls == [
+        ("setup", 3, 100007),
+        ("play_once", None, None),
+        ("close", None, None),
+        ("setup", 3, 100007),
+    ]
+
+
 def test_aggregate_builds_canonical_task_records_and_manifest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
