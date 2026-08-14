@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20e-8plus8-24sim-episode-20260815-v2
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20e-8plus8-24sim-episode-20260815-v3
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 POLICY_ENV=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-policy-py310-v1
 POLICY_PYTHON=$POLICY_ENV/bin/python
