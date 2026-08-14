@@ -199,7 +199,9 @@ def run_task_eval(
             max_seed_attempts=max_seed_attempts,
             python_executable=python_executable,
             evaluator_overlay=Path(evaluator_overlay),
-            resume=resume,
+            # The parent always creates the task directory and preflight manifest
+            # before handing the run to the evaluator process.
+            resume=True,
         )
         log_dir = output / "_attempt_logs"
         log_dir.mkdir(parents=True, exist_ok=True)

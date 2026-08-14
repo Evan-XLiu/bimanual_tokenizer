@@ -20,6 +20,7 @@ from scripts.robotwin.run_eval import (
 class _FakeEvaluatorProcess:
     def __init__(self, command: list[str], **_kwargs: object) -> None:
         self.stdout = iter(())
+        assert "--resume" in command
         output = Path(command[command.index("--output-dir") + 1])
         task = command[command.index("--task") + 1]
         manifest_path = output / task / "run_manifest.json"
