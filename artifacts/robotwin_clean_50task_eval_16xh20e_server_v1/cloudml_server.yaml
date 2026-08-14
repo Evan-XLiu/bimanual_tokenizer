@@ -1,9 +1,9 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-16xh20-policy-server-v12
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-16xh20-policy-server-v13
 description: RoboTwin demo_clean final EMA step10095 AR H32 BIN policy server; 16 physical H20 GPUs, one gRPC replica per GPU; waits for matching client completion.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-hxs/bsp-base-common-exp:3055471-verified-1
-  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh | sed s/20260814-v7/20260814-v12/ > /tmp/robotwin_server_v12.sh && chmod +x /tmp/robotwin_server_v12.sh && exec bash /tmp/robotwin_server_v12.sh'
+  imageCommand: exec bash -lc 'cd /robot/robot-research-exp-0/user/hxs/praxis-vla && git show origin/hxs/codex/robotwin-integration:artifacts/robotwin_clean_50task_eval_16xh20e_server_v1/run_server.sh | sed -e s/20260814-v7/20260814-v13/ -e s/robotwin_server_v12/robotwin_server_v13/ > /tmp/robotwin_server_v13.sh && chmod +x /tmp/robotwin_server_v13.sh && exec bash /tmp/robotwin_server_v13.sh'
 modelUri: ""
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES

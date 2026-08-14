@@ -9,7 +9,21 @@ RDZ_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean
 OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 NODE_COUNT=3; GPU_COUNT=8; SIMULATORS_PER_GPU=2; WORKERS_PER_NODE=$((GPU_COUNT * SIMULATORS_PER_GPU)); WORKER_COUNT=$((NODE_COUNT * WORKERS_PER_NODE)); SERVER_COUNT=16
-NODE_RANK=${MLP_ROLE_INDEX:-${ARNOLD_ID:-${NODE_RANK:-${RANK:-0}}}}; NODE_RANK=$((10#$NODE_RANK)); test "$NODE_RANK" -lt "$NODE_COUNT"
+case "${HOSTNAME:-}" in
+  *-master-*)
+    NODE_RANK=0
+    ;;
+  *-worker-*)
+    NODE_RANK="${HOSTNAME##*-worker-}"
+    NODE_RANK=$((10#$NODE_RANK + 1))
+    ;;
+  *)
+    NODE_RANK=${MLP_ROLE_INDEX:-${ARNOLD_ID:-${NODE_RANK:-${RANK:-0}}}}
+    NODE_RANK=$((10#$NODE_RANK))
+    ;;
+esac
+test "$NODE_RANK" -ge 0; test "$NODE_RANK" -lt "$NODE_COUNT"
+echo "ROBOTWIN_CLIENT_NODE_RANK hostname=${HOSTNAME:-unknown} node_rank=$NODE_RANK node_count=$NODE_COUNT"
 mkdir -p "$RDZ_ROOT" "$OUT/_logs"
 deadline=$(($(date +%s) + 86400))
 while [ ! -s "$RDZ_ROOT/server_generation" ] || [ "$(find "$RDZ_ROOT" -maxdepth 1 -name 'server-*.ready' | wc -l)" -lt 2 ]; do
