@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20e-16policy-20260814-v1
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20-16policy-20260814-v4
 SOURCE_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla
 ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
 ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v2/bin/python
@@ -12,7 +12,7 @@ NODE_COUNT=3; GPU_COUNT=8; SIMULATORS_PER_GPU=2; WORKERS_PER_NODE=$((GPU_COUNT *
 NODE_RANK=${MLP_ROLE_INDEX:-${ARNOLD_ID:-${NODE_RANK:-${RANK:-0}}}}; NODE_RANK=$((10#$NODE_RANK)); test "$NODE_RANK" -lt "$NODE_COUNT"
 mkdir -p "$RDZ_ROOT" "$OUT/_logs"
 deadline=$(($(date +%s) + 86400))
-while [ ! -s "$RDZ_ROOT/server_generation" ] || [ "$(find "$RDZ_ROOT" -maxdepth 1 -name 'server-*.endpoint' | wc -l)" -lt 2 ]; do
+while [ ! -s "$RDZ_ROOT/server_generation" ] || [ "$(find "$RDZ_ROOT" -maxdepth 1 -name 'server-*.ready' | wc -l)" -lt 2 ]; do
   [ "$(date +%s)" -lt "$deadline" ] || { echo "Timed out waiting for policy endpoints"; exit 1; }
   sleep 5
 done

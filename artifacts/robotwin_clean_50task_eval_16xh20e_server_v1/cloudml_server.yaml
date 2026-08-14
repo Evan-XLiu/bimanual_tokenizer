@@ -1,4 +1,4 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-16xh20-policy-server-v3
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-16xh20-policy-server-v4
 description: RoboTwin demo_clean final EMA step10095 AR H32 BIN policy server; 16 physical H20E GPUs, one gRPC replica per GPU; waits for matching client completion.
 accessType: PRIVATE
 imageConfig:

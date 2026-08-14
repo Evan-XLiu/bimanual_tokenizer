@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20e-16policy-20260814-v1
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20-16policy-20260814-v4
 POLICY_ENV=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-policy-py310-v1
 POLICY_PYTHON=$POLICY_ENV/bin/python
 POLICY_SERVER=$POLICY_ENV/lib/python3.10/site-packages/praxis/scripts/serve.py
 CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/robotwin-bar-bin-qwen3vl2b-h32-final-ema-step10095-robot-mount-v1/pretrained_model
 RDZ_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/_rendezvous/$RUN_ID
-BASE_PORT=50100; NODE_COUNT=2; GPU_COUNT=8; SERVER_TIMEOUT_SEC=86400
+BASE_PORT=50100; NODE_COUNT=2; GPU_COUNT=8; SERVER_TIMEOUT_SEC=86400; HEALTH_TIMEOUT_SEC=1800
 NODE_RANK=${MLP_ROLE_INDEX:-${ARNOLD_ID:-${NODE_RANK:-${RANK:-0}}}}
 NODE_RANK=$((10#$NODE_RANK)); test "$NODE_RANK" -lt "$NODE_COUNT"
 test -x "$POLICY_PYTHON"; test -f "$POLICY_SERVER"; test -f "$CHECKPOINT/config.json"; test -f "$CHECKPOINT/model.safetensors"
@@ -20,7 +20,10 @@ fi
 deadline=$(($(date +%s) + SERVER_TIMEOUT_SEC))
 while [ ! -s "$RDZ_ROOT/server_generation" ]; do [ "$(date +%s)" -lt "$deadline" ] || exit 1; sleep 2; done
 generation=$(tr -d '[:space:]' <"$RDZ_ROOT/server_generation")
-printf '%s %s %s\n' "$generation" "$host" "$((BASE_PORT + NODE_RANK * GPU_COUNT))" >"$RDZ_ROOT/server-${NODE_RANK}.endpoint"
+endpoint_file="$RDZ_ROOT/server-${NODE_RANK}.endpoint"
+ready_file="$RDZ_ROOT/server-${NODE_RANK}.ready"
+rm -f "$endpoint_file" "$ready_file"
+printf '%s %s %s\n' "$generation" "$host" "$((BASE_PORT + NODE_RANK * GPU_COUNT))" >"$endpoint_file"
 PIDS=()
 cleanup() { for pid in "${PIDS[@]:-}"; do kill "$pid" 2>/dev/null || true; done; wait 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
@@ -29,14 +32,15 @@ for gpu in $(seq 0 $((GPU_COUNT - 1))); do
   CUDA_VISIBLE_DEVICES=$gpu "$POLICY_PYTHON" -u "$POLICY_SERVER" policy=bar_bin_qwen policy.pretrained_path="$CHECKPOINT" host=0.0.0.0 port="$port" device=cuda >"$RDZ_ROOT/server-${NODE_RANK}-${gpu}.log" 2>&1 &
   PIDS+=("$!")
 done
+health_deadline=$(($(date +%s) + HEALTH_TIMEOUT_SEC))
 for gpu in $(seq 0 $((GPU_COUNT - 1))); do
   port=$((BASE_PORT + NODE_RANK * GPU_COUNT + gpu))
-  "$POLICY_PYTHON" - "$host" "$port" "$CHECKPOINT" <<'PY'
+  "$POLICY_PYTHON" - "$host" "$port" "$CHECKPOINT" "$health_deadline" <<'PY'
 import json, sys, time
 from pathlib import Path
 from praxis_remote import PolicyClient
 host, port, expected = sys.argv[1], int(sys.argv[2]), Path(sys.argv[3]).resolve()
-for _ in range(180):
+for _ in range(max(1, int((int(sys.argv[4]) - int(time.time())) / 2))):
     client = PolicyClient(host=host, port=port, timeout=5.0)
     try:
         try:
@@ -48,7 +52,12 @@ for _ in range(180):
     time.sleep(2)
 else: raise RuntimeError(f"Policy server did not become ready: {host}:{port}")
 PY
+  if [ "$(date +%s)" -ge "$health_deadline" ]; then
+    echo "Policy server health timeout node=$NODE_RANK gpu=$gpu host=$host port=$port" >&2
+    exit 1
+  fi
 done
+printf '%s\n' "$generation" >"$ready_file"
 echo "ROBOTWIN_POLICY_SERVER_NODE_READY node=$NODE_RANK generation=$generation host=$host"
 while :; do
   if [ -s "$RDZ_ROOT/client_complete" ] && [ "$(tr -d '[:space:]' <"$RDZ_ROOT/client_complete")" = "$generation" ]; then exit 0; fi
