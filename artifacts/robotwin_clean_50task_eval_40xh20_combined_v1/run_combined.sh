@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20-16policy-20260814-v19
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20-16policy-20260814-v20
 SOURCE_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla
 ROBOTWIN_ROOT=/robot/robot-research-raw-data-0/user/lqw/code/RoboTwin
 ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v2/bin/python
@@ -156,7 +156,7 @@ PY
       --worker-index "$global_worker" --worker-count "$WORKER_COUNT" \
       --policy-host "${ENDPOINT_HOSTS[$endpoint_index]}" --policy-port "${ENDPOINT_PORTS[$endpoint_index]}" \
       --output-dir "$OUT" --run-id "$RUN_ID" --expected-checkpoint "$CHECKPOINT" \
-      --episodes-per-task 20 --max-seed-attempts 1000 \
+      --episodes-per-task 20 --max-seed-attempts 1000 --resume \
       >"$OUT/_logs/worker-$global_worker.log" 2>&1 &
     PIDS+=("$!")
   done
