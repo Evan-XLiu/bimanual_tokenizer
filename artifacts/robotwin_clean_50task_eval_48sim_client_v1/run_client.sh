@@ -40,6 +40,12 @@ for endpoint in "$RDZ_ROOT"/server-*.endpoint; do
   done
 done
 [ "${#ENDPOINT_HOSTS[@]}" -eq "$SERVER_COUNT" ] || { echo "Expected $SERVER_COUNT policy endpoints, found ${#ENDPOINT_HOSTS[@]}"; exit 1; }
+for endpoint_index in "${!ENDPOINT_HOSTS[@]}"; do
+  endpoint_host=${ENDPOINT_HOSTS[$endpoint_index]}; endpoint_port=${ENDPOINT_PORTS[$endpoint_index]}
+  endpoint_ip=$(getent ahostsv4 "$endpoint_host" | awk 'NR == 1 { print $1; exit }')
+  test -n "$endpoint_ip" || { echo "Policy endpoint does not resolve: host=$endpoint_host port=$endpoint_port" >&2; exit 1; }
+  echo "ROBOTWIN_CLIENT_POLICY_ENDPOINT index=$endpoint_index host=$endpoint_host ip=$endpoint_ip port=$endpoint_port"
+done
 RESUME_FLAG=()
 if [ -e "$OUT/comparison.json" ] || [ -d "$OUT/adjust_bottle" ]; then RESUME_FLAG+=(--resume); fi
 PIDS=()
