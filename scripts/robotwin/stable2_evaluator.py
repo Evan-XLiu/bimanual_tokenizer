@@ -22,6 +22,7 @@ from typing import Any
 import numpy as np
 import yaml
 
+
 def _load_policy_plugin(plugin_config_path: Path) -> None:
     package_root = plugin_config_path.parent
     required = {
@@ -544,14 +545,14 @@ def _load_json_mapping(path: Path) -> dict[str, Any]:
     return payload
 
 
-def _prepare_official_runtime(
+def _prepare_official_task(
     *,
     official: ModuleType | Any,
     root: Path,
     task_config_path: Path,
     config: dict[str, Any],
-) -> tuple[Any, dict[str, Any], Any, str, int]:
-    """Build stable_2.0 runtime state without calling its write-heavy outer main."""
+) -> tuple[Any, dict[str, Any], str, int]:
+    """Build the official task state without creating a policy client."""
     task_args = _load_yaml_mapping(task_config_path)
     task_args.update(
         {
@@ -610,13 +611,30 @@ def _prepare_official_runtime(
     )
 
     task_env = official.class_decorator(config["task_name"])
+    start_seed = 100000 * (1 + int(config["seed"]))
+    return task_env, task_args, video_size, start_seed
+
+
+def _prepare_official_runtime(
+    *,
+    official: ModuleType | Any,
+    root: Path,
+    task_config_path: Path,
+    config: dict[str, Any],
+) -> tuple[Any, dict[str, Any], Any, str, int]:
+    """Build stable_2.0 task and policy state without its write-heavy outer main."""
+    task_env, task_args, video_size, start_seed = _prepare_official_task(
+        official=official,
+        root=root,
+        task_config_path=task_config_path,
+        config=config,
+    )
     get_model = official.eval_function_decorator(config["policy_name"], "get_model")
     try:
         model = get_model(config)
     except BaseException:
         task_env.close_env()
         raise
-    start_seed = 100000 * (1 + int(config["seed"]))
     return task_env, task_args, model, video_size, start_seed
 
 

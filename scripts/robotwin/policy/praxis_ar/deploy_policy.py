@@ -176,7 +176,11 @@ def get_model(usr_args: dict[str, Any]) -> PraxisRobotWinPolicy:
             raise RuntimeError("Praxis policy server model info must be a JSON object.")
         camera_map = _parse_camera_map(usr_args.get("camera_map"))
         action_dim = int(usr_args.get("action_dim", 14))
-        episode_namespace = str(usr_args.get("task_name") or "robotwin")
+        episode_namespace = str(
+            usr_args.get("episode_namespace")
+            or usr_args.get("task_name")
+            or "robotwin"
+        )
         return PraxisRobotWinPolicy(
             client=client,
             camera_map=camera_map,
