@@ -39,6 +39,8 @@ class _PlanningTask:
         seed = self.setup_seeds[-1]
         if seed == 100000:
             raise _UnstableError("unstable")
+        if seed == 100002:
+            raise AssertionError("target_pose cannot be None")
         return {"info": {"seed": seed}}
 
     def check_success(self) -> bool:
@@ -92,8 +94,8 @@ def test_planner_preserves_sequential_seed_acceptance_and_instruction_rng(
         resume=False,
     )
 
-    assert [item["seed"] for item in result["episodes"]] == [100002, 100003]
-    assert task_env.setup_seeds == [100000, 100001, 100002, 100003]
+    assert [item["seed"] for item in result["episodes"]] == [100003, 100004]
+    assert task_env.setup_seeds == [100000, 100001, 100002, 100003, 100004]
     attempts = [
         json.loads(line)
         for line in (output / "pick_apple" / "seed_attempts.jsonl").read_text().splitlines()
@@ -101,8 +103,9 @@ def test_planner_preserves_sequential_seed_acceptance_and_instruction_rng(
     assert [(item["seed"], item["reason"]) for item in attempts] == [
         (100000, "unstable_error"),
         (100001, "expert_plan_failed"),
-        (100002, "expert_plan_succeeded"),
+        (100002, "expert_exception"),
         (100003, "expert_plan_succeeded"),
+        (100004, "expert_plan_succeeded"),
     ]
     stdout = capsys.readouterr().out
     assert "ROBOTWIN_PLAN_START" in stdout
@@ -207,13 +210,13 @@ def test_planner_resume_rebuilds_plan_from_atomic_accepted_attempt(
         resume=True,
     )
 
-    assert [item["seed"] for item in result["episodes"]] == [100000, 100002]
-    assert task_env.setup_seeds == [100001, 100002]
+    assert [item["seed"] for item in result["episodes"]] == [100000, 100003]
+    assert task_env.setup_seeds == [100001, 100002, 100003]
     rebuilt = [
         json.loads(line)
         for line in (task_dir / "episode_plan_records.jsonl").read_text().splitlines()
     ]
-    assert [item["seed"] for item in rebuilt] == [100000, 100002]
+    assert [item["seed"] for item in rebuilt] == [100000, 100003]
 
 
 def test_planner_resume_finalizes_fully_accepted_attempts_without_setup(

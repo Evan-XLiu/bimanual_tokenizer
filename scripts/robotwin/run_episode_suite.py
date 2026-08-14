@@ -261,6 +261,24 @@ def plan_task_episodes(
                     )
                     now_seed += 1
                     continue
+                except Exception as exc:
+                    attempt = {
+                        "attempt_index": seed_attempts - 1,
+                        "seed": attempted_seed,
+                        "accepted": False,
+                        "reason": "expert_exception",
+                        "detail": f"{type(exc).__name__}: {exc}",
+                    }
+                    attempts_handle.write(json.dumps(attempt, sort_keys=True) + "\n")
+                    attempts_handle.flush()
+                    os.fsync(attempts_handle.fileno())
+                    print(
+                        f"ROBOTWIN_PLAN_REJECT task={task_name} seed={attempted_seed} "
+                        f"reason=expert_exception error={type(exc).__name__}",
+                        flush=True,
+                    )
+                    now_seed += 1
+                    continue
                 finally:
                     task_env.close_env()
                     task_args["render_freq"] = render_freq
