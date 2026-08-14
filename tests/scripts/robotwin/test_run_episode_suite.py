@@ -49,6 +49,11 @@ class _PlanningTask:
 
 
 def _write_plugin(tmp_path: Path) -> Path:
+    task_config = tmp_path / "task_config"
+    task_config.mkdir(exist_ok=True)
+    (task_config / "_eval_step_limit.yml").write_text(
+        yaml.safe_dump({"pick_apple": 700})
+    )
     path = tmp_path / "deploy_policy.yml"
     path.write_text(yaml.safe_dump({"instruction_type": "seen"}))
     return path
@@ -209,6 +214,62 @@ def test_planner_resume_rebuilds_plan_from_atomic_accepted_attempt(
         for line in (task_dir / "episode_plan_records.jsonl").read_text().splitlines()
     ]
     assert [item["seed"] for item in rebuilt] == [100000, 100002]
+
+
+def test_planner_resume_finalizes_fully_accepted_attempts_without_setup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "output"
+    task_dir = output / "pick_apple"
+    task_dir.mkdir(parents=True)
+    accepted_episode = {
+        "task": "pick_apple",
+        "episode_index": 0,
+        "seed": 100000,
+        "instruction": "pick the apple",
+        "instruction_index": 0,
+        "instruction_candidate_count": 1,
+        "instruction_rng_seed": 100000,
+    }
+    (task_dir / "seed_attempts.jsonl").write_text(
+        json.dumps(
+            {
+                "attempt_index": 0,
+                "seed": 100000,
+                "accepted": True,
+                "reason": "expert_plan_succeeded",
+                "episode": accepted_episode,
+            }
+        )
+        + "\n"
+    )
+    task_env = _PlanningTask()
+    official = SimpleNamespace(UnStableError=_UnstableError)
+    monkeypatch.setattr(module, "_load_policy_plugin", lambda _path: None)
+    monkeypatch.setattr(module, "_load_official_module", lambda _root: official)
+    monkeypatch.setattr(
+        module, "_validate_task_config", lambda root, _plugin: root / "demo_clean.yml"
+    )
+    monkeypatch.setattr(
+        module,
+        "_prepare_official_task",
+        lambda **_kwargs: (task_env, {"render_freq": 0}, "640x480", 100000),
+    )
+
+    result = plan_task_episodes(
+        robotwin_root=tmp_path,
+        plugin_config=_write_plugin(tmp_path),
+        task_name="pick_apple",
+        output_dir=output,
+        run_id="formal",
+        episodes_per_task=1,
+        max_seed_attempts=20,
+        resume=True,
+    )
+
+    assert result["task_step_limit"] == 700
+    assert result["episodes"] == [accepted_episode]
+    assert task_env.setup_seeds == []
 
 
 def test_progress_is_deduplicated_and_printed_live(

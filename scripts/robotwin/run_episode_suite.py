@@ -124,6 +124,16 @@ def _validate_task_config(robotwin_root: Path, plugin_config: Path) -> Path:
     return task_config_path
 
 
+def _official_task_step_limit(robotwin_root: Path, task_name: str) -> int:
+    limits = _load_yaml_mapping(
+        robotwin_root / "task_config" / "_eval_step_limit.yml"
+    )
+    value = limits.get(task_name, 1000)
+    if not isinstance(value, int) or value <= 0:
+        raise ValueError(f"Invalid official step limit for {task_name}: {value!r}.")
+    return value
+
+
 def plan_task_episodes(
     *,
     robotwin_root: Path,
@@ -207,6 +217,7 @@ def plan_task_episodes(
             config=config,
         )
         task_args["eval_mode"] = True
+        step_limit = _official_task_step_limit(root, task_name)
         if start_seed != 100000:
             raise RuntimeError(f"Unexpected seed-group start seed: {start_seed}.")
         with (
@@ -314,7 +325,6 @@ def plan_task_episodes(
                 )
                 now_seed += 1
 
-        step_limit = int(task_env.step_lim)
         plan = {
             "status": "completed",
             "run_id": run_id,
