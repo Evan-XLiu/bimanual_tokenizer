@@ -1,4 +1,4 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-8xh20e-24sim-episode-client-v1
+jobName: praxis-robotwin-clean50-ar-bin-ema10095-8xh20e-24sim-episode-client-v2
 description: Official RoboTwin demo_clean final EMA step10095 AR H32 BIN evaluation; 50 tasks x 20 episodes, seen instructions, seed group 0; 24 episode-parallel simulators on 8 H20E GPUs, served by the separate 8-H20E policy task.
 accessType: PRIVATE
 imageConfig:

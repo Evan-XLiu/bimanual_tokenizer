@@ -10,6 +10,7 @@ RDZ_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean
 OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
 PLUGIN=$SOURCE_ROOT/scripts/robotwin/policy/praxis_ar/deploy_policy.yml
+EPISODE_RUNNER=$SOURCE_ROOT/scripts/robotwin/run_episode_suite.py
 GPU_COUNT=8
 SIMULATORS_PER_GPU=3
 WORKER_COUNT=$((GPU_COUNT * SIMULATORS_PER_GPU))
@@ -22,6 +23,7 @@ test -f "$CHECKPOINT/config.json"
 test -f "$CHECKPOINT/model.safetensors"
 test -f "$TASKS"
 test -f "$PLUGIN"
+test -f "$EPISODE_RUNNER"
 mkdir -p "$RDZ_ROOT" "$OUT/_logs"
 
 RESUME_FLAG=(--resume)
@@ -35,11 +37,12 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-cd "$SOURCE_ROOT"
+# RoboTwin imports asset manifests through paths relative to its repository root.
+cd "$ROBOTWIN_ROOT"
 echo "ROBOTWIN_PLANNING_PHASE_START workers=$WORKER_COUNT tasks=50 episodes_per_task=$EPISODES_PER_TASK"
 for worker in $(seq 0 $((WORKER_COUNT - 1))); do
   gpu=$((worker / SIMULATORS_PER_GPU))
-  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_episode_suite.py plan-worker \
+  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u "$EPISODE_RUNNER" plan-worker \
     --robotwin-root "$ROBOTWIN_ROOT" \
     --plugin-config "$PLUGIN" \
     --tasks "$TASKS" \
@@ -120,7 +123,7 @@ for worker in $(seq 0 $((WORKER_COUNT - 1))); do
   gpu=$((worker / SIMULATORS_PER_GPU))
   server_index=$((worker % SERVER_COUNT))
   policy_port=$((BASE_PORT + server_index))
-  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_episode_suite.py episode-worker \
+  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u "$EPISODE_RUNNER" episode-worker \
     --robotwin-root "$ROBOTWIN_ROOT" \
     --plugin-config "$PLUGIN" \
     --tasks "$TASKS" \
@@ -145,7 +148,7 @@ test "$failed" -eq 0
 PIDS=()
 echo "ROBOTWIN_ROLLOUT_PHASE_COMPLETE episodes=1000"
 
-"$ROBOTWIN_PYTHON" -u scripts/robotwin/run_episode_suite.py aggregate \
+"$ROBOTWIN_PYTHON" -u "$EPISODE_RUNNER" aggregate \
   --tasks "$TASKS" \
   --output-dir "$OUT" \
   --run-id "$RUN_ID" \
