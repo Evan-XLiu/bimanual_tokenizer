@@ -43,7 +43,8 @@ done
 for endpoint_index in "${!ENDPOINT_HOSTS[@]}"; do
   endpoint_host=${ENDPOINT_HOSTS[$endpoint_index]}; endpoint_port=${ENDPOINT_PORTS[$endpoint_index]}
   endpoint_ip=$(getent ahostsv4 "$endpoint_host" | awk 'NR == 1 { print $1; exit }')
-  test -n "$endpoint_ip" || { echo "Policy endpoint does not resolve: host=$endpoint_host port=$endpoint_port" >&2; exit 1; }
+  test -n "$endpoint_ip" || { echo "Policy endpoint does not resolve to a routable IPv4: host=$endpoint_host port=$endpoint_port" >&2; exit 1; }
+  case "$endpoint_ip" in 127.*) echo "Policy endpoint resolved to loopback: host=$endpoint_host ip=$endpoint_ip port=$endpoint_port" >&2; exit 1 ;; esac
   echo "ROBOTWIN_CLIENT_POLICY_ENDPOINT index=$endpoint_index host=$endpoint_host ip=$endpoint_ip port=$endpoint_port"
 done
 RESUME_FLAG=()

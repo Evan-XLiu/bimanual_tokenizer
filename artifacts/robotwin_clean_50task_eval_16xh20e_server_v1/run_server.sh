@@ -13,7 +13,10 @@ test -x "$POLICY_PYTHON"; test -f "$POLICY_SERVER"; test -f "$CHECKPOINT/config.
 mkdir -p "$RDZ_ROOT"
 hostname_value="${HOSTNAME:-}"
 test -n "$hostname_value"
-host=$(getent ahostsv4 "$hostname_value" | awk 'NR == 1 { print $1; exit }')
+host=$(getent ahostsv4 "$hostname_value" | awk '$1 !~ /^127\\./ { print $1; exit }')
+if [ -z "$host" ]; then
+  host=$(awk -v name="$hostname_value" '$2 == name && $1 !~ /^127\\./ { print $1; exit }' /etc/hosts)
+fi
 test -n "$host"
 if [ "$NODE_RANK" = 0 ]; then
   generation="${CLOUDML_JOB_ID:-robotwin-server}-${RUN_ID}-$(date -u +%Y%m%dT%H%M%SZ)-$$"
