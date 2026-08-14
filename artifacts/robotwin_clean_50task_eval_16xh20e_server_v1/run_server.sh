@@ -11,8 +11,8 @@ NODE_RANK=${MLP_ROLE_INDEX:-${ARNOLD_ID:-${NODE_RANK:-${RANK:-0}}}}
 NODE_RANK=$((10#$NODE_RANK)); test "$NODE_RANK" -lt "$NODE_COUNT"
 test -x "$POLICY_PYTHON"; test -f "$POLICY_SERVER"; test -f "$CHECKPOINT/config.json"; test -f "$CHECKPOINT/model.safetensors"
 mkdir -p "$RDZ_ROOT"
-host=$(hostname -I | awk '{print $1}')
-case "$host" in ""|127.*) echo "Cannot determine routable server host: $host"; exit 2 ;; esac
+host="${HOSTNAME:-}"
+test -n "$host"
 if [ "$NODE_RANK" = 0 ]; then
   generation="${CLOUDML_JOB_ID:-robotwin-server}-${RUN_ID}-$(date -u +%Y%m%dT%H%M%SZ)-$$"
   printf '%s\n' "$generation" >"$RDZ_ROOT/server_generation.tmp"; mv "$RDZ_ROOT/server_generation.tmp" "$RDZ_ROOT/server_generation"
@@ -24,6 +24,7 @@ endpoint_file="$RDZ_ROOT/server-${NODE_RANK}.endpoint"
 ready_file="$RDZ_ROOT/server-${NODE_RANK}.ready"
 rm -f "$endpoint_file" "$ready_file"
 printf '%s %s %s\n' "$generation" "$host" "$((BASE_PORT + NODE_RANK * GPU_COUNT))" >"$endpoint_file"
+echo "ROBOTWIN_POLICY_SERVER_ENDPOINT node=$NODE_RANK host=$host base_port=$((BASE_PORT + NODE_RANK * GPU_COUNT))"
 PIDS=()
 cleanup() { for pid in "${PIDS[@]:-}"; do kill "$pid" 2>/dev/null || true; done; wait 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
