@@ -15,7 +15,9 @@ import pytest
 from praxis.serving.model_identity import build_policy_serving_identity
 from scripts.robotwin.stable2_evaluator import (
     _load_policy_plugin,
+    _record_live_progress,
     _resolve_ffmpeg_executable,
+    _sync_live_progress,
     _validate_server_model_info,
     run_controlled_rollouts,
     run_stable2_eval,
@@ -771,3 +773,90 @@ def test_server_identity_rejects_different_checkpoint(tmp_path: Path) -> None:
             },
             expected_checkpoint=expected,
         )
+
+
+def test_live_progress_prints_task_and_global_success_rates(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "suite"
+    first = {
+        "task": "click_bell",
+        "episode_index": 0,
+        "seed": 100000,
+        "success": True,
+        "policy_steps": 73,
+    }
+    second = {
+        "task": "open_microwave",
+        "episode_index": 0,
+        "seed": 100001,
+        "success": False,
+        "policy_steps": 1200,
+    }
+
+    _record_live_progress(
+        output_root=root,
+        record=first,
+        task_completed=1,
+        task_successes=1,
+        task_episodes=2,
+        expected_total=4,
+    )
+    first_output = capsys.readouterr().out
+    assert "task=click_bell" in first_output
+    assert "task_completed=1/2" in first_output
+    assert "task_Success=1.000000" in first_output
+    assert "global_completed=1/4" in first_output
+    assert "global_Success=1.000000" in first_output
+
+    _record_live_progress(
+        output_root=root,
+        record=second,
+        task_completed=1,
+        task_successes=0,
+        task_episodes=2,
+        expected_total=4,
+    )
+    second_output = capsys.readouterr().out
+    assert "task=open_microwave" in second_output
+    assert "task_Success=0.000000" in second_output
+    assert "global_completed=2/4" in second_output
+    assert "global_successes=1" in second_output
+    assert "global_Success=0.500000" in second_output
+
+
+def test_live_progress_deduplicates_episode_and_syncs_resume_records(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "suite"
+    resumed = [
+        {"task": "click_bell", "episode_index": 0, "success": True},
+        {"task": "click_bell", "episode_index": 1, "success": False},
+    ]
+    _sync_live_progress(output_root=root, records=resumed)
+    duplicate = {
+        "task": "click_bell",
+        "episode_index": 1,
+        "seed": 100001,
+        "success": False,
+        "policy_steps": 1200,
+    }
+    stats = _record_live_progress(
+        output_root=root,
+        record=duplicate,
+        task_completed=2,
+        task_successes=1,
+        task_episodes=2,
+        expected_total=4,
+    )
+
+    assert stats == {
+        "task_completed": 2,
+        "task_successes": 1,
+        "global_completed": 2,
+        "global_successes": 1,
+    }
+    assert len((root / "progress.jsonl").read_text().splitlines()) == 2
+    output = capsys.readouterr().out
+    assert "global_completed=2/4" in output
+    assert "global_successes=1" in output

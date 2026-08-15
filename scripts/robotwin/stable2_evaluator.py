@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import importlib
 import importlib.util
 import json
@@ -113,6 +114,107 @@ def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
 
 def _default_popen(command: list[str]):
     return subprocess.Popen(command, stdin=subprocess.PIPE)
+
+
+def _read_jsonl_records(path: Path) -> list[dict[str, Any]]:
+    if not path.is_file():
+        return []
+    records: list[dict[str, Any]] = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        value = json.loads(line)
+        if not isinstance(value, dict):
+            raise ValueError(f"Expected a JSON object at {path}:{line_number}.")
+        records.append(value)
+    return records
+
+
+def _record_live_progress(
+    *,
+    output_root: Path,
+    record: dict[str, Any],
+    task_completed: int,
+    task_successes: int,
+    task_episodes: int,
+    expected_total: int,
+) -> dict[str, int]:
+    """Append one completed episode and print task/global cumulative Success."""
+    progress_path = output_root / "progress.jsonl"
+    lock_path = output_root / ".progress.lock"
+    event = {
+        "task": str(record["task"]),
+        "episode_index": int(record["episode_index"]),
+        "success": bool(record["success"]),
+    }
+    output_root.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        existing = _read_jsonl_records(progress_path)
+        keys = {(str(item["task"]), int(item["episode_index"])) for item in existing}
+        key = (event["task"], event["episode_index"])
+        if key not in keys:
+            with progress_path.open("a", encoding="utf-8") as progress_handle:
+                progress_handle.write(json.dumps(event, sort_keys=True) + "\n")
+                progress_handle.flush()
+                os.fsync(progress_handle.fileno())
+            existing.append(event)
+        global_completed = len(existing)
+        global_successes = sum(bool(item["success"]) for item in existing)
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+    print(
+        f"ROBOTWIN_EPISODE_RESULT task={event['task']} "
+        f"episode={event['episode_index']} seed={record['seed']} "
+        f"Success={str(event['success']).lower()} "
+        f"policy_steps={record['policy_steps']} "
+        f"task_completed={task_completed}/{task_episodes} "
+        f"task_successes={task_successes} "
+        f"task_Success={task_successes / task_completed:.6f} "
+        f"global_completed={global_completed}/{expected_total} "
+        f"global_successes={global_successes} "
+        f"global_Success={global_successes / global_completed:.6f}",
+        flush=True,
+    )
+    return {
+        "task_completed": task_completed,
+        "task_successes": task_successes,
+        "global_completed": global_completed,
+        "global_successes": global_successes,
+    }
+
+
+def _sync_live_progress(
+    *,
+    output_root: Path,
+    records: list[dict[str, Any]],
+) -> None:
+    """Make resume records visible to the shared counter without printing them."""
+    if not records:
+        return
+    progress_path = output_root / "progress.jsonl"
+    lock_path = output_root / ".progress.lock"
+    output_root.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        existing = _read_jsonl_records(progress_path)
+        keys = {(str(item["task"]), int(item["episode_index"])) for item in existing}
+        additions = [
+            {
+                "task": str(item["task"]),
+                "episode_index": int(item["episode_index"]),
+                "success": bool(item["success"]),
+            }
+            for item in records
+            if (str(item["task"]), int(item["episode_index"])) not in keys
+        ]
+        if additions:
+            with progress_path.open("a", encoding="utf-8") as progress_handle:
+                progress_handle.writelines(
+                    json.dumps(item, sort_keys=True) + "\n" for item in additions
+                )
+                progress_handle.flush()
+                os.fsync(progress_handle.fileno())
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
 
 def _resolve_ffmpeg_executable() -> str:
@@ -234,14 +336,7 @@ def run_controlled_rollouts(
     eval_func = official.eval_function_decorator(args["policy_name"], "eval")
     reset_func = official.eval_function_decorator(args["policy_name"], "reset_model")
 
-    existing_records: list[dict[str, Any]] = []
-    if resume and records_path.is_file():
-        for line in records_path.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                value = json.loads(line)
-                if not isinstance(value, dict):
-                    raise ValueError(f"Invalid episode record in {records_path}.")
-                existing_records.append(value)
+    existing_records = _read_jsonl_records(records_path) if resume else []
     completed_indices = {int(item["episode_index"]) for item in existing_records}
     if len(completed_indices) != len(existing_records) or any(
         index < 0 or index >= episodes for index in completed_indices
@@ -277,6 +372,7 @@ def run_controlled_rollouts(
         else:
             episode_index = pending_index
             now_seed = int(pending["seed"])
+    _sync_live_progress(output_root=root.parent, records=existing_records)
     resolved_instruction_rng_seed = (
         int(start_seed) if instruction_rng_seed is None else int(instruction_rng_seed)
     )
@@ -462,6 +558,17 @@ def run_controlled_rollouts(
                 records.write(json.dumps(record, sort_keys=True) + "\n")
                 records.flush()
                 os.fsync(records.fileno())
+                existing_records.append(record)
+                _record_live_progress(
+                    output_root=root.parent,
+                    record=record,
+                    task_completed=len(existing_records),
+                    task_successes=sum(
+                        bool(item["success"]) for item in existing_records
+                    ),
+                    task_episodes=episodes,
+                    expected_total=50 * episodes,
+                )
                 completed_indices.add(episode_index)
                 pending_path = root / "pending_episode.json"
                 if pending_path.exists():

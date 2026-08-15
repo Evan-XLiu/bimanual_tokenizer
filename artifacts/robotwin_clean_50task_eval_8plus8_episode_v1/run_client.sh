@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20e-8plus8-24sim-episode-20260815-v3
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20e-8plus8-taskmajor-20260815-v4
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 ROBOTWIN_ROOT=/mnt/robot-research-raw-data-0/user/lqw/code/RoboTwin
 ROBOTWIN_PYTHON=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-eval-py310-v2/bin/python
@@ -9,8 +9,6 @@ CHECKPOINT=/robot/robot-research-exp-0/user/hxs/praxis-vla/serving-artifacts/rob
 RDZ_ROOT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/_rendezvous/$RUN_ID
 OUT=/robot/robot-research-exp-0/user/hxs/praxis-vla/outputs/robotwin2_clean/$RUN_ID
 TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
-PLUGIN=$SOURCE_ROOT/scripts/robotwin/policy/praxis_ar/deploy_policy.yml
-EPISODE_RUNNER=$SOURCE_ROOT/scripts/robotwin/run_episode_suite.py
 GPU_COUNT=8
 SIMULATORS_PER_GPU=3
 WORKER_COUNT=$((GPU_COUNT * SIMULATORS_PER_GPU))
@@ -22,12 +20,9 @@ test -f "$ROBOTWIN_ROOT/script/eval_policy.py"
 test -f "$CHECKPOINT/config.json"
 test -f "$CHECKPOINT/model.safetensors"
 test -f "$TASKS"
-test -f "$PLUGIN"
-test -f "$EPISODE_RUNNER"
 mkdir -p "$RDZ_ROOT" "$OUT/_logs"
 
 RESUME_FLAG=(--resume)
-
 PIDS=()
 cleanup() {
   for pid in "${PIDS[@]:-}"; do
@@ -38,34 +33,12 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 wait_for_workers() {
-  local _
+  local failed=0
   for _ in "${PIDS[@]}"; do
-    wait -n || return 1
+    wait -n || failed=1
   done
+  return "$failed"
 }
-
-# RoboTwin imports asset manifests through paths relative to its repository root.
-cd "$ROBOTWIN_ROOT"
-echo "ROBOTWIN_PLANNING_PHASE_START workers=$WORKER_COUNT tasks=50 episodes_per_task=$EPISODES_PER_TASK"
-for worker in $(seq 0 $((WORKER_COUNT - 1))); do
-  gpu=$((worker / SIMULATORS_PER_GPU))
-  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u "$EPISODE_RUNNER" plan-worker \
-    --robotwin-root "$ROBOTWIN_ROOT" \
-    --plugin-config "$PLUGIN" \
-    --tasks "$TASKS" \
-    --worker-index "$worker" \
-    --worker-count "$WORKER_COUNT" \
-    --output-dir "$OUT" \
-    --run-id "$RUN_ID" \
-    --episodes-per-task "$EPISODES_PER_TASK" \
-    --max-seed-attempts 1000 \
-    "${RESUME_FLAG[@]}" \
-    2>&1 | sed -u "s/^/[planner-$worker] /" | tee -a "$OUT/_logs/planner-$worker.log" &
-  PIDS+=("$!")
-done
-wait_for_workers
-PIDS=()
-echo "ROBOTWIN_PLANNING_PHASE_COMPLETE tasks=50 plans=1000"
 
 policy_endpoints_healthy() {
   "$ROBOTWIN_PYTHON" - "$1" "$2" "$CHECKPOINT" "$SERVER_COUNT" <<'PY'
@@ -78,22 +51,18 @@ from praxis_remote import PolicyClient
 host, base_port = sys.argv[1], int(sys.argv[2])
 expected = Path(sys.argv[3]).resolve()
 server_count = int(sys.argv[4])
-try:
-    for server_index in range(server_count):
-        port = base_port + server_index
-        client = PolicyClient(host=host, port=port, timeout=10.0)
-        try:
-            ready, info = client.health_check()
-            loaded = Path(json.loads(info)["serving_artifact"]["checkpoint"]["path"]).resolve()
-            if not ready or loaded != expected:
-                raise RuntimeError(f"Policy endpoint is not ready: {host}:{port}")
-        finally:
-            client.close()
-except Exception:
-    raise SystemExit(1)
 for server_index in range(server_count):
+    port = base_port + server_index
+    client = PolicyClient(host=host, port=port, timeout=10.0)
+    try:
+        ready, info = client.health_check()
+        loaded = Path(json.loads(info)["serving_artifact"]["checkpoint"]["path"]).resolve()
+        if not ready or loaded != expected:
+            raise RuntimeError(f"Policy endpoint is not ready: {host}:{port}")
+    finally:
+        client.close()
     print(
-        f"ROBOTWIN_CLIENT_POLICY_HEALTH_OK host={host} port={base_port + server_index}",
+        f"ROBOTWIN_CLIENT_POLICY_HEALTH_OK host={host} port={port}",
         flush=True,
     )
 PY
@@ -116,19 +85,22 @@ while :; do
       fi
     fi
   fi
-  [ "$(date +%s)" -lt "$deadline" ] || { echo "Timed out waiting for policy server" >&2; exit 1; }
+  [ "$(date +%s)" -lt "$deadline" ] || {
+    echo "Timed out waiting for policy server" >&2
+    exit 1
+  }
   sleep 5
 done
 echo "ROBOTWIN_CLIENT_POLICY_ENDPOINTS generation=$GENERATION host=$POLICY_HOST ip=$policy_ip ports=$BASE_PORT-$((BASE_PORT + SERVER_COUNT - 1))"
 
-echo "ROBOTWIN_ROLLOUT_PHASE_START workers=$WORKER_COUNT simulators_per_gpu=$SIMULATORS_PER_GPU"
+cd "$SOURCE_ROOT"
+echo "ROBOTWIN_TASK_MAJOR_PHASE_START workers=$WORKER_COUNT simulators_per_gpu=$SIMULATORS_PER_GPU tasks=50 episodes_per_task=$EPISODES_PER_TASK"
 for worker in $(seq 0 $((WORKER_COUNT - 1))); do
   gpu=$((worker / SIMULATORS_PER_GPU))
   server_index=$((worker % SERVER_COUNT))
   policy_port=$((BASE_PORT + server_index))
-  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u "$EPISODE_RUNNER" episode-worker \
+  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py worker \
     --robotwin-root "$ROBOTWIN_ROOT" \
-    --plugin-config "$PLUGIN" \
     --tasks "$TASKS" \
     --worker-index "$worker" \
     --worker-count "$WORKER_COUNT" \
@@ -138,16 +110,18 @@ for worker in $(seq 0 $((WORKER_COUNT - 1))); do
     --run-id "$RUN_ID" \
     --expected-checkpoint "$CHECKPOINT" \
     --episodes-per-task "$EPISODES_PER_TASK" \
-    --heartbeat-steps 100 \
+    --max-seed-attempts 1000 \
     "${RESUME_FLAG[@]}" \
-    2>&1 | sed -u "s/^/[episode-$worker] /" | tee -a "$OUT/_logs/episode-$worker.log" &
+    2>&1 | sed -u "s/^/[task-worker-$worker] /" | tee -a "$OUT/_logs/task-worker-$worker.log" &
   PIDS+=("$!")
 done
-wait_for_workers
+if ! wait_for_workers; then
+  echo "ROBOTWIN_TASK_MAJOR_PHASE_FAILED" >&2
+  exit 1
+fi
 PIDS=()
-echo "ROBOTWIN_ROLLOUT_PHASE_COMPLETE episodes=1000"
 
-"$ROBOTWIN_PYTHON" -u "$EPISODE_RUNNER" aggregate \
+"$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py aggregate \
   --tasks "$TASKS" \
   --output-dir "$OUT" \
   --run-id "$RUN_ID" \
