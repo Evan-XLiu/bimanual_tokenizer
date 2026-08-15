@@ -112,7 +112,7 @@ for worker in $(seq 0 $((WORKER_COUNT - 1))); do
     --episodes-per-task "$EPISODES_PER_TASK" \
     --max-seed-attempts 1000 \
     "${RESUME_FLAG[@]}" \
-    2>&1 | sed -u "s/^/[task-worker-$worker] /" | tee -a "$OUT/_logs/task-worker-$worker.log" &
+    2>&1 | sed -u $'s/\033\\[[0-9;]*m//g' | sed -u "s/^/[task-worker-$worker] /" | tee -a "$OUT/_logs/task-worker-$worker.log" &
   PIDS+=("$!")
 done
 if ! wait_for_workers; then
