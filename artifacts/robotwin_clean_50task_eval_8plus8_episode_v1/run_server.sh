@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-final-ema-step10095-demo-clean-50x20-s0-h20e-8plus8-taskmajor-20260815-v4
+RUN_ID=robotwin-ar-bin-qwen3vl2b-h32-execute8-final-ema-step10095-demo-clean-50x20-s0-h20e-8plus8-taskmajor-20260817-v1
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 POLICY_ENV=/robot/robot-research-exp-0/user/hxs/envs/praxis-vla-robotwin-policy-py310-v1
 POLICY_PYTHON=$POLICY_ENV/bin/python
@@ -44,6 +44,7 @@ for gpu in $(seq 0 $((GPU_COUNT - 1))); do
   CUDA_VISIBLE_DEVICES=$gpu "$POLICY_PYTHON" -u "$POLICY_SERVER" \
     policy=bar_bin_qwen \
     policy.pretrained_path="$CHECKPOINT" \
+    policy.n_action_steps=8 \
     host=0.0.0.0 \
     port="$port" \
     device=cuda \
