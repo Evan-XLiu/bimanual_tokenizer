@@ -159,11 +159,15 @@ def _print_episode_result(
 def _is_recoverable_expert_plan_error(exc: BaseException) -> bool:
     message = str(exc)
     return (
-        isinstance(exc, AssertionError)
-        and message == "target_pose cannot be None for move action."
-    ) or (
-        isinstance(exc, TypeError)
-        and message == "'NoneType' object is not subscriptable"
+        (
+            isinstance(exc, AssertionError)
+            and message == "target_pose cannot be None for move action."
+        )
+        or (
+            isinstance(exc, TypeError)
+            and message == "'NoneType' object is not subscriptable"
+        )
+        or (isinstance(exc, IndexError) and message == "list index out of range")
     )
 
 
@@ -374,7 +378,7 @@ def run_controlled_rollouts(
                 os.fsync(attempts.fileno())
                 now_seed += 1
                 continue
-            except (AssertionError, TypeError) as exc:
+            except (AssertionError, IndexError, TypeError) as exc:
                 if not _is_recoverable_expert_plan_error(exc):
                     raise
                 attempts.write(

@@ -448,6 +448,7 @@ def test_controlled_rollout_raises_official_expert_play_error(tmp_path: Path) ->
     [
         AssertionError("target_pose cannot be None for move action."),
         TypeError("'NoneType' object is not subscriptable"),
+        IndexError("list index out of range"),
     ],
 )
 def test_controlled_rollout_rejects_known_expert_geometry_error(
@@ -509,6 +510,38 @@ def test_controlled_rollout_rejects_known_expert_geometry_error(
     assert attempts[0]["error_type"] == (
         f"{type(expert_error).__module__}.{type(expert_error).__qualname__}"
     )
+
+
+def test_controlled_rollout_raises_unknown_expert_index_error(tmp_path: Path) -> None:
+    official = SimpleNamespace(
+        UnStableError=_UnstableError,
+        eval_function_decorator=lambda *_args: lambda *_unused: None,
+    )
+    env = _TaskEnv()
+    env.unstable_seeds = set()
+    env.expert_errors[100000] = IndexError("expert action is unavailable")
+
+    with pytest.raises(IndexError, match="expert action is unavailable"):
+        run_controlled_rollouts(
+            official=official,
+            task_name="pick_apple",
+            task_env=env,
+            args={
+                "task_name": "pick_apple",
+                "policy_name": "praxis_ar",
+                "clear_cache_freq": 5,
+                "render_freq": 0,
+                "eval_video_log": True,
+            },
+            model=object(),
+            start_seed=100000,
+            episodes=1,
+            video_size="2x2",
+            instruction_type="unseen",
+            output_dir=tmp_path / "eval",
+            max_seed_attempts=1,
+            popen_factory=_FakeProcess,
+        )
 
 
 def test_rollout_failure_reaps_video_and_closes_environment(tmp_path: Path) -> None:
