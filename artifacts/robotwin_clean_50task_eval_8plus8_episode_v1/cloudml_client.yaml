@@ -1,9 +1,9 @@
-jobName: praxis-robotwin-clean50-ar-bin-ema10095-8xh20e-24sim-taskmajor-client-v8
-description: Official RoboTwin demo_clean final EMA step10095 AR H32 BIN evaluation; 50 tasks x 20 episodes, seen instructions, seed group 0; 24 task-major simulators on 8 H20E GPUs, served by the separate 8-H20E policy task.
+jobName: praxis-robotwin-clean50-ar-bin-h32-exec8-ema10095-8xh20e-24sim-dynamic-client-resume-v3
+description: Official RoboTwin demo_clean final EMA step10095 AR BAR+BIN+Qwen H32 evaluation with inference-time execute 8; 50 tasks x 20 episodes, seen instructions, seed group 0; 24 dynamic simulator slots on 8 H20E GPUs, served by the separate 8-H20E policy task.
 accessType: PRIVATE
 imageConfig:
   imageUrl: micr.cloud.mioffice.cn/robot-rfm-hxs/bsp-base-common-exp:3055471-verified-1
-  imageCommand: exec bash -lc 'set -Eeuo pipefail; SRC=/robot/robot-research-exp-0/user/hxs/praxis-vla; RUN=/tmp/praxis-vla-robotwin-8plus8-client; mkdir "$RUN"; cd "$SRC"; flock .git/robotwin-eval-fetch.lock git fetch --quiet origin hxs/codex/robotwin-integration:refs/remotes/origin/hxs/codex/robotwin-integration; git archive origin/hxs/codex/robotwin-integration | tar -x -C "$RUN"; cd "$RUN"; echo "ROBOTWIN_SOURCE_COMMIT=$(git --git-dir="$SRC/.git" rev-parse origin/hxs/codex/robotwin-integration)"; exec bash artifacts/robotwin_clean_50task_eval_8plus8_episode_v1/run_client.sh'
+  imageCommand: exec bash -lc 'set -Eeuo pipefail; REPO=https://github.com/xshenhan/praxis-vla.git; COMMIT=c2d7c0bfeb6af035bce2cbe80e25b6ca089f3026; RUN=/tmp/praxis-vla-robotwin-h32e8-dynamic-client; git clone --quiet --no-checkout "$REPO" "$RUN"; cd "$RUN"; git checkout --quiet --detach "$COMMIT"; test "$(git rev-parse HEAD)" = "$COMMIT"; echo "ROBOTWIN_SOURCE_REPO=$REPO ROBOTWIN_SOURCE_COMMIT=$COMMIT"; exec bash artifacts/robotwin_clean_50task_eval_8plus8_episode_v1/run_client.sh'
 modelUri: ""
 envConfigs:
   - key: NVIDIA_DRIVER_CAPABILITIES
@@ -39,3 +39,12 @@ retryConfig:
   maxRetryTimes: 0
   policySets: []
 rdma: false
+alertConfig:
+  enableAlert: true
+  alertItems:
+    - alertConditions:
+        - FAILED
+      alertLevel: P2
+      alertReceivers:
+        persons:
+          - hanxiaoshen
