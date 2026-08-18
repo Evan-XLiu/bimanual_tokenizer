@@ -443,6 +443,74 @@ def test_controlled_rollout_raises_official_expert_play_error(tmp_path: Path) ->
     assert (output_dir / "seed_attempts.jsonl").read_text() == ""
 
 
+@pytest.mark.parametrize(
+    "expert_error",
+    [
+        AssertionError("target_pose cannot be None for move action."),
+        TypeError("'NoneType' object is not subscriptable"),
+    ],
+)
+def test_controlled_rollout_rejects_known_expert_geometry_error(
+    tmp_path: Path,
+    expert_error: Exception,
+) -> None:
+    def policy_eval(task_env, _model, _observation):
+        frame = np.zeros((2, 2, 3), dtype=np.uint8).tobytes()
+        task_env.eval_video_ffmpeg.stdin.write(frame)
+        task_env.take_action_cnt += 1
+        task_env.eval_success = True
+        task_env.eval_video_ffmpeg.stdin.write(frame)
+
+    official = SimpleNamespace(
+        UnStableError=_UnstableError,
+        generate_episode_descriptions=lambda *_args: [
+            {"unseen": ["put the apple in the bowl"]}
+        ],
+        eval_function_decorator=lambda _policy, name: (
+            policy_eval if name == "eval" else lambda _model: None
+        ),
+    )
+    env = _TaskEnv()
+    env.unstable_seeds = set()
+    env.expert_errors[100000] = expert_error
+    output_dir = tmp_path / type(expert_error).__name__
+
+    _, successes = run_controlled_rollouts(
+        official=official,
+        task_name="pick_apple",
+        task_env=env,
+        args={
+            "task_name": "pick_apple",
+            "policy_name": "praxis_ar",
+            "clear_cache_freq": 5,
+            "render_freq": 0,
+            "eval_video_log": True,
+        },
+        model=object(),
+        start_seed=100000,
+        episodes=1,
+        video_size="2x2",
+        instruction_type="unseen",
+        output_dir=output_dir,
+        max_seed_attempts=2,
+        popen_factory=_FakeProcess,
+    )
+
+    assert successes == 1
+    assert env.setup_seeds == [100000, 100001, 100001]
+    attempts = [
+        json.loads(line)
+        for line in (output_dir / "seed_attempts.jsonl").read_text().splitlines()
+    ]
+    assert [(item["seed"], item["reason"]) for item in attempts] == [
+        (100000, "expert_plan_exception"),
+        (100001, "expert_plan_succeeded"),
+    ]
+    assert attempts[0]["error_type"] == (
+        f"{type(expert_error).__module__}.{type(expert_error).__qualname__}"
+    )
+
+
 def test_rollout_failure_reaps_video_and_closes_environment(tmp_path: Path) -> None:
     processes: list[_FakeProcess] = []
 
@@ -644,7 +712,6 @@ def test_stable2_eval_uses_official_runtime_and_matches_checkpoint(
 
     def fake_rollouts(**kwargs):
         output = Path(kwargs["output_dir"])
-        kwargs["task_env"].step_lim = 400
         assert kwargs["output_dir_precreated"] is True
         assert output.is_dir()
         (output / "episode_records.jsonl").write_text("")
@@ -675,6 +742,7 @@ def test_stable2_eval_uses_official_runtime_and_matches_checkpoint(
     assert close_calls == [model]
     manifest = json.loads(Path(result["run_manifest_path"]).read_text())
     assert manifest["status"] == "rollout_completed"
+    assert manifest["task_step_limit"] is None
     assert manifest["expected_checkpoint"]["checkpoint"]["path"] == str(
         checkpoint.resolve()
     )

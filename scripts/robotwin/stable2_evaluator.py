@@ -156,6 +156,17 @@ def _print_episode_result(
     }
 
 
+def _is_recoverable_expert_plan_error(exc: BaseException) -> bool:
+    message = str(exc)
+    return (
+        isinstance(exc, AssertionError)
+        and message == "target_pose cannot be None for move action."
+    ) or (
+        isinstance(exc, TypeError)
+        and message == "'NoneType' object is not subscriptable"
+    )
+
+
 def _resolve_ffmpeg_executable() -> str:
     system_ffmpeg = shutil.which("ffmpeg")
     if system_ffmpeg is not None:
@@ -353,6 +364,29 @@ def run_controlled_rollouts(
                             "seed": attempted_seed,
                             "accepted": False,
                             "reason": "unstable_error",
+                            "detail": str(exc),
+                        },
+                        sort_keys=True,
+                    )
+                    + "\n"
+                )
+                attempts.flush()
+                os.fsync(attempts.fileno())
+                now_seed += 1
+                continue
+            except (AssertionError, TypeError) as exc:
+                if not _is_recoverable_expert_plan_error(exc):
+                    raise
+                attempts.write(
+                    json.dumps(
+                        {
+                            "attempt_index": seed_attempts - 1,
+                            "seed": attempted_seed,
+                            "accepted": False,
+                            "reason": "expert_plan_exception",
+                            "error_type": (
+                                f"{type(exc).__module__}.{type(exc).__qualname__}"
+                            ),
                             "detail": str(exc),
                         },
                         sort_keys=True,
@@ -840,7 +874,9 @@ def _run_stable2_eval_impl(
             resume=resume,
         )
         task_step_limit = getattr(task_env, "step_lim", None)
-        if not isinstance(task_step_limit, int) or task_step_limit <= 0:
+        if task_step_limit is not None and (
+            not isinstance(task_step_limit, int) or task_step_limit <= 0
+        ):
             raise RuntimeError(
                 f"RoboTwin task {task_name!r} has invalid step limit "
                 f"{task_step_limit!r}."
