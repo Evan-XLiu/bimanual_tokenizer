@@ -1,4 +1,4 @@
-jobName: praxis-robotwin-clean50-ar-bin-h32-exec8-ema10095-8xh20e-policy-server-dynamic-resume-v3
+jobName: praxis-robotwin-clean50-ar-bin-h32-exec8-ema10095-8xh20e-policy-server-dynamic-resume-v4
 description: RoboTwin demo_clean final EMA step10095 AR BAR+BIN+Qwen H32 policy server with inference-time execute 8; 8 H20E GPUs, one gRPC server per GPU, for the independent dynamic 8+8 resume evaluation.
 accessType: PRIVATE
 imageConfig:
