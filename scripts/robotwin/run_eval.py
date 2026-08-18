@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +41,9 @@ def _load_manifest(path: Path) -> dict[str, Any]:
     return payload
 
 
-def _terminate_process(process: subprocess.Popen[str], *, timeout: float = 10.0) -> None:
+def _terminate_process(
+    process: subprocess.Popen[str], *, timeout: float = 10.0
+) -> None:
     if process.poll() is not None:
         return
     process.terminate()
@@ -140,12 +143,16 @@ def run_task_eval(
     evaluator_overlay: str | Path = DEFAULT_EVALUATOR_OVERLAY,
     python_executable: str = sys.executable,
     resume: bool = False,
+    subprocess_env: Mapping[str, str] | None = None,
+    line_callback: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     root = Path(robotwin_root).expanduser().resolve()
     output = Path(output_dir).expanduser().resolve()
     task_output = output / task_name
     if task_output.exists() and not resume:
-        raise FileExistsError(f"Use --resume for an existing task eval output directory: {task_output}")
+        raise FileExistsError(
+            f"Use --resume for an existing task eval output directory: {task_output}"
+        )
     task_output.mkdir(parents=True, exist_ok=resume)
     run_manifest_path = task_output / "run_manifest.json"
     _atomic_json(
@@ -214,6 +221,7 @@ def run_task_eval(
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                env={**os.environ, **subprocess_env} if subprocess_env else None,
             )
             assert process.stdout is not None
             for line in process.stdout:
@@ -221,6 +229,8 @@ def run_task_eval(
                 sys.stdout.flush()
                 log_handle.write(line)
                 log_handle.flush()
+                if line_callback is not None:
+                    line_callback(line)
             return_code = process.wait()
         if return_code != 0:
             raise RuntimeError(

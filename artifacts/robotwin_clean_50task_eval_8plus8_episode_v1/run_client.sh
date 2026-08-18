@@ -23,22 +23,6 @@ test -f "$TASKS"
 mkdir -p "$RDZ_ROOT" "$OUT/_logs"
 
 RESUME_FLAG=(--resume)
-PIDS=()
-cleanup() {
-  for pid in "${PIDS[@]:-}"; do
-    kill "$pid" 2>/dev/null || true
-  done
-  wait 2>/dev/null || true
-}
-trap cleanup EXIT INT TERM
-
-wait_for_workers() {
-  local failed=0
-  for _ in "${PIDS[@]}"; do
-    wait -n || failed=1
-  done
-  return "$failed"
-}
 
 policy_endpoints_healthy() {
   "$ROBOTWIN_PYTHON" - "$1" "$2" "$CHECKPOINT" "$SERVER_COUNT" <<'PY'
@@ -94,32 +78,25 @@ done
 echo "ROBOTWIN_CLIENT_POLICY_ENDPOINTS generation=$GENERATION host=$POLICY_HOST ip=$policy_ip ports=$BASE_PORT-$((BASE_PORT + SERVER_COUNT - 1))"
 
 cd "$SOURCE_ROOT"
-echo "ROBOTWIN_TASK_MAJOR_PHASE_START workers=$WORKER_COUNT simulators_per_gpu=$SIMULATORS_PER_GPU tasks=50 episodes_per_task=$EPISODES_PER_TASK"
-for worker in $(seq 0 $((WORKER_COUNT - 1))); do
-  gpu=$((worker / SIMULATORS_PER_GPU))
-  server_index=$((worker % SERVER_COUNT))
-  policy_port=$((BASE_PORT + server_index))
-  CUDA_VISIBLE_DEVICES=$gpu "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py worker \
-    --robotwin-root "$ROBOTWIN_ROOT" \
-    --tasks "$TASKS" \
-    --worker-index "$worker" \
-    --worker-count "$WORKER_COUNT" \
-    --policy-host "$POLICY_HOST" \
-    --policy-port "$policy_port" \
-    --output-dir "$OUT" \
-    --run-id "$RUN_ID" \
-    --expected-checkpoint "$CHECKPOINT" \
-    --episodes-per-task "$EPISODES_PER_TASK" \
-    --max-seed-attempts 1000 \
-    "${RESUME_FLAG[@]}" \
-    2>&1 | sed -u $'s/\033\\[[0-9;]*m//g' | sed -u "s/^/[task-worker-$worker] /" | tee -a "$OUT/_logs/task-worker-$worker.log" &
-  PIDS+=("$!")
-done
-if ! wait_for_workers; then
+echo "ROBOTWIN_DYNAMIC_PHASE_START slots=$WORKER_COUNT simulators_per_gpu=$SIMULATORS_PER_GPU tasks=50 episodes_per_task=$EPISODES_PER_TASK"
+if ! "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py supervise \
+  --robotwin-root "$ROBOTWIN_ROOT" \
+  --tasks "$TASKS" \
+  --policy-host "$POLICY_HOST" \
+  --base-policy-port "$BASE_PORT" \
+  --output-dir "$OUT" \
+  --run-id "$RUN_ID" \
+  --expected-checkpoint "$CHECKPOINT" \
+  --gpu-count "$GPU_COUNT" \
+  --simulators-per-gpu "$SIMULATORS_PER_GPU" \
+  --server-count "$SERVER_COUNT" \
+  --episodes-per-task "$EPISODES_PER_TASK" \
+  --max-seed-attempts 1000 \
+  "${RESUME_FLAG[@]}" \
+  2>&1 | sed -u $'s/\033\\[[0-9;]*m//g' | tee -a "$OUT/_logs/dynamic-supervisor.log"; then
   echo "ROBOTWIN_TASK_MAJOR_PHASE_FAILED" >&2
   exit 1
 fi
-PIDS=()
 
 "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py aggregate \
   --tasks "$TASKS" \

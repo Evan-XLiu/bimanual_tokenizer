@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import importlib
 import importlib.util
 import json
@@ -120,7 +119,9 @@ def _read_jsonl_records(path: Path) -> list[dict[str, Any]]:
     if not path.is_file():
         return []
     records: list[dict[str, Any]] = []
-    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    for line_number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), 1
+    ):
         if not line.strip():
             continue
         value = json.loads(line)
@@ -130,91 +131,29 @@ def _read_jsonl_records(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def _record_live_progress(
+def _print_episode_result(
     *,
-    output_root: Path,
     record: dict[str, Any],
     task_completed: int,
     task_successes: int,
     task_episodes: int,
-    expected_total: int,
 ) -> dict[str, int]:
-    """Append one completed episode and print task/global cumulative Success."""
-    progress_path = output_root / "progress.jsonl"
-    lock_path = output_root / ".progress.lock"
-    event = {
-        "task": str(record["task"]),
-        "episode_index": int(record["episode_index"]),
-        "success": bool(record["success"]),
-    }
-    output_root.mkdir(parents=True, exist_ok=True)
-    with lock_path.open("a+", encoding="utf-8") as lock_handle:
-        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-        existing = _read_jsonl_records(progress_path)
-        keys = {(str(item["task"]), int(item["episode_index"])) for item in existing}
-        key = (event["task"], event["episode_index"])
-        if key not in keys:
-            with progress_path.open("a", encoding="utf-8") as progress_handle:
-                progress_handle.write(json.dumps(event, sort_keys=True) + "\n")
-                progress_handle.flush()
-                os.fsync(progress_handle.fileno())
-            existing.append(event)
-        global_completed = len(existing)
-        global_successes = sum(bool(item["success"]) for item in existing)
-        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+    """Print task-local progress; the suite supervisor owns global counters."""
+    success = bool(record["success"])
     print(
-        f"ROBOTWIN_EPISODE_RESULT task={event['task']} "
-        f"episode={event['episode_index']} seed={record['seed']} "
-        f"Success={str(event['success']).lower()} "
+        f"ROBOTWIN_EPISODE_RESULT task={record['task']} "
+        f"episode={record['episode_index']} seed={record['seed']} "
+        f"Success={str(success).lower()} "
         f"policy_steps={record['policy_steps']} "
         f"task_completed={task_completed}/{task_episodes} "
         f"task_successes={task_successes} "
-        f"task_Success={task_successes / task_completed:.6f} "
-        f"global_completed={global_completed}/{expected_total} "
-        f"global_successes={global_successes} "
-        f"global_Success={global_successes / global_completed:.6f}",
+        f"task_Success={task_successes / task_completed:.6f}",
         flush=True,
     )
     return {
         "task_completed": task_completed,
         "task_successes": task_successes,
-        "global_completed": global_completed,
-        "global_successes": global_successes,
     }
-
-
-def _sync_live_progress(
-    *,
-    output_root: Path,
-    records: list[dict[str, Any]],
-) -> None:
-    """Make resume records visible to the shared counter without printing them."""
-    if not records:
-        return
-    progress_path = output_root / "progress.jsonl"
-    lock_path = output_root / ".progress.lock"
-    output_root.mkdir(parents=True, exist_ok=True)
-    with lock_path.open("a+", encoding="utf-8") as lock_handle:
-        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-        existing = _read_jsonl_records(progress_path)
-        keys = {(str(item["task"]), int(item["episode_index"])) for item in existing}
-        additions = [
-            {
-                "task": str(item["task"]),
-                "episode_index": int(item["episode_index"]),
-                "success": bool(item["success"]),
-            }
-            for item in records
-            if (str(item["task"]), int(item["episode_index"])) not in keys
-        ]
-        if additions:
-            with progress_path.open("a", encoding="utf-8") as progress_handle:
-                progress_handle.writelines(
-                    json.dumps(item, sort_keys=True) + "\n" for item in additions
-                )
-                progress_handle.flush()
-                os.fsync(progress_handle.fileno())
-        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
 
 def _resolve_ffmpeg_executable() -> str:
@@ -327,7 +266,9 @@ def run_controlled_rollouts(
     root = Path(output_dir).expanduser().resolve()
     if output_dir_precreated:
         if not root.is_dir():
-            raise FileNotFoundError(f"Pre-created eval output directory is missing: {root}.")
+            raise FileNotFoundError(
+                f"Pre-created eval output directory is missing: {root}."
+            )
     else:
         root.mkdir(parents=True, exist_ok=resume)
     args["eval_video_save_dir"] = root
@@ -350,12 +291,11 @@ def run_controlled_rollouts(
     )
     if resume and attempts_path.is_file():
         attempt_lines = [
-            line for line in attempts_path.read_text(encoding="utf-8").splitlines() if line.strip()
+            line
+            for line in attempts_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
         ]
-        attempted_seeds = [
-            int(json.loads(line)["seed"])
-            for line in attempt_lines
-        ]
+        attempted_seeds = [int(json.loads(line)["seed"]) for line in attempt_lines]
         now_seed = max(attempted_seeds, default=int(start_seed) - 1) + 1
         seed_attempts = len(attempt_lines)
     else:
@@ -365,14 +305,15 @@ def run_controlled_rollouts(
     if resume and pending_path.is_file():
         pending = _load_json_mapping(pending_path)
         if pending.get("task") != task_name:
-            raise ValueError(f"Pending episode belongs to another task: {pending_path}.")
+            raise ValueError(
+                f"Pending episode belongs to another task: {pending_path}."
+            )
         pending_index = int(pending["episode_index"])
         if pending_index in completed_indices:
             pending_path.unlink()
         else:
             episode_index = pending_index
             now_seed = int(pending["seed"])
-    _sync_live_progress(output_root=root.parent, records=existing_records)
     resolved_instruction_rng_seed = (
         int(start_seed) if instruction_rng_seed is None else int(instruction_rng_seed)
     )
@@ -559,15 +500,13 @@ def run_controlled_rollouts(
                 records.flush()
                 os.fsync(records.fileno())
                 existing_records.append(record)
-                _record_live_progress(
-                    output_root=root.parent,
+                _print_episode_result(
                     record=record,
                     task_completed=len(existing_records),
                     task_successes=sum(
                         bool(item["success"]) for item in existing_records
                     ),
                     task_episodes=episodes,
-                    expected_total=50 * episodes,
                 )
                 completed_indices.add(episode_index)
                 pending_path = root / "pending_episode.json"
@@ -761,7 +700,10 @@ def _validate_server_model_info(
         )
     checkpoint = server_artifact.get("checkpoint")
     loaded_path = checkpoint.get("path") if isinstance(checkpoint, dict) else None
-    if loaded_path is None or Path(loaded_path).resolve() != expected_checkpoint.resolve():
+    if (
+        loaded_path is None
+        or Path(loaded_path).resolve() != expected_checkpoint.resolve()
+    ):
         raise RuntimeError(
             "Praxis policy server loaded a different checkpoint: "
             f"server={loaded_path!r}, expected={str(expected_checkpoint)!r}."
@@ -853,9 +795,7 @@ def _run_stable2_eval_impl(
         "policy_port": policy_port,
         "run_id": run_id,
         "max_seed_attempts": max_seed_attempts,
-        "expected_checkpoint": {
-            "checkpoint": {"path": str(expected_checkpoint_path)}
-        },
+        "expected_checkpoint": {"checkpoint": {"path": str(expected_checkpoint_path)}},
         "server_model_info": None,
     }
     _atomic_json(run_manifest_path, run_manifest)
@@ -929,9 +869,7 @@ def _run_stable2_eval_impl(
             {
                 "status": "failed",
                 "failure": {
-                    "error_type": (
-                        f"{type(exc).__module__}.{type(exc).__qualname__}"
-                    ),
+                    "error_type": (f"{type(exc).__module__}.{type(exc).__qualname__}"),
                     "message": str(exc),
                     "cleanup_error": close_error,
                 },

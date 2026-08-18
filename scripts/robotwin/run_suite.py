@@ -11,6 +11,10 @@ import csv
 import json
 import os
 import sys
+import threading
+from collections import deque
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -51,12 +55,188 @@ def load_official_tasks(path: str | Path = DEFAULT_TASKS_PATH) -> list[str]:
     return tasks
 
 
-def assigned_tasks(tasks: list[str], *, worker_index: int, worker_count: int) -> list[str]:
+def assigned_tasks(
+    tasks: list[str], *, worker_index: int, worker_count: int
+) -> list[str]:
     if worker_count <= 0 or worker_index < 0 or worker_index >= worker_count:
         raise ValueError(
             f"Invalid worker assignment index={worker_index}, count={worker_count}."
         )
     return tasks[worker_index::worker_count]
+
+
+def _task_is_completed(output_dir: Path, task: str) -> bool:
+    task_dir = output_dir / task
+    manifest_path = task_dir / "run_manifest.json"
+    result_path = task_dir / "comparison.json"
+    if not manifest_path.is_file() or not result_path.is_file():
+        return False
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    return manifest.get("status") == "completed"
+
+
+def _recorded_episode_count(output_dir: Path, task: str) -> int:
+    path = output_dir / task / "episode_records.jsonl"
+    if not path.is_file():
+        return 0
+    return sum(
+        1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    )
+
+
+def _task_completed_from_line(line: str) -> int | None:
+    if "ROBOTWIN_EPISODE_RESULT " not in line:
+        return None
+    for field in line.split():
+        if field.startswith("task_completed="):
+            completed, _, _total = field.removeprefix("task_completed=").partition("/")
+            return int(completed)
+    return None
+
+
+def supervise_suite(
+    *,
+    robotwin_root: Path,
+    tasks_path: Path,
+    policy_host: str,
+    base_policy_port: int,
+    output_dir: Path,
+    run_id: str,
+    expected_checkpoint: Path,
+    gpu_count: int = 8,
+    simulators_per_gpu: int = 3,
+    server_count: int = 8,
+    episodes_per_task: int = 20,
+    max_seed_attempts: int = 1000,
+    resume: bool = False,
+    task_runner: Callable[..., dict[str, Any]] = run_task_eval,
+) -> dict[str, Any]:
+    """Dynamically assign whole tasks to fixed simulator/policy slots."""
+    if gpu_count <= 0 or simulators_per_gpu <= 0 or server_count <= 0:
+        raise ValueError("GPU, simulator, and server counts must be positive.")
+    tasks = load_official_tasks(tasks_path)
+    root = output_dir.expanduser().resolve()
+    slot_count = gpu_count * simulators_per_gpu
+    completed = {task for task in tasks if resume and _task_is_completed(root, task)}
+    pending = deque(task for task in tasks if task not in completed)
+    failures: dict[str, str] = {}
+    active: dict[int, str] = {}
+    episode_counts = {
+        task: _recorded_episode_count(root, task) if resume else 0 for task in tasks
+    }
+    lock = threading.Lock()
+    total_episodes = len(tasks) * episodes_per_task
+
+    def emit_locked(
+        event: str,
+        *,
+        slot: int | None = None,
+        task: str | None = None,
+    ) -> None:
+        assignment = ""
+        if slot is not None:
+            gpu = slot // simulators_per_gpu
+            server_index = slot % server_count
+            assignment = (
+                f" slot={slot} task={task} gpu={gpu} "
+                f"policy={policy_host}:{base_policy_port + server_index}"
+            )
+        print(
+            f"ROBOTWIN_SUITE_PARALLELISM event={event} "
+            f"active_slots={len(active)} total_slots={slot_count} "
+            f"pending_tasks={len(pending)} completed_tasks={len(completed)} "
+            f"failed_tasks={len(failures)} "
+            f"completed_episodes={sum(episode_counts.values())}/{total_episodes}"
+            f"{assignment}",
+            flush=True,
+        )
+
+    def run_slot(slot: int) -> None:
+        gpu = slot // simulators_per_gpu
+        server_index = slot % server_count
+        policy_port = base_policy_port + server_index
+        while True:
+            with lock:
+                if not pending:
+                    return
+                task = pending.popleft()
+                active[slot] = task
+                emit_locked("task_start", slot=slot, task=task)
+
+            def on_line(
+                line: str,
+                task_name: str = task,
+                slot_index: int = slot,
+            ) -> None:
+                task_completed = _task_completed_from_line(line)
+                if task_completed is None:
+                    return
+                with lock:
+                    episode_counts[task_name] = task_completed
+                    emit_locked("episode", slot=slot_index, task=task_name)
+
+            try:
+                result = task_runner(
+                    robotwin_root=robotwin_root,
+                    task_name=task,
+                    task_config="demo_clean",
+                    episodes_per_task=episodes_per_task,
+                    record_episodes_per_task=episodes_per_task,
+                    seed=0,
+                    policy_host=policy_host,
+                    policy_port=policy_port,
+                    output_dir=root,
+                    run_id=run_id,
+                    expected_checkpoint=expected_checkpoint,
+                    max_seed_attempts=max_seed_attempts,
+                    resume=resume,
+                    subprocess_env={"CUDA_VISIBLE_DEVICES": str(gpu)},
+                    line_callback=on_line,
+                )
+            except Exception as exc:
+                with lock:
+                    active.pop(slot, None)
+                    failures[task] = (
+                        f"{type(exc).__module__}.{type(exc).__qualname__}: {exc}"
+                    )
+                    emit_locked("task_failed", slot=slot, task=task)
+                continue
+
+            with lock:
+                active.pop(slot, None)
+                completed.add(task)
+                episode_counts[task] = int(result.get("episodes", episodes_per_task))
+                emit_locked("task_complete", slot=slot, task=task)
+
+    with lock:
+        emit_locked("resume_loaded")
+    with ThreadPoolExecutor(max_workers=slot_count) as executor:
+        futures = [executor.submit(run_slot, slot) for slot in range(slot_count)]
+        for future in futures:
+            future.result()
+
+    remaining = [task for task in tasks if task not in completed]
+    summary = {
+        "run_id": run_id,
+        "status": "completed" if not remaining else "incomplete",
+        "task_count": len(tasks),
+        "completed_tasks": len(completed),
+        "failed_tasks": failures,
+        "remaining_tasks": remaining,
+        "completed_episodes": sum(episode_counts.values()),
+        "total_episodes": total_episodes,
+        "slot_count": slot_count,
+        "gpu_count": gpu_count,
+        "simulators_per_gpu": simulators_per_gpu,
+        "server_count": server_count,
+    }
+    with lock:
+        emit_locked("supervisor_complete")
+    return summary
+
+
+def supervisor_exit_code(summary: dict[str, Any]) -> int:
+    return 0 if summary.get("status") == "completed" else 1
 
 
 def run_worker(
@@ -88,7 +268,10 @@ def run_worker(
             manifest = json.loads(completed_manifest.read_text())
             if manifest.get("status") == "completed":
                 results.append(json.loads(completed_result.read_text()))
-                print(f"ROBOTWIN_SUITE_TASK_RESUME_SKIP worker={worker_index} task={task}", flush=True)
+                print(
+                    f"ROBOTWIN_SUITE_TASK_RESUME_SKIP worker={worker_index} task={task}",
+                    flush=True,
+                )
                 continue
         print(
             f"ROBOTWIN_SUITE_TASK_START worker={worker_index} task={task}",
@@ -149,7 +332,9 @@ def aggregate_suite(
             or manifest.get("expected_checkpoint", {}).get("checkpoint", {}).get("path")
             != str(checkpoint)
         ):
-            raise RuntimeError(f"Incomplete or mismatched RoboTwin task result: {task}.")
+            raise RuntimeError(
+                f"Incomplete or mismatched RoboTwin task result: {task}."
+            )
         task_results.append(result)
         media_manifest_paths.append(str(task_dir / "media_manifest.json"))
 
@@ -180,7 +365,9 @@ def aggregate_suite(
         "tasks": task_results,
         "media_manifest_paths": media_manifest_paths,
     }
-    _atomic_text(root / "comparison.json", json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    _atomic_text(
+        root / "comparison.json", json.dumps(summary, indent=2, sort_keys=True) + "\n"
+    )
     csv_path = root / "comparison.csv"
     temporary = csv_path.with_name(f".{csv_path.name}.{os.getpid()}.tmp")
     with temporary.open("x", encoding="utf-8", newline="") as handle:
@@ -225,6 +412,21 @@ def _parser() -> argparse.ArgumentParser:
     aggregate.add_argument("--run-id", required=True)
     aggregate.add_argument("--expected-checkpoint", required=True, type=Path)
     aggregate.add_argument("--episodes-per-task", type=int, default=20)
+
+    supervise = subparsers.add_parser("supervise")
+    supervise.add_argument("--robotwin-root", required=True, type=Path)
+    supervise.add_argument("--tasks", default=DEFAULT_TASKS_PATH, type=Path)
+    supervise.add_argument("--policy-host", default="127.0.0.1")
+    supervise.add_argument("--base-policy-port", required=True, type=int)
+    supervise.add_argument("--output-dir", required=True, type=Path)
+    supervise.add_argument("--run-id", required=True)
+    supervise.add_argument("--expected-checkpoint", required=True, type=Path)
+    supervise.add_argument("--gpu-count", type=int, default=8)
+    supervise.add_argument("--simulators-per-gpu", type=int, default=3)
+    supervise.add_argument("--server-count", type=int, default=8)
+    supervise.add_argument("--episodes-per-task", type=int, default=20)
+    supervise.add_argument("--max-seed-attempts", type=int, default=1000)
+    supervise.add_argument("--resume", action="store_true")
     return parser
 
 
@@ -245,7 +447,7 @@ def main() -> None:
             max_seed_attempts=args.max_seed_attempts,
             resume=args.resume,
         )
-    else:
+    elif args.command == "aggregate":
         result = aggregate_suite(
             tasks_path=args.tasks,
             output_dir=args.output_dir,
@@ -253,7 +455,26 @@ def main() -> None:
             run_id=args.run_id,
             episodes_per_task=args.episodes_per_task,
         )
+    else:
+        result = supervise_suite(
+            robotwin_root=args.robotwin_root,
+            tasks_path=args.tasks,
+            policy_host=args.policy_host,
+            base_policy_port=args.base_policy_port,
+            output_dir=args.output_dir,
+            run_id=args.run_id,
+            expected_checkpoint=args.expected_checkpoint,
+            gpu_count=args.gpu_count,
+            simulators_per_gpu=args.simulators_per_gpu,
+            server_count=args.server_count,
+            episodes_per_task=args.episodes_per_task,
+            max_seed_attempts=args.max_seed_attempts,
+            resume=args.resume,
+        )
     print(json.dumps(result, indent=2, sort_keys=True))
+    if args.command == "supervise":
+        assert isinstance(result, dict)
+        raise SystemExit(supervisor_exit_code(result))
 
 
 if __name__ == "__main__":
