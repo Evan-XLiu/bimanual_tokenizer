@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N praxis_robotwin
+#PBS -l walltime=24:00:00
+#PBS -l select=1:ngpus=1
+
+set -Eeuo pipefail
+
+cd "${PBS_O_WORKDIR:?Submit this job from the bimanual_tokenizer repository root}"
+
+: "${ROBOTWIN_ROOT:?Export ROBOTWIN_ROOT and pass it with qsub -v}"
+: "${ROBOTWIN_PYTHON:?Export ROBOTWIN_PYTHON and pass it with qsub -v}"
+: "${PRAXIS_CHECKPOINT:?Export PRAXIS_CHECKPOINT and pass it with qsub -v}"
+
+HOPPER_SINGULARITY_IMAGE=${HOPPER_SINGULARITY_IMAGE:-/app1/common/singularity-img/hopper/pytorch/pytorch_2.7.0_cuda_12.8.sif}
+test -f "$HOPPER_SINGULARITY_IMAGE"
+
+module load singularity/1.3.1
+singularity exec --nv --bind /scratch:/scratch "$HOPPER_SINGULARITY_IMAGE" \
+  bash artifacts/robotwin_hopper/run_eval.sh

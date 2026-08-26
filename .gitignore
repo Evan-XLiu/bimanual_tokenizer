@@ -104,6 +104,3 @@ ipython_config.py
 /.cursor/
 /.omc/
 /.omx/
-
-# ======================== CloudML Machine Environment ========================
-/cloudml/
