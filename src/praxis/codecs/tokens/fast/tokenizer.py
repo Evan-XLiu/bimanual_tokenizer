@@ -38,6 +38,8 @@ class FASTTokenizer(BaseTokenizer):
         {
             "action_dim",
             "action_horizon",
+            "action_normalization_mode",
+            "clip_quantile_normalized_actions",
             "scale",
             "min_token",
             "max_token_length",
@@ -60,6 +62,18 @@ class FASTTokenizer(BaseTokenizer):
         self.config = cfg
         self.action_dim = int(cfg.action_dim) if cfg.action_dim is not None else 0
         self.action_horizon = int(cfg.action_horizon)
+        self.action_normalization_mode = str(cfg.action_normalization_mode)
+        if self.action_normalization_mode not in {
+            "dataset_min_max",
+            "quantile_01_99",
+        }:
+            raise ValueError(
+                "FAST action_normalization_mode must be 'dataset_min_max' or "
+                f"'quantile_01_99', got {self.action_normalization_mode!r}."
+            )
+        self.clip_quantile_normalized_actions = bool(
+            cfg.clip_quantile_normalized_actions
+        )
         self.scale = float(cfg.scale)
         self.min_token = int(cfg.min_token)
         self.max_token_length = int(cfg.max_token_length)
@@ -161,6 +175,48 @@ class FASTTokenizer(BaseTokenizer):
                 "FAST tokenizer action_dim mismatch: "
                 f"tokenizer action_dim={self.action_dim}, io action_dim={io_action_dim}."
             )
+
+    def set_normalization_stats(self, stats, modes=None) -> None:
+        """Install dataset min/max or robust q01/q99 action statistics."""
+        if self.action_normalization_mode != "quantile_01_99":
+            super().set_normalization_stats(stats, modes=modes)
+            return
+
+        source_key = self.action_key if self.action_key in stats else None
+        if source_key is None and len(stats) == 1:
+            source_key = next(iter(stats))
+        if source_key is None:
+            super().set_normalization_stats(stats, modes=modes)
+            return
+        source_stats = dict(stats[source_key])
+        if "q01" not in source_stats or "q99" not in source_stats:
+            raise ValueError(
+                "FAST quantile_01_99 normalization requires q01 and q99 action "
+                f"statistics for {source_key!r}."
+            )
+        robust_stats = dict(source_stats)
+        robust_stats["min"] = source_stats["q01"]
+        robust_stats["max"] = source_stats["q99"]
+        robust_payload = dict(stats)
+        robust_payload[source_key] = robust_stats
+        super().set_normalization_stats(robust_payload, modes=modes)
+
+    def _normalize_action_tensor(self, actions: Tensor) -> Tensor:
+        normalized = super()._normalize_action_tensor(actions)
+        if (
+            self.action_normalization_mode == "quantile_01_99"
+            and self.clip_quantile_normalized_actions
+        ):
+            normalized = normalized.clamp(-1.0, 1.0)
+        return normalized
+
+    def _unnormalize_action_tensor(self, actions: Tensor) -> Tensor:
+        if (
+            self.action_normalization_mode == "quantile_01_99"
+            and self.clip_quantile_normalized_actions
+        ):
+            actions = actions.clamp(-1.0, 1.0)
+        return super()._unnormalize_action_tensor(actions)
 
     @staticmethod
     def _validate_bpe_decoder(bpe: PreTrainedTokenizerFast) -> None:

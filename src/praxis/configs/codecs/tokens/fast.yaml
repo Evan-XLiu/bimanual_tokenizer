@@ -7,6 +7,8 @@ pretrained_path: null
 action_dim: null
 action_horizon: 32
 max_fit_chunks: 50000
+action_normalization_mode: dataset_min_max
+clip_quantile_normalized_actions: true
 
 # DCT quantization
 scale: 10.0

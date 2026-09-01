@@ -201,6 +201,18 @@ class TestFASTTokenizer:
 
 
 class TestFASTFit:
+    def test_rejects_unknown_action_normalization_mode(self):
+        from praxis.codecs.tokens.fast.tokenizer import FASTTokenizer
+
+        with pytest.raises(ValueError, match="action_normalization_mode"):
+            FASTTokenizer(
+                config=FASTTokenizerConfig(
+                    action_dim=4,
+                    bpe_tokenizer_path=None,
+                    action_normalization_mode="unknown",
+                )
+            )
+
     def test_set_io_infers_action_dim_when_unset(self):
         from praxis.codecs.tokens.fast.tokenizer import FASTTokenizer
 
@@ -287,6 +299,60 @@ class TestFASTFit:
         tok = self._make_unfitted(max_token_length=32)
         assert tok.variable_length_codes is True
         assert tok.max_code_seq_len == 32
+
+    def test_quantile_normalization_maps_q01_q99_and_clips_outliers(self):
+        tok = self._make_unfitted(action_normalization_mode="quantile_01_99")
+        tok.set_normalization_stats(
+            {
+                "action": {
+                    "min": torch.full((4,), -100.0),
+                    "max": torch.full((4,), 100.0),
+                    "q01": torch.full((4,), -2.0),
+                    "q99": torch.full((4,), 6.0),
+                }
+            },
+            modes={"action": NormMode.MIN_MAX},
+        )
+
+        actions = torch.tensor([[[-10.0, -2.0, 2.0, 10.0]]])
+        normalized = tok._normalize_action_tensor(actions)
+        torch.testing.assert_close(
+            normalized,
+            torch.tensor([[[-1.0, -1.0, 0.0, 1.0]]]),
+        )
+        restored = tok._unnormalize_action_tensor(
+            torch.tensor([[[-2.0, -1.0, 0.0, 2.0]]])
+        )
+        torch.testing.assert_close(
+            restored,
+            torch.tensor([[[-2.0, -2.0, 2.0, 6.0]]]),
+        )
+        assert torch.equal(tok.normalize_action.stats["action"]["min"], torch.full((4,), -2.0))
+        assert torch.equal(tok.normalize_action.stats["action"]["max"], torch.full((4,), 6.0))
+
+    def test_quantile_normalization_can_disable_clipping_for_ablation(self):
+        tok = self._make_unfitted(
+            action_normalization_mode="quantile_01_99",
+            clip_quantile_normalized_actions=False,
+        )
+        tok.set_normalization_stats(
+            {
+                "action": {
+                    "q01": torch.zeros(4),
+                    "q99": torch.ones(4),
+                }
+            }
+        )
+
+        normalized = tok._normalize_action_tensor(torch.full((1, 1, 4), 2.0))
+        torch.testing.assert_close(normalized, torch.full((1, 1, 4), 3.0))
+
+    def test_quantile_normalization_requires_q01_q99(self):
+        tok = self._make_unfitted(action_normalization_mode="quantile_01_99")
+        with pytest.raises(ValueError, match="requires q01 and q99"):
+            tok.set_normalization_stats(
+                {"action": {"min": torch.zeros(4), "max": torch.ones(4)}}
+            )
 
     def test_no_bpe_raises_on_detokenize(self):
         tok = self._make_unfitted()

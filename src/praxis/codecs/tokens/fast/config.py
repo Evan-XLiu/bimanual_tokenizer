@@ -24,6 +24,12 @@ class FASTTokenizerConfig:
     action_dim: int | None = None
     action_horizon: int = 32
 
+    # Robust action normalization used before DCT/BPE.  The default preserves
+    # the historical dataset min/max contract; quantile_01_99 maps per-DOF
+    # q01/q99 to [-1, 1] and can clip outliers for robust FAST fitting.
+    action_normalization_mode: str = "dataset_min_max"
+    clip_quantile_normalized_actions: bool = True
+
     scale: float = 10.0
     min_token: int = 0
     max_token_length: int = 128
@@ -46,4 +52,6 @@ def default_fast_tokenizer_config() -> dict[str, object]:
         "name": "fast",
         "pretrained_path": None,
         "bpe_tokenizer_path": FAST_BPE_TOKENIZER_PATH,
+        "action_normalization_mode": "dataset_min_max",
+        "clip_quantile_normalized_actions": True,
     }
