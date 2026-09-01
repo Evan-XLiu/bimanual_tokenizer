@@ -1,7 +1,7 @@
 # LeRobot RoboTwin 2.0 clean dataset configuration.
 name: robotwin2_clean
 repo_id: local/robotwin2_depth_merged_clean
-root: ${oc.env:ROBOTWIN_DATA_ROOT,/scratch/xuanweiliu/data/robotwin2.0_depth_merged_clean}
+root: ${oc.env:ROBOTWIN_DATA_ROOT,/scratch/xuanweiliu/bimanual_tokenizer/data/lerobot/local/robotwin2_depth_merged_clean}
 hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
 episodes: null
 observation_keys:

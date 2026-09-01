@@ -103,7 +103,7 @@ class PaliGemmaPrefixAdapter:
                 attention_mask,
                 first_position=1,
             )
-            causal_mask = cast(Any, self.vlm).model._update_causal_mask(
+            causal_mask = self._paligemma_model._update_causal_mask(
                 attention_mask,
                 token_type_ids,
                 None,
@@ -197,6 +197,21 @@ class PaliGemmaPrefixAdapter:
         return cast(Any, self.vlm).language_model
 
     @property
+    def _paligemma_model(self) -> Any:
+        """Return the multimodal core through native or PEFT wrappers."""
+        owner = cast(Any, self.vlm)
+        for _ in range(3):
+            model = getattr(owner, "model", None)
+            if model is None:
+                break
+            if callable(getattr(model, "get_placeholder_mask", None)) and callable(
+                getattr(model, "_update_causal_mask", None)
+            ):
+                return model
+            owner = model
+        raise RuntimeError("Could not locate the PaliGemma multimodal model core.")
+
+    @property
     def layers(self) -> nn.ModuleList:
         layers = getattr(self.language_model, "layers", None)
         if isinstance(layers, nn.ModuleList):
@@ -230,7 +245,7 @@ class PaliGemmaPrefixAdapter:
 
     def _input_embeddings(self, input_ids: Tensor) -> Tensor:
         config = cast(Any, self.vlm).config
-        model = cast(Any, self.vlm).model
+        model = self._paligemma_model
         image_token_id = int(config.image_token_id)
         vocab_size = int(getattr(model, "vocab_size", config.text_config.vocab_size))
         llm_input_ids = input_ids
@@ -249,7 +264,7 @@ class PaliGemmaPrefixAdapter:
     ) -> Tensor:
         image_features = cast(Any, self.vlm).get_image_features(pixel_values)
         image_features = image_features.to(inputs_embeds.device, inputs_embeds.dtype)
-        placeholder_mask = cast(Any, self.vlm).model.get_placeholder_mask(
+        placeholder_mask = self._paligemma_model.get_placeholder_mask(
             input_ids,
             inputs_embeds=inputs_embeds,
             image_features=image_features,

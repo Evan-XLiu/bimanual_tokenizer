@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N curobo_hopper_diag
+#PBS -P CFP05-CF-002
+#PBS -l walltime=00:15:00
+#PBS -l select=1:ncpus=8:mem=64gb:ngpus=1
+
+set -Eeuxo pipefail
+cd "${PBS_O_WORKDIR:?Submit from the bimanual_tokenizer repository root}"
+
+export ROBOTWIN_ROOT=${ROBOTWIN_ROOT:-/scratch/xuanweiliu/RoboTwin}
+export ROBOTWIN_PYTHON=${ROBOTWIN_PYTHON:-/scratch/xuanweiliu/conda_envs/robotwin/bin/python}
+export CUDA_LAUNCH_BLOCKING=1
+export CUROBO_DISABLE_FUSED_LBFGS=${CUROBO_DISABLE_FUSED_LBFGS:-0}
+export PYTHONPATH="$ROBOTWIN_ROOT/envs/curobo/src${PYTHONPATH:+:$PYTHONPATH}"
+
+DIAG_ROOT="outputs/curobo_hopper_diag/${PBS_JOBID}"
+export WARP_CACHE_PATH="$PWD/$DIAG_ROOT/warp"
+export CUDA_CACHE_PATH="$PWD/$DIAG_ROOT/cuda"
+export TORCH_EXTENSIONS_DIR="$PWD/$DIAG_ROOT/torch_extensions"
+mkdir -p "$WARP_CACHE_PATH" "$CUDA_CACHE_PATH" "$TORCH_EXTENSIONS_DIR"
+
+"$ROBOTWIN_PYTHON" -u artifacts/robotwin_hopper/diagnose_curobo_hopper.py

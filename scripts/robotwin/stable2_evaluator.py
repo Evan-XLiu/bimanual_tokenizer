@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
@@ -21,6 +22,49 @@ from typing import Any
 
 import numpy as np
 import yaml
+
+
+def _install_hopper_curobo_workaround() -> bool:
+    """Disable cuRobo's fused LBFGS kernel when explicitly requested.
+
+    cuRobo 0.7.x's fused ``lbfgs_step_cu`` raises CUDA illegal-instruction
+    errors on Hopper sm_90 GPUs.  Keep LBFGS itself, but use its Torch fallback
+    and disable CUDA graphs, matching the minimal reproducer from RoboTwin #452.
+    """
+    if os.environ.get("ROBOTWIN_DISABLE_FUSED_LBFGS", "0") != "1":
+        return False
+
+    from curobo.opt.newton.lbfgs import LBFGSOpt
+    from curobo.wrap.reacher.motion_gen import MotionGenConfig
+
+    if not getattr(LBFGSOpt, "_praxis_hopper_workaround", False):
+        original_lbfgs_init = LBFGSOpt.__init__
+
+        def patched_lbfgs_init(self, config=None):
+            if config is not None and hasattr(config, "use_cuda_kernel"):
+                config.use_cuda_kernel = False
+            original_lbfgs_init(self, config)
+            self.use_cuda_kernel = False
+
+        LBFGSOpt.__init__ = patched_lbfgs_init
+        LBFGSOpt._praxis_hopper_workaround = True
+
+    if not getattr(MotionGenConfig, "_praxis_hopper_workaround", False):
+        original_loader = MotionGenConfig.load_from_robot_config
+
+        def patched_loader(*args, **kwargs):
+            kwargs["use_cuda_graph"] = False
+            return original_loader(*args, **kwargs)
+
+        MotionGenConfig.load_from_robot_config = staticmethod(patched_loader)
+        MotionGenConfig._praxis_hopper_workaround = True
+
+    print(
+        "ROBOTWIN_CUROBO_HOPPER_WORKAROUND "
+        "use_cuda_graph=false fused_lbfgs_cuda_kernel=false",
+        flush=True,
+    )
+    return True
 
 
 def _load_policy_plugin(plugin_config_path: Path) -> None:
@@ -449,12 +493,14 @@ def run_controlled_rollouts(
             )
             ffmpeg: Any | None = None
             try:
+                reset_started = time.perf_counter()
                 task_env.setup_demo(
                     now_ep_num=episode_index,
                     seed=now_seed,
                     is_test=True,
                     **args,
                 )
+                environment_reset_elapsed = time.perf_counter() - reset_started
                 episode_info_list = [episode_info["info"]]
                 descriptions = official.generate_episode_descriptions(
                     args["task_name"], episode_info_list, episodes
@@ -481,10 +527,21 @@ def run_controlled_rollouts(
                 )
                 task_env._set_eval_video_ffmpeg(ffmpeg)
                 assert ffmpeg is not None
+                policy_reset_started = time.perf_counter()
                 reset_func(model)
+                reset_elapsed = environment_reset_elapsed + (
+                    time.perf_counter() - policy_reset_started
+                )
+                profile_start = getattr(model, "profile_episode_start", None)
+                if callable(profile_start):
+                    profile_start(reset_seconds=reset_elapsed)
                 success = False
                 while task_env.take_action_cnt < task_env.step_lim:
+                    observation_started = time.perf_counter()
                     observation = task_env.get_obs()
+                    profile_observation = getattr(model, "profile_observation", None)
+                    if callable(profile_observation):
+                        profile_observation(time.perf_counter() - observation_started)
                     eval_func(task_env, model, observation)
                     if task_env.eval_success:
                         success = True
@@ -492,7 +549,11 @@ def run_controlled_rollouts(
 
                 # stable_2.0 take_action writes the terminal success frame itself.
                 if not success:
+                    observation_started = time.perf_counter()
                     terminal_observation = task_env.get_obs()
+                    profile_observation = getattr(model, "profile_observation", None)
+                    if callable(profile_observation):
+                        profile_observation(time.perf_counter() - observation_started)
                     terminal_rgb = terminal_observation["observation"]["head_camera"][
                         "rgb"
                     ]
@@ -503,6 +564,9 @@ def run_controlled_rollouts(
                     ffmpeg.stdin.write(
                         np.asarray(terminal_rgb, dtype=np.uint8).tobytes()
                     )
+                profile_end = getattr(model, "profile_episode_end", None)
+                if callable(profile_end):
+                    profile_end()
                 _close_video_process(ffmpeg)
                 ffmpeg = None
                 if hasattr(task_env, "eval_video_ffmpeg"):
@@ -594,7 +658,12 @@ def run_controlled_rollouts(
 def _load_official_module(robotwin_root: Path) -> ModuleType:
     source = robotwin_root / "script" / "eval_policy.py"
     if not source.is_file():
-        raise FileNotFoundError(f"Official RoboTwin evaluator not found: {source}")
+        source = robotwin_root / "scripts" / "eval_policy_xpolicylab.py"
+    if not source.is_file():
+        raise FileNotFoundError(
+            "Official RoboTwin evaluator not found at either "
+            f"{robotwin_root / 'script' / 'eval_policy.py'} or {source}."
+        )
     for path in (
         robotwin_root,
         robotwin_root / "policy",
@@ -608,8 +677,42 @@ def _load_official_module(robotwin_root: Path) -> ModuleType:
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot import official RoboTwin evaluator: {source}")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    previous_cwd = Path.cwd()
+    try:
+        # Current RoboTwin still resolves some assets relative to its checkout
+        # while importing envs utilities.
+        os.chdir(robotwin_root)
+        spec.loader.exec_module(module)
+    finally:
+        os.chdir(previous_cwd)
+    if not callable(getattr(module, "eval_function_decorator", None)):
+        # RoboTwin's XPolicyLab evaluator moved policy loading to its websocket
+        # client.  The controlled Praxis overlay still runs the same official
+        # task environment in-process, so bridge its narrow legacy hook to the
+        # already validated local plugin loaded by _load_policy_plugin().
+        def eval_function_decorator(policy_name: str, function_name: str) -> Any:
+            policy_module = importlib.import_module(policy_name)
+            function = getattr(policy_module, function_name, None)
+            if not callable(function):
+                raise AttributeError(
+                    f"Policy {policy_name!r} has no callable {function_name!r}."
+                )
+            return function
+
+        module.eval_function_decorator = eval_function_decorator
     return module
+
+
+def _task_config_dir(robotwin_root: Path) -> Path:
+    legacy = robotwin_root / "task_config"
+    if legacy.is_dir():
+        return legacy
+    current = robotwin_root / "env_cfg" / "task_config"
+    if current.is_dir():
+        return current
+    raise FileNotFoundError(
+        f"RoboTwin task config directory not found under {robotwin_root}."
+    )
 
 
 def _load_yaml_mapping(path: Path) -> dict[str, Any]:
@@ -766,6 +869,7 @@ def _run_stable2_eval_impl(
     expected_checkpoint: str | Path,
     resume: bool,
 ) -> dict[str, Any]:
+    curobo_hopper_workaround = _install_hopper_curobo_workaround()
     if record_episodes_per_task != episodes_per_task:
         raise ValueError(
             "record_episodes_per_task must equal episodes_per_task: "
@@ -775,7 +879,7 @@ def _run_stable2_eval_impl(
     plugin_config_path = Path(plugin_config).expanduser().resolve()
     _load_policy_plugin(plugin_config_path)
     official = _load_official_module(root)
-    task_config_path = root / "task_config" / f"{task_config}.yml"
+    task_config_path = _task_config_dir(root) / f"{task_config}.yml"
     task_args = _load_yaml_mapping(task_config_path)
     if not bool(task_args.get("eval_video_log")):
         raise ValueError(f"{task_config_path} must set eval_video_log: true.")
@@ -835,6 +939,7 @@ def _run_stable2_eval_impl(
         "max_seed_attempts": max_seed_attempts,
         "expected_checkpoint": {"checkpoint": {"path": str(expected_checkpoint_path)}},
         "server_model_info": None,
+        "curobo_hopper_workaround": curobo_hopper_workaround,
     }
     _atomic_json(run_manifest_path, run_manifest)
 

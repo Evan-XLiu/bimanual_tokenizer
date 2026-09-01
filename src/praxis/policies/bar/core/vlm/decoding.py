@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import os
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -417,6 +419,10 @@ def run_blockwise_decode(
         unexpected = ", ".join(sorted(str(key) for key in decode_kwargs))
         raise TypeError(f"Unsupported VLM decode kwargs: {unexpected}.")
 
+    profile = os.environ.get("ROLLOUT_PROFILE", "0") == "1"
+    if profile and torch.cuda.is_available():
+        torch.cuda.synchronize()
+    inference_started = time.perf_counter() if profile else 0.0
     decoded = run_blockwise_token_decode(
         policy,
         obs,
@@ -426,11 +432,23 @@ def run_blockwise_decode(
         decode_top_k=decode_top_k,
         generator=generator,
     )
+    if profile:
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        token_decode_seconds = time.perf_counter() - inference_started
+        detokenize_started = time.perf_counter()
     actions = policy._decode_generated_action_tokens(
         decoded.token_ids,
         device=next(policy.parameters()).device,
         horizon=resolved_keep_k,
     )
+    if profile:
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        policy._rollout_profile_chunk_stages = {
+            "model_decode_seconds": token_decode_seconds,
+            "detokenize_unnormalize_seconds": time.perf_counter() - detokenize_started,
+        }
     return DecodedActionChunk(
         actions=actions,
         token_ids=decoded.token_ids,

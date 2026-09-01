@@ -135,9 +135,12 @@ def _policy_io(dynamic_dim: int = 3) -> PolicyIO:
 def test_predict_action_from_chunk_queue_reuses_chunk_predictions():
     policy = DummyPolicy()
     obs = {"observation.state": torch.randn(2)}
+    inference_calls = 0
 
     def predict_action_chunk(stacked_obs, **chunk_kwargs):
+        nonlocal inference_calls
         del stacked_obs, chunk_kwargs
+        inference_calls += 1
         return torch.tensor([[[1.0, 2.0], [3.0, 4.0]]]), {}
 
     action0 = policy._predict_action_from_chunk_queue(
@@ -151,7 +154,45 @@ def test_predict_action_from_chunk_queue_reuses_chunk_predictions():
 
     assert action0.shape == (2,)
     assert action1.shape == (2,)
+    assert inference_calls == 1
     assert len(policy._action_queue) == 0
+
+
+def test_rollout_profiler_observes_chunk_queue_without_changing_actions(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("ROLLOUT_PROFILE", "1")
+    policy = DummyPolicy()
+    obs = {"observation.state": torch.randn(2)}
+    inference_calls = 0
+
+    def predict_action_chunk(stacked_obs, **chunk_kwargs):
+        nonlocal inference_calls
+        del stacked_obs, chunk_kwargs
+        inference_calls += 1
+        return torch.tensor([[[1.0, 2.0], [3.0, 4.0]]]), {}
+
+    action0 = policy._predict_action_from_chunk_queue(
+        obs,
+        predict_action_chunk=predict_action_chunk,
+    )
+    event0 = dict(policy._rollout_profile_last_step or {})
+    action1 = policy._predict_action_from_chunk_queue(
+        obs,
+        predict_action_chunk=predict_action_chunk,
+    )
+    event1 = dict(policy._rollout_profile_last_step or {})
+
+    torch.testing.assert_close(action0, torch.tensor([1.0, 2.0]))
+    torch.testing.assert_close(action1, torch.tensor([3.0, 4.0]))
+    assert inference_calls == 1
+    assert event0["new_inference"] is True
+    assert event0["chunk_remaining_before"] == 0
+    assert event0["predicted_chunk"] == 2
+    assert event0["executed_chunk_length"] == 2
+    assert event1["new_inference"] is False
+    assert event1["chunk_remaining_before"] == 1
+    assert event1["predicted_chunk"] is None
 
 
 def test_predict_action_from_chunk_queue_batches_observation_by_policy_io_shape():

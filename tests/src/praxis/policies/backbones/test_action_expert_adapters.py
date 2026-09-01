@@ -239,6 +239,16 @@ class _FakePaliInner(nn.Module):
         self.last_token_type_ids = args[1]
         self.last_is_training = bool(args[5])
 
+    def get_placeholder_mask(
+        self,
+        input_ids: torch.Tensor,
+        *,
+        inputs_embeds: torch.Tensor,
+        image_features: torch.Tensor,
+    ) -> torch.Tensor:
+        del image_features
+        return (input_ids == 99).unsqueeze(-1).expand_as(inputs_embeds)
+
 
 class _FakePaliVlm(nn.Module):
     def __init__(self) -> None:
@@ -256,6 +266,36 @@ class _FakePaliVlm(nn.Module):
 
     def get_input_embeddings(self) -> nn.Embedding:
         return self.language_model.embed_tokens
+
+    def get_image_features(self, pixel_values: torch.Tensor) -> torch.Tensor:
+        return torch.ones(
+            pixel_values.shape[0],
+            1,
+            self.language_model.config.hidden_size,
+            device=pixel_values.device,
+        )
+
+
+class _FakePeftPaliVlm(nn.Module):
+    """Minimal PEFT shape: wrapper.model is the conditional-generation model."""
+
+    def __init__(self, base: _FakePaliVlm) -> None:
+        super().__init__()
+        self.model = base
+
+    @property
+    def config(self) -> Any:
+        return self.model.config
+
+    @property
+    def language_model(self) -> Any:
+        return self.model.language_model
+
+    def get_input_embeddings(self) -> nn.Embedding:
+        return self.model.get_input_embeddings()
+
+    def get_image_features(self, pixel_values: torch.Tensor) -> torch.Tensor:
+        return self.model.get_image_features(pixel_values)
 
 
 def _prefix_inputs() -> dict[str, torch.Tensor]:
@@ -352,6 +392,19 @@ def test_pali_scheduled_adapter_uses_native_positions() -> None:
     assert state.suffix_position_offsets.tolist() == [4, 4]
     assert vlm.model.last_token_type_ids is None
     assert vlm.model.last_is_training is None
+
+
+def test_pali_prefix_adapter_supports_peft_wrapped_image_inputs() -> None:
+    base = _FakePaliVlm()
+    adapter = PaliGemmaPrefixAdapter(_FakePeftPaliVlm(base))
+    inputs = _prefix_inputs()
+    inputs["input_ids"][0, 0] = 99
+    inputs["pixel_values"] = torch.zeros(2, 3, 2, 2)
+
+    state = adapter.prepare_prefix(inputs)
+
+    assert state.hidden.shape == (2, 3, 8)
+    assert base.model.last_is_training is False
 
 
 def test_qwen_prefix_adapter_projects_masked_layer_kv(monkeypatch) -> None:

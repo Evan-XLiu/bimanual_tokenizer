@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import sys
 from pathlib import Path
 
@@ -169,6 +170,60 @@ def test_close_model_closes_policy_client() -> None:
     close_model(policy)
 
     assert client.close_calls == 1
+
+
+def test_rollout_profile_combines_client_and_server_chunk_metrics(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    server_trace = tmp_path / "server-profile.jsonl"
+    monkeypatch.setenv("ROLLOUT_PROFILE", "1")
+    monkeypatch.setenv("ROLLOUT_PROFILE_SERVER_TRACE", str(server_trace))
+    events = [
+        {
+            "episode_id": "robotwin:000000",
+            "step": 0,
+            "new_inference": True,
+            "chunk_remaining_before": 0,
+            "predicted_chunk": 2,
+            "executed_chunk_length": 2,
+            "praxis_preprocess_seconds": 0.01,
+            "inference_seconds": 0.02,
+            "postprocess_seconds": 0.003,
+        },
+        {
+            "episode_id": "robotwin:000000",
+            "step": 1,
+            "new_inference": False,
+            "chunk_remaining_before": 1,
+            "predicted_chunk": None,
+            "executed_chunk_length": None,
+            "praxis_preprocess_seconds": 0.01,
+            "inference_seconds": 0.0,
+            "postprocess_seconds": 0.0,
+        },
+    ]
+    policy = PraxisRobotWinPolicy(client=_Client())
+    env = _TaskEnv()
+    policy.profile_episode_start(reset_seconds=0.1)
+    server_trace.write_text(
+        "".join(json.dumps(event) + "\n" for event in events),
+        encoding="utf-8",
+    )
+    policy.profile_observation(0.005)
+    policy.step(env, _observation())
+    policy.profile_observation(0.005)
+    policy.step(env, _observation())
+    policy.profile_episode_end()
+
+    output = capsys.readouterr().out
+    assert "episode_steps:                2" in output
+    assert "policy_inference_calls:       1" in output
+    assert "returned_chunk_lengths:       [2]" in output
+    assert "actions_consumed_per_chunk:   [2]" in output
+    assert "step=0  new_inference=True" in output
+    assert "step=1  new_inference=False" in output
 
 
 def test_official_dynamic_importer_finds_package_level_policy_api(

@@ -175,10 +175,14 @@ def run_task_eval(
     process: subprocess.Popen[str] | None = None
     stage = "preflight"
     try:
-        official_entrypoint = root / "script" / "eval_policy.py"
-        if not official_entrypoint.is_file():
+        official_entrypoints = (
+            root / "script" / "eval_policy.py",
+            root / "scripts" / "eval_policy_xpolicylab.py",
+        )
+        if not any(path.is_file() for path in official_entrypoints):
             raise FileNotFoundError(
-                f"Official RoboTwin evaluator not found: {official_entrypoint}"
+                "Official RoboTwin evaluator not found: "
+                + " or ".join(str(path) for path in official_entrypoints)
             )
         required_plugin_files = (
             source / "__init__.py",

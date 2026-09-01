@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import time
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
@@ -92,6 +94,10 @@ class PolicyEvalAdapter:
         self._episode_states: dict[str, PolicyRolloutState] = {}
         self._episode_generators: dict[str, torch.Generator] = {}
         self._reset_generation = 0
+        self._rollout_profile_enabled = os.environ.get("ROLLOUT_PROFILE", "0") == "1"
+        profile_path = os.environ.get("ROLLOUT_PROFILE_SERVER_TRACE")
+        self._rollout_profile_path = Path(profile_path) if profile_path else None
+        self._rollout_profile_steps: dict[str, int] = {}
         self.policy.to(self.device)
         if self.policy.training:
             self.policy.eval()
@@ -103,9 +109,11 @@ class PolicyEvalAdapter:
                 episode_key = str(episode_id)
                 self._episode_states.pop(episode_key, None)
                 self._episode_generators.pop(episode_key, None)
+                self._rollout_profile_steps.pop(episode_key, None)
             return
         self._episode_states.clear()
         self._episode_generators.clear()
+        self._rollout_profile_steps.clear()
         self.policy.reset()
 
     @torch.inference_mode()
@@ -149,13 +157,28 @@ class PolicyEvalAdapter:
         *,
         policy_kwargs: Mapping[str, Any] | None,
     ) -> torch.Tensor:
+        profile = self._rollout_profile_enabled
+        if profile and torch.cuda.is_available():
+            torch.cuda.synchronize()
+        preprocess_started = time.perf_counter() if profile else 0.0
         batch = collate_observations_to_torch_batch(
             observations,
             device=self.device,
         )
         batch = resize_policy_io_images(batch, io=self.policy.io)
         batch = self.preprocessor(batch)
-        return self.policy.predict_action(batch, **dict(policy_kwargs or {}))
+        if profile:
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            preprocess_elapsed = time.perf_counter() - preprocess_started
+        else:
+            preprocess_elapsed = 0.0
+        action = self.policy.predict_action(batch, **dict(policy_kwargs or {}))
+        if profile:
+            event = dict(getattr(self.policy, "_rollout_profile_last_step", None) or {})
+            event["praxis_preprocess_seconds"] = preprocess_elapsed
+            self._last_rollout_profile_event = event
+        return action
 
     def _predict_episode_scoped(
         self,
@@ -192,6 +215,7 @@ class PolicyEvalAdapter:
                         "generator": self._episode_generator(episode_id),
                     },
                 )
+                self._write_rollout_profile_event(episode_id)
                 self._consume_policy_inference_info(episode_id=episode_id)
                 self._episode_states[episode_id] = self.policy.capture_rollout_state()
                 batched = normalize_batched_action(
@@ -204,6 +228,17 @@ class PolicyEvalAdapter:
             self.policy.restore_rollout_state(ambient_state)
 
         return np.stack(actions, axis=0)
+
+    def _write_rollout_profile_event(self, episode_id: str) -> None:
+        if not self._rollout_profile_enabled or self._rollout_profile_path is None:
+            return
+        event = dict(getattr(self, "_last_rollout_profile_event", {}) or {})
+        step = self._rollout_profile_steps.get(episode_id, 0)
+        event.update({"episode_id": episode_id, "step": step})
+        self._rollout_profile_steps[episode_id] = step + 1
+        self._rollout_profile_path.parent.mkdir(parents=True, exist_ok=True)
+        with self._rollout_profile_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(event, sort_keys=True) + "\n")
 
     def _episode_generator(self, episode_id: str) -> torch.Generator:
         generator = self._episode_generators.get(episode_id)

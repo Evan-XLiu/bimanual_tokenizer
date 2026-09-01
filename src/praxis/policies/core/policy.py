@@ -7,6 +7,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import time
 from abc import ABC, abstractmethod
 from collections import deque
 from collections.abc import Callable
@@ -71,6 +73,8 @@ class BasePolicy(nn.Module, PyTorchModelHubMixin, ABC):
         self._obs_queues: dict[str, deque[Tensor]] = {}
         self._action_queue: deque[Tensor] = deque()
         self._pending_inference_info: dict[str, Any] | None = None
+        self._rollout_profile_enabled = os.environ.get("ROLLOUT_PROFILE", "0") == "1"
+        self._rollout_profile_last_step: dict[str, Any] | None = None
 
     def _record_inference_info(self, info: dict[str, Any] | None) -> None:
         """Store one chunk's inference metadata for external rollout collectors."""
@@ -301,7 +305,13 @@ class BasePolicy(nn.Module, PyTorchModelHubMixin, ABC):
                 self._obs_queues[key] = deque(maxlen=self.config.n_obs_steps)
         self._obs_queues = populate_queues(self._obs_queues, obs)
 
-        if len(self._action_queue) == 0:
+        profile = self._rollout_profile_enabled
+        chunk_remaining_before = len(self._action_queue)
+        new_inference = chunk_remaining_before == 0
+        inference_elapsed = 0.0
+        postprocess_elapsed = 0.0
+        predicted_chunk = 0
+        if new_inference:
             missing = [
                 feat.key
                 for feat in self.io.obs_features
@@ -326,7 +336,24 @@ class BasePolicy(nn.Module, PyTorchModelHubMixin, ABC):
             ):
                 stacked_obs[self.io.language_key] = obs[self.io.language_key]
 
+            if profile and torch.cuda.is_available():
+                torch.cuda.synchronize()
+            inference_started = time.perf_counter() if profile else 0.0
+            if profile:
+                self._rollout_profile_chunk_stages = None
             chunk_result = predict_action_chunk(stacked_obs, **kwargs)
+            if profile:
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
+                inference_elapsed = time.perf_counter() - inference_started
+                chunk_stages = dict(
+                    getattr(self, "_rollout_profile_chunk_stages", None) or {}
+                )
+                internal_postprocess = float(
+                    chunk_stages.get("detokenize_unnormalize_seconds", 0.0)
+                )
+                inference_elapsed = max(0.0, inference_elapsed - internal_postprocess)
+                postprocess_elapsed += internal_postprocess
             if not isinstance(chunk_result, tuple) or len(chunk_result) != 2:
                 raise TypeError(
                     "predict_action_chunk must return (actions, info). Return "
@@ -343,10 +370,31 @@ class BasePolicy(nn.Module, PyTorchModelHubMixin, ABC):
                 raise RuntimeError("Model returned an empty action chunk.")
             for i in range(n_chunk_steps):
                 self._action_queue.append(actions[:, i])
+            predicted_chunk = int(actions.shape[1])
 
         action = self._action_queue.popleft()
         if postprocess_action is not None:
+            if profile and torch.cuda.is_available():
+                torch.cuda.synchronize()
+            postprocess_started = time.perf_counter() if profile else 0.0
             action = postprocess_action(action)
+            if profile:
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
+                postprocess_elapsed += time.perf_counter() - postprocess_started
+        if profile:
+            self._rollout_profile_last_step = {
+                "new_inference": new_inference,
+                "chunk_remaining_before": chunk_remaining_before,
+                "predicted_chunk": predicted_chunk if new_inference else None,
+                "executed_chunk_length": (
+                    min(int(self.config.n_action_steps), predicted_chunk)
+                    if new_inference
+                    else None
+                ),
+                "inference_seconds": inference_elapsed,
+                "postprocess_seconds": postprocess_elapsed,
+            }
         return action.squeeze(0)
 
     def reset(self) -> None:
