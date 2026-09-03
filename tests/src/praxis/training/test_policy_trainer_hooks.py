@@ -123,6 +123,36 @@ def test_init_model_sets_stats(monkeypatch) -> None:
     assert policy.stats_calls == [({"x": 1}, None)]
 
 
+def test_init_model_overrides_only_filtered_action_stats(monkeypatch) -> None:
+    trainer = PolicyTrainer.__new__(PolicyTrainer)
+    policy = _StatsPolicy()
+    stub = cast(Any, trainer)
+    stub.cfg = OmegaConf.create({"policy": {"name": "bar_boat_pali"}})
+    stub.io = object()
+    stub.dataset = SimpleNamespace(
+        stats={"action": {"mean": "raw"}, "observation.state": {"mean": "obs"}},
+        normalization_modes=None,
+    )
+    stub.filtered_action_stats = {"action": {"mean": "filtered"}}
+
+    monkeypatch.setattr(
+        "praxis.training.policy_trainer.make_policy",
+        lambda cfg, io: policy,
+    )
+
+    trainer._init_model()
+
+    assert policy.stats_calls == [
+        (
+            {
+                "action": {"mean": "filtered"},
+                "observation.state": {"mean": "obs"},
+            },
+            None,
+        )
+    ]
+
+
 def test_policy_fsdp_rejects_non_vlm_policy() -> None:
     trainer = PolicyTrainer.__new__(PolicyTrainer)
     stub = cast(Any, trainer)

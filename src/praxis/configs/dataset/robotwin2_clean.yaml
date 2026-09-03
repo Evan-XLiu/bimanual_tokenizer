@@ -4,6 +4,10 @@ repo_id: local/robotwin2_depth_merged_clean
 root: ${oc.env:ROBOTWIN_DATA_ROOT,/scratch/xuanweiliu/bimanual_tokenizer/data/lerobot/local/robotwin2_depth_merged_clean}
 hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
 episodes: null
+# Audited periodic-branch and temporal-jump exclusions. Override either path
+# explicitly with null only when intentionally training on the unfiltered data.
+exclude_episodes_file: ${oc.env:ROBOTWIN_EXCLUDE_EPISODES_FILE,/scratch/xuanweiliu/bimanual_tokenizer/artifacts/robotwin_hopper/fast_episode_filter/excluded_episodes.json}
+action_stats_file: ${oc.env:ROBOTWIN_ACTION_STATS_FILE,/scratch/xuanweiliu/bimanual_tokenizer/artifacts/robotwin_hopper/fast_episode_filter/retained_action_stats.json}
 observation_keys:
   - observation.state
   - observation.images.cam_high

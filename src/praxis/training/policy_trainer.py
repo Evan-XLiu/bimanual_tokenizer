@@ -26,10 +26,16 @@ from praxis.data.lerobot_adapter import (
     LeRobotDatasetAdapter,
     ensure_lerobot_dataset_available,
 )
+from praxis.data.utils import stats_to_tensors
 from praxis.policies.core import BasePolicy
 from praxis.policies.factory import make_io_from_metadata, make_policy
 from praxis.processing.pipelines import make_policy_pre_post_processors
 from praxis.training import inline_policy_eval
+from praxis.training.core.dataset_filtering import (
+    filter_episode_pool,
+    load_action_stats_payload,
+    load_excluded_episode_ids,
+)
 from praxis.training.core.distributed import is_distributed_padding_batch
 from praxis.training.core.eval_collectors import (
     ReconstLossCollector,
@@ -210,6 +216,15 @@ class PolicyTrainer(DefaultTrainer):
 
     def _init_data(self) -> None:
         dc = self.cfg.dataset
+        excluded_episodes = load_excluded_episode_ids(
+            getattr(dc, "exclude_episodes_file", None)
+        )
+        stats_payload = load_action_stats_payload(
+            getattr(dc, "action_stats_file", None)
+        )
+        self.filtered_action_stats = (
+            None if stats_payload is None else stats_to_tensors(stats_payload)
+        )
         ensure_lerobot_dataset_available(
             repo_id=dc.repo_id,
             runtime=self.runtime,
@@ -236,7 +251,15 @@ class PolicyTrainer(DefaultTrainer):
                 )
             self.action_key = self.io.action_feature.key
             self.io.fps = temp_meta.fps
-            all_episodes = list(dc.episodes or range(temp_meta.meta.total_episodes))
+            configured_episodes = list(
+                dc.episodes or range(temp_meta.meta.total_episodes)
+            )
+            all_episodes = filter_episode_pool(configured_episodes, excluded_episodes)
+            if excluded_episodes and self.runtime.is_main_process:
+                print(
+                    f"[PolicyTrainer] Excluding {len(excluded_episodes)} episodes; "
+                    f"training/validation pool contains {len(all_episodes)} episodes."
+                )
             del temp_meta
 
             train_episodes, val_episodes = self._split_episodes(all_episodes)
@@ -312,8 +335,12 @@ class PolicyTrainer(DefaultTrainer):
 
     def _init_model(self) -> None:
         self.model = make_policy(self.cfg.policy, self.io)
+        normalization_stats = self.dataset.stats
+        filtered_action_stats = getattr(self, "filtered_action_stats", None)
+        if filtered_action_stats is not None:
+            normalization_stats = {**normalization_stats, **filtered_action_stats}
         self.model.set_normalization_stats(
-            self.dataset.stats,
+            normalization_stats,
             modes=getattr(self.dataset, "normalization_modes", None),
         )
 

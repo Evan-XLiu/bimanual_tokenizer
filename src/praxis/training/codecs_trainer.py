@@ -23,9 +23,14 @@ from praxis.data.lerobot_adapter import (
     ensure_lerobot_dataset_available,
     read_lerobot_cache_provenance,
 )
-from praxis.data.utils import resolve_action_feature_from_metadata
+from praxis.data.utils import resolve_action_feature_from_metadata, stats_to_tensors
 from praxis.data.xtokenizer_canonical_stats import XTokenizerQuantileStatistics
 from praxis.data.xtokenizer_vl import VLFeatureManifest, VLFeatureSidecar
+from praxis.training.core.dataset_filtering import (
+    filter_episode_pool,
+    load_action_stats_payload,
+    load_excluded_episode_ids,
+)
 from praxis.training.core.distributed import is_distributed_padding_batch
 from praxis.training.core.eval_collectors import (
     ReconstLossCollector,
@@ -501,6 +506,16 @@ class CodecsTrainer(DefaultTrainer):
 
     def _init_data(self) -> None:
         dc = self.cfg.dataset
+        excluded_episodes = load_excluded_episode_ids(
+            getattr(dc, "exclude_episodes_file", None)
+        )
+
+        self.filtered_action_stats = None
+        stats_payload = load_action_stats_payload(
+            getattr(dc, "action_stats_file", None)
+        )
+        if stats_payload is not None:
+            self.filtered_action_stats = stats_to_tensors(stats_payload)
         xtokenizer_normalization_statistics = _open_xtokenizer_canonical_stats(
             dc,
             self.cfg.codec,
@@ -549,7 +564,13 @@ class CodecsTrainer(DefaultTrainer):
         if configured_revision is not None:
             temp_dataset_kwargs["revision"] = str(configured_revision)
         temp_ds = LeRobotDataset(**temp_dataset_kwargs)
-        all_episodes = list(dc.episodes or range(temp_ds.meta.total_episodes))
+        configured_episodes = list(dc.episodes or range(temp_ds.meta.total_episodes))
+        all_episodes = filter_episode_pool(configured_episodes, excluded_episodes)
+        if excluded_episodes and self.runtime.is_main_process:
+            print(
+                f"[CodecsTrainer] Excluding {len(excluded_episodes)} episodes; "
+                f"training/validation pool contains {len(all_episodes)} episodes."
+            )
         meta_features = temp_ds.meta.features
         raw_action_feature = resolve_action_feature_from_metadata(
             meta_features,
@@ -732,8 +753,9 @@ class CodecsTrainer(DefaultTrainer):
             None,
         )
         if xtokenizer_stats is None:
+            normalization_stats = self.filtered_action_stats or self.dataset.stats
             self.model.set_normalization_stats(
-                self.dataset.stats,
+                normalization_stats,
                 modes=getattr(self.dataset, "normalization_modes", None),
             )
         else:
