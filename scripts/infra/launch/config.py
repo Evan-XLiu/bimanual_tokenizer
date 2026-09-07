@@ -114,6 +114,9 @@ CODEC_OVERRIDES: dict[str, list[str]] = {
     "oat": [
         "codecs@codec=tokens/oat",
     ],
+    "bimanualoat": [
+        "codecs@codec=tokens/bimanualoat",
+    ],
     "boat": [
         "codecs@codec=tokens/boat",
     ],

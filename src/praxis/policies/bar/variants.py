@@ -48,6 +48,23 @@ class ACodecPaliPolicy(PaliPolicyBase):
 
 
 @dataclass
+class BimanualOATPaliPolicyConfig(PaliPolicyConfig):
+    """Hyperparameters for paired bimanual OAT Pali VLM policy."""
+
+    name: str = "bar_bimanualoat_pali"
+    decode_keep_k: int | None = None
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bimanualoat")
+    )
+
+
+class BimanualOATPaliPolicy(PaliPolicyBase):
+    """Paired bimanual OAT Pali policy."""
+
+    CONFIG_CLASS = BimanualOATPaliPolicyConfig
+
+
+@dataclass
 class BinPaliPolicyConfig(PaliPolicyConfig):
     """Hyperparameters for Bin blockwise action-token Pali VLM policy."""
 
@@ -150,6 +167,23 @@ class ACodecQwenPolicy(QwenPolicyBase):
     """ACodec Qwen policy routed through the shared blockwise VLM path."""
 
     CONFIG_CLASS = ACodecQwenPolicyConfig
+
+
+@dataclass
+class BimanualOATQwenPolicyConfig(QwenPolicyConfig):
+    """Hyperparameters for paired bimanual OAT Qwen VLM policy."""
+
+    name: str = "bar_bimanualoat_qwen"
+    decode_keep_k: int | None = None
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bimanualoat")
+    )
+
+
+class BimanualOATQwenPolicy(QwenPolicyBase):
+    """Paired bimanual OAT Qwen policy."""
+
+    CONFIG_CLASS = BimanualOATQwenPolicyConfig
 
 
 @dataclass
@@ -258,6 +292,23 @@ class ACodecSmolPolicy(SmolPolicyBase):
 
 
 @dataclass
+class BimanualOATSmolPolicyConfig(SmolPolicyConfig):
+    """Hyperparameters for paired bimanual OAT Smol VLM policy."""
+
+    name: str = "bar_bimanualoat_smol"
+    decode_keep_k: int | None = None
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bimanualoat")
+    )
+
+
+class BimanualOATSmolPolicy(SmolPolicyBase):
+    """Paired bimanual OAT Smol policy."""
+
+    CONFIG_CLASS = BimanualOATSmolPolicyConfig
+
+
+@dataclass
 class BinSmolPolicyConfig(SmolPolicyConfig):
     """Hyperparameters for Bin blockwise action-token Smol VLM policy."""
 
@@ -359,6 +410,12 @@ __all__ = [
     "BinQwenPolicyConfig",
     "BinSmolPolicy",
     "BinSmolPolicyConfig",
+    "BimanualOATPaliPolicy",
+    "BimanualOATPaliPolicyConfig",
+    "BimanualOATQwenPolicy",
+    "BimanualOATQwenPolicyConfig",
+    "BimanualOATSmolPolicy",
+    "BimanualOATSmolPolicyConfig",
     "BOATPaliPolicy",
     "BOATPaliPolicyConfig",
     "BOATQwenPolicy",

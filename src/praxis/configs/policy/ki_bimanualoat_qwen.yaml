@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: qwen
+  - ki/codec@_here_: bimanualoat
+  - _self_
+
+name: ki_bimanualoat_qwen

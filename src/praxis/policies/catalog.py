@@ -13,7 +13,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-POLICY_CODECS: tuple[str, ...] = ("oat", "acodec", "boat", "fast", "bin", "quest")
+POLICY_CODECS: tuple[str, ...] = (
+    "oat",
+    "bimanualoat",
+    "acodec",
+    "boat",
+    "fast",
+    "bin",
+    "quest",
+)
 POLICY_BACKBONES: tuple[str, ...] = ("pali", "qwen", "smol")
 
 DEFAULT_POLICY_METHOD = "bar"
@@ -68,6 +76,7 @@ class PolicySpec:
 _CODEC_CLASS_PREFIXES: dict[str, str] = {
     "acodec": "ACodec",
     "bin": "Bin",
+    "bimanualoat": "BimanualOAT",
     "boat": "BOAT",
     "fast": "FAST",
     "oat": "OAT",
@@ -83,7 +92,10 @@ _BACKBONE_CLASS_NAMES: dict[str, str] = {
 
 POLICY_FAMILIES: tuple[PolicyFamily, ...] = (
     PolicyFamily(method="bar", codecs=POLICY_CODECS),
-    PolicyFamily(method="ki", codecs=("oat", "acodec", "fast", "bin", "quest")),
+    PolicyFamily(
+        method="ki",
+        codecs=("oat", "bimanualoat", "acodec", "fast", "bin", "quest"),
+    ),
     PolicyFamily(method="fm", codecs=None),
 )
 POLICY_FAMILIES_BY_METHOD: dict[str, PolicyFamily] = {

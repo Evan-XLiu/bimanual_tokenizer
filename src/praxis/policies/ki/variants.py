@@ -38,6 +38,22 @@ class ACodecPaliPolicy(PaliPolicyBase):
 
 
 @dataclass
+class BimanualOATPaliPolicyConfig(PaliPolicyConfig):
+    """Hyperparameters for paired bimanual OAT Pali co-training."""
+
+    name: str = "ki_bimanualoat_pali"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bimanualoat")
+    )
+
+
+class BimanualOATPaliPolicy(PaliPolicyBase):
+    """PaliGemma co-training with paired bimanual OAT tokens."""
+
+    CONFIG_CLASS = BimanualOATPaliPolicyConfig
+
+
+@dataclass
 class BinPaliPolicyConfig(PaliPolicyConfig):
     """Hyperparameters for Bin Pali co-training."""
 
@@ -116,6 +132,22 @@ class ACodecQwenPolicy(QwenPolicyBase):
     """Qwen VLM CE plus detached-prefix-K/V FM expert."""
 
     CONFIG_CLASS = ACodecQwenPolicyConfig
+
+
+@dataclass
+class BimanualOATQwenPolicyConfig(QwenPolicyConfig):
+    """Hyperparameters for paired bimanual OAT Qwen co-training."""
+
+    name: str = "ki_bimanualoat_qwen"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bimanualoat")
+    )
+
+
+class BimanualOATQwenPolicy(QwenPolicyBase):
+    """Qwen co-training with paired bimanual OAT tokens."""
+
+    CONFIG_CLASS = BimanualOATQwenPolicyConfig
 
 
 @dataclass
@@ -225,6 +257,22 @@ class ACodecSmolPolicy(SmolPolicyBase):
 
 
 @dataclass
+class BimanualOATSmolPolicyConfig(SmolPolicyConfig):
+    """Hyperparameters for paired bimanual OAT Smol co-training."""
+
+    name: str = "ki_bimanualoat_smol"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bimanualoat")
+    )
+
+
+class BimanualOATSmolPolicy(SmolPolicyBase):
+    """Smol co-training with paired bimanual OAT tokens."""
+
+    CONFIG_CLASS = BimanualOATSmolPolicyConfig
+
+
+@dataclass
 class BinSmolPolicyConfig(SmolPolicyConfig):
     """Hyperparameters for Bin Smol co-training."""
 
@@ -302,6 +350,12 @@ __all__ = [
     "BinQwenPolicyConfig",
     "BinSmolPolicy",
     "BinSmolPolicyConfig",
+    "BimanualOATPaliPolicy",
+    "BimanualOATPaliPolicyConfig",
+    "BimanualOATQwenPolicy",
+    "BimanualOATQwenPolicyConfig",
+    "BimanualOATSmolPolicy",
+    "BimanualOATSmolPolicyConfig",
     "FASTPaliPolicy",
     "FASTPaliPolicyConfig",
     "FASTQwenPolicy",

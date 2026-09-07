@@ -25,6 +25,9 @@ def _ref(module_path: str, class_name: str) -> str:
 _CODEC_REGISTRY: dict[tuple[str, str], str] = {
     ("tokens", "acodec"): _ref("tokens.acodec.tokenizer", "ActionCodecTokenizer"),
     ("tokens", "boat"): _ref("tokens.boat.tokenizer", "BOATTokenizer"),
+    ("tokens", "bimanualoat"): _ref(
+        "tokens.bimanualoat.tokenizer", "BimanualOATTokenizer"
+    ),
     ("tokens", "bin"): _ref("tokens.bin.tokenizer", "BinTokenizer"),
     ("tokens", "fast"): _ref("tokens.fast.tokenizer", "FASTTokenizer"),
     ("tokens", "oat"): _ref("tokens.oat.tokenizer", "OATTokenizer"),
