@@ -437,6 +437,22 @@ class TestPolicyClients:
             ),
         )
 
+    def test_remote_chunk_request_returns_multiple_sequential_actions(
+        self, serving_stack
+    ):
+        client: PolicyClient = serving_stack["client"]
+        policy: DummyParityPolicy = serving_stack["remote_policy"]
+
+        actions = client.predict_action(
+            [_build_observation(0)],
+            policy_kwargs={"praxis_action_chunk_steps": 3},
+            episode_ids=["episode-0"],
+        )
+
+        assert actions.shape == (1, 3, 8)
+        np.testing.assert_array_equal(actions[0, :, 7], [0.0, 1.0, 2.0])
+        assert policy.predict_calls == 3
+
     def test_batched_predict_action_matches_local_and_is_single_policy_call(
         self, serving_stack
     ):

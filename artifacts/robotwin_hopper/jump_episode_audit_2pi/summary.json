@@ -1,0 +1,102 @@
+{
+  "magnitude_rule": "any non-gripper arm action abs(q) > 2*pi",
+  "magnitude_threshold_rad": 6.283185307179586,
+  "temporal_rule": "same-episode adjacent-frame action abs(delta) >= 0.5 rad",
+  "temporal_threshold_rad_per_frame": 0.5,
+  "audited_episode_ids": [
+    510,
+    527,
+    530,
+    531
+  ],
+  "episodes": [
+    {
+      "episode_index": 510,
+      "num_frames": 178,
+      "frame_min": 0,
+      "frame_max": 177,
+      "task_index": 488,
+      "task": "Using the right arm, catch the paymentsign with QR code area and rotate it to face the QR code.",
+      "jump_transitions": [
+        {
+          "frame_index": 131,
+          "joints": [
+            {
+              "joint": "right_joint_2",
+              "previous_action": 2.1529183387756348,
+              "action": 2.9825398921966553,
+              "delta": 0.8296215534210205,
+              "abs_delta": 0.8296215534210205
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "episode_index": 527,
+      "num_frames": 169,
+      "frame_min": 0,
+      "frame_max": 168,
+      "task_index": 505,
+      "task": "Lift the white rectangular paymentsign with yellow details and rotate for its qrcode to face you.",
+      "jump_transitions": [
+        {
+          "frame_index": 122,
+          "joints": [
+            {
+              "joint": "right_joint_2",
+              "previous_action": 2.1057984828948975,
+              "action": 2.928539991378784,
+              "delta": 0.8227415084838867,
+              "abs_delta": 0.8227415084838867
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "episode_index": 530,
+      "num_frames": 166,
+      "frame_min": 0,
+      "frame_max": 165,
+      "task_index": 508,
+      "task": "Use the right arm to grab the sign with yellow payment section and point its QR code toward you.",
+      "jump_transitions": [
+        {
+          "frame_index": 121,
+          "joints": [
+            {
+              "joint": "right_joint_2",
+              "previous_action": 2.0902671813964844,
+              "action": 2.814229965209961,
+              "delta": 0.7239627838134766,
+              "abs_delta": 0.7239627838134766
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "episode_index": 531,
+      "num_frames": 169,
+      "frame_min": 0,
+      "frame_max": 168,
+      "task_index": 509,
+      "task": "Lift the white stand sign from the table and turn it to face you.",
+      "jump_transitions": [
+        {
+          "frame_index": 122,
+          "joints": [
+            {
+              "joint": "right_joint_2",
+              "previous_action": 2.1539783477783203,
+              "action": 2.977449893951416,
+              "delta": 0.8234715461730957,
+              "abs_delta": 0.8234715461730957
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

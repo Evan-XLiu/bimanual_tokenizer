@@ -4,7 +4,7 @@ set -Eeuo pipefail
 SOURCE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 POLICY_PYTHON=${POLICY_PYTHON:-$SOURCE_ROOT/.venv/bin/python}
 POLICY_SERVER=${POLICY_SERVER:-$SOURCE_ROOT/.venv/bin/praxis-serve}
-TASKS=$SOURCE_ROOT/scripts/robotwin/all_tasks.yml
+TASKS=${ROBOTWIN_TASKS_FILE:-$SOURCE_ROOT/scripts/robotwin/all_tasks.yml}
 
 : "${ROBOTWIN_ROOT:?Set ROBOTWIN_ROOT to the official RoboTwin checkout}"
 : "${ROBOTWIN_PYTHON:?Set ROBOTWIN_PYTHON to its Python executable}"

@@ -300,41 +300,8 @@ class TestFASTFit:
         assert tok.variable_length_codes is True
         assert tok.max_code_seq_len == 32
 
-    def test_quantile_normalization_maps_q01_q99_and_clips_outliers(self):
+    def test_quantile_normalization_preserves_out_of_range_values(self):
         tok = self._make_unfitted(action_normalization_mode="quantile_01_99")
-        tok.set_normalization_stats(
-            {
-                "action": {
-                    "min": torch.full((4,), -100.0),
-                    "max": torch.full((4,), 100.0),
-                    "q01": torch.full((4,), -2.0),
-                    "q99": torch.full((4,), 6.0),
-                }
-            },
-            modes={"action": NormMode.MIN_MAX},
-        )
-
-        actions = torch.tensor([[[-10.0, -2.0, 2.0, 10.0]]])
-        normalized = tok._normalize_action_tensor(actions)
-        torch.testing.assert_close(
-            normalized,
-            torch.tensor([[[-1.0, -1.0, 0.0, 1.0]]]),
-        )
-        restored = tok._unnormalize_action_tensor(
-            torch.tensor([[[-2.0, -1.0, 0.0, 2.0]]])
-        )
-        torch.testing.assert_close(
-            restored,
-            torch.tensor([[[-2.0, -2.0, 2.0, 6.0]]]),
-        )
-        assert torch.equal(tok.normalize_action.stats["action"]["min"], torch.full((4,), -2.0))
-        assert torch.equal(tok.normalize_action.stats["action"]["max"], torch.full((4,), 6.0))
-
-    def test_quantile_normalization_can_disable_clipping_for_ablation(self):
-        tok = self._make_unfitted(
-            action_normalization_mode="quantile_01_99",
-            clip_quantile_normalized_actions=False,
-        )
         tok.set_normalization_stats(
             {
                 "action": {

@@ -33,6 +33,7 @@ from typing import Any, cast
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from omegaconf import OmegaConf
+from transformers import PreTrainedTokenizerFast
 
 from praxis.codecs.factory import make_codec
 from praxis.codecs.tokens.fast.tokenizer import FASTTokenizer
@@ -195,6 +196,16 @@ def parse_args() -> argparse.Namespace:
         help="Path to a trained FAST tokenizer pretrained_model directory.",
     )
     parser.add_argument(
+        "--bpe-tokenizer-path",
+        type=str,
+        default=None,
+        help=(
+            "Optionally replace the checkpoint's fitted BPE with another FAST "
+            "BPE (for example physical-intelligence/fast), while retaining the "
+            "checkpoint's dataset normalization statistics and action geometry."
+        ),
+    )
+    parser.add_argument(
         "--dataset-repo-id",
         type=str,
         required=True,
@@ -254,6 +265,14 @@ def main() -> None:
             file=sys.stderr,
         )
         sys.exit(1)
+
+    if args.bpe_tokenizer_path is not None:
+        print(f"  replacing BPE with {args.bpe_tokenizer_path} ...")
+        tokenizer._set_bpe(
+            PreTrainedTokenizerFast.from_pretrained(args.bpe_tokenizer_path)
+        )
+        tokenizer.config.bpe_tokenizer_path = args.bpe_tokenizer_path
+        tokenizer._maybe_load_processor_metadata(args.bpe_tokenizer_path)
 
     action_horizon = int(args.action_horizon or tokenizer.action_horizon)
     # Keep tokenizer geometry aligned with the sampled chunk horizon.

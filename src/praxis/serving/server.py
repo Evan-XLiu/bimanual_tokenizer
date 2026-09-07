@@ -20,6 +20,8 @@ from praxis.policies.core import BasePolicy
 from praxis.policies.eval_adapter import PolicyEvalAdapter
 from praxis.serving.model_identity import build_policy_serving_identity
 
+_ACTION_CHUNK_STEPS_KWARG = "praxis_action_chunk_steps"
+
 
 class _PolicyServerHandler:
     """Adapt a ``BasePolicy`` to the generic praxis-remote handler API."""
@@ -48,11 +50,37 @@ class _PolicyServerHandler:
         policy_kwargs: Mapping[str, PolicyKwargValue] | None = None,
         episode_ids: Sequence[str] | None = None,
     ) -> np.ndarray:
-        return self.adapter.act(
-            observations,
-            policy_kwargs=policy_kwargs,
-            episode_ids=episode_ids,
-        )
+        resolved_kwargs = dict(policy_kwargs or {})
+        chunk_steps_value = resolved_kwargs.pop(_ACTION_CHUNK_STEPS_KWARG, None)
+        if chunk_steps_value is None:
+            return self.adapter.act(
+                observations,
+                policy_kwargs=resolved_kwargs,
+                episode_ids=episode_ids,
+            )
+
+        if isinstance(chunk_steps_value, bool) or not isinstance(
+            chunk_steps_value, (int, np.integer)
+        ):
+            raise TypeError(f"{_ACTION_CHUNK_STEPS_KWARG} must be an integer.")
+        chunk_steps = int(chunk_steps_value)
+        if chunk_steps <= 0:
+            raise ValueError(f"{_ACTION_CHUNK_STEPS_KWARG} must be positive.")
+
+        # Keep the public praxis-remote protocol unchanged: one Predict request
+        # may carry an ndarray of any shape. Repeated adapter calls preserve the
+        # policy's native observation/action queues, so the first call performs
+        # chunk inference and the remaining calls consume its cached actions.
+        # The observation crosses the process boundary only once.
+        actions = [
+            self.adapter.act(
+                observations,
+                policy_kwargs=resolved_kwargs,
+                episode_ids=episode_ids,
+            )
+            for _ in range(chunk_steps)
+        ]
+        return np.stack(actions, axis=1)
 
     def reset(self, episode_ids: Sequence[str] | None = None) -> None:
         self.adapter.reset(episode_ids=episode_ids)

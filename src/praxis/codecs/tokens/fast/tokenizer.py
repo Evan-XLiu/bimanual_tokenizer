@@ -39,7 +39,6 @@ class FASTTokenizer(BaseTokenizer):
             "action_dim",
             "action_horizon",
             "action_normalization_mode",
-            "clip_quantile_normalized_actions",
             "scale",
             "min_token",
             "max_token_length",
@@ -71,9 +70,6 @@ class FASTTokenizer(BaseTokenizer):
                 "FAST action_normalization_mode must be 'dataset_min_max' or "
                 f"'quantile_01_99', got {self.action_normalization_mode!r}."
             )
-        self.clip_quantile_normalized_actions = bool(
-            cfg.clip_quantile_normalized_actions
-        )
         self.scale = float(cfg.scale)
         self.min_token = int(cfg.min_token)
         self.max_token_length = int(cfg.max_token_length)
@@ -202,20 +198,9 @@ class FASTTokenizer(BaseTokenizer):
         super().set_normalization_stats(robust_payload, modes=modes)
 
     def _normalize_action_tensor(self, actions: Tensor) -> Tensor:
-        normalized = super()._normalize_action_tensor(actions)
-        if (
-            self.action_normalization_mode == "quantile_01_99"
-            and self.clip_quantile_normalized_actions
-        ):
-            normalized = normalized.clamp(-1.0, 1.0)
-        return normalized
+        return super()._normalize_action_tensor(actions)
 
     def _unnormalize_action_tensor(self, actions: Tensor) -> Tensor:
-        if (
-            self.action_normalization_mode == "quantile_01_99"
-            and self.clip_quantile_normalized_actions
-        ):
-            actions = actions.clamp(-1.0, 1.0)
         return super()._unnormalize_action_tensor(actions)
 
     @staticmethod

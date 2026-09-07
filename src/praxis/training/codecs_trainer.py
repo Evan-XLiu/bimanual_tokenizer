@@ -704,7 +704,16 @@ class CodecsTrainer(DefaultTrainer):
         # Keep an unsharded main-rank loader for bootstrap-only codec fit().
         # Fitting BPE/other non-gradient codecs on rank 0 must see the
         # dataset stream, not only rank 0's training shard.
-        self.fit_dataloader = self.dataloader
+        self.fit_dataloader = self.dataset.make_dataloader(
+            batch_size=self.tc.batch_size,
+            num_workers=self.tc.num_workers,
+            shuffle=True,
+            prefetch_factor=self.tc.prefetch_factor,
+            use_episode_aware_sampler=self.tc.use_episode_aware_sampler,
+            drop_n_first_frames=drop_n_first_frames,
+            drop_n_last_frames=drop_n_last_frames,
+            drop_last=False,
+        )
 
         if val_episodes:
             val_adapter_kwargs = dict(adapter_kwargs)

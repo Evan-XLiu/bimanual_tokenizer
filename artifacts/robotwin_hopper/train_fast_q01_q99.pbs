@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #PBS -j oe
 #PBS -k oed
-#PBS -N fast_q01_q99
+#PBS -N fast_q01_v1k
 #PBS -P CFP05-CF-002
-#PBS -l walltime=06:00:00
+#PBS -l walltime=01:00:00
 #PBS -l select=1:ngpus=1
 
 set -Eeuo pipefail
