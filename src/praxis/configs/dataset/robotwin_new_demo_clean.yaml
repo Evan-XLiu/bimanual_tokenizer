@@ -1,0 +1,15 @@
+# Local RoboTwin dataset used for current tokenizer and policy training.
+name: robotwin_new_demo_clean
+repo_id: local/robotwin_new_demo_clean
+root: ${oc.env:ROBOTWIN_NEW_DATA_ROOT,/scratch/xuanweiliu/bimanual_tokenizer/data/lerobot/local/robotwin_new_demo_clean}
+hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
+episodes: null
+exclude_episodes_file: null
+action_stats_file: null
+observation_keys:
+  - observation.state
+  - observation.images.cam_high
+  - observation.images.cam_left_wrist
+  - observation.images.cam_right_wrist
+video_backend: null
+bypass_force_cache_sync: true

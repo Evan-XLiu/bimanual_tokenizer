@@ -16,6 +16,7 @@ POLICY_PORT=${POLICY_PORT:-50100}
 EPISODES_PER_TASK=${EPISODES_PER_TASK:-20}
 MAX_SEED_ATTEMPTS=${MAX_SEED_ATTEMPTS:-1000}
 ROBOTWIN_TASK=${ROBOTWIN_TASK:-}
+ROBOTWIN_EXCLUDE_TASKS=${ROBOTWIN_EXCLUDE_TASKS:-}
 
 test -x "$POLICY_PYTHON"
 test -x "$POLICY_SERVER"
@@ -90,9 +91,29 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+POLICY_RUNTIME_OVERRIDES=()
+if [ -n "${FLOW_SAMPLING_STEPS:-}" ]; then
+  if ! [[ "$FLOW_SAMPLING_STEPS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "FLOW_SAMPLING_STEPS must be a positive integer, got: $FLOW_SAMPLING_STEPS" >&2
+    exit 1
+  fi
+  POLICY_RUNTIME_OVERRIDES+=("policy.flow_sampling_steps=$FLOW_SAMPLING_STEPS")
+fi
+
+EXCLUDE_TASK_ARGS=()
+if [ -n "$ROBOTWIN_EXCLUDE_TASKS" ]; then
+  IFS=',' read -r -a excluded_tasks <<< "$ROBOTWIN_EXCLUDE_TASKS"
+  for excluded_task in "${excluded_tasks[@]}"; do
+    if [ -n "$excluded_task" ]; then
+      EXCLUDE_TASK_ARGS+=(--exclude-task "$excluded_task")
+    fi
+  done
+fi
+
 "$POLICY_SERVER" \
   policy="$POLICY_NAME" \
   policy.pretrained_path="$PRAXIS_CHECKPOINT" \
+  "${POLICY_RUNTIME_OVERRIDES[@]}" \
   host=127.0.0.1 \
   port="$POLICY_PORT" \
   device=cuda \
@@ -165,8 +186,9 @@ fi
   --server-count 1 \
   --episodes-per-task "$EPISODES_PER_TASK" \
   --max-seed-attempts "$MAX_SEED_ATTEMPTS" \
-  --resume \
-  2>&1 | tee -a "$OUT/_logs/supervisor.log"
+    --resume \
+    "${EXCLUDE_TASK_ARGS[@]}" \
+    2>&1 | tee -a "$OUT/_logs/supervisor.log"
 
 "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py aggregate \
   --tasks "$TASKS" \
@@ -174,6 +196,7 @@ fi
   --run-id "$RUN_ID" \
   --expected-checkpoint "$PRAXIS_CHECKPOINT" \
   --episodes-per-task "$EPISODES_PER_TASK" \
+  "${EXCLUDE_TASK_ARGS[@]}" \
   2>&1 | tee -a "$OUT/_logs/aggregate.log"
 
 echo "ROBOTWIN_HOPPER_EVAL_COMPLETE output_dir=$OUT"

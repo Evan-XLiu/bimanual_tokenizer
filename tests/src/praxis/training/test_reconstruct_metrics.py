@@ -25,7 +25,10 @@ from praxis.training.core.eval_collectors import (
     unregister_reconstruction_info_annotator_factory,
     unregister_reconstruction_metric_collector_factory,
 )
-from praxis.training.policy_trainer import PolicyTrainer
+from praxis.training.policy_trainer import (
+    PolicyTrainer,
+    _static_reconstruction_prediction,
+)
 
 
 def _policy_io(
@@ -106,6 +109,41 @@ def test_pipeline_reports_reconstruction_loss() -> None:
     out = pipeline.finalize()
 
     assert out == {"val_reconst_loss": pytest.approx(0.0)}
+
+
+def test_static_zero_reconstruction_returns_raw_action_zeros() -> None:
+    gt_action = torch.tensor([[[1.0, -2.0], [3.0, -4.0]]])
+
+    pred_action, info = _static_reconstruction_prediction(
+        mode="zero",
+        batch={"action": gt_action},
+        gt_action=gt_action,
+    )
+
+    torch.testing.assert_close(pred_action, torch.zeros_like(gt_action))
+    assert info == {"reconst_action_mode": "zero"}
+
+
+def test_static_hold_reconstruction_repeats_latest_observation_state() -> None:
+    gt_action = torch.zeros((2, 3, 2), dtype=torch.float32)
+    state = torch.tensor([[[1.0, 2.0]], [[3.0, 4.0]]], dtype=torch.float32)
+
+    pred_action, info = _static_reconstruction_prediction(
+        mode="hold",
+        batch={"observation.state": state},
+        gt_action=gt_action,
+    )
+
+    torch.testing.assert_close(
+        pred_action,
+        torch.tensor(
+            [
+                [[1.0, 2.0], [1.0, 2.0], [1.0, 2.0]],
+                [[3.0, 4.0], [3.0, 4.0], [3.0, 4.0]],
+            ]
+        ),
+    )
+    assert info == {"reconst_action_mode": "hold"}
 
 
 def test_metric_pipeline_applies_reconstruction_info_annotator() -> None:
@@ -309,6 +347,48 @@ def test_policy_trainer_reconstruct_uses_exact_policy_io_obs_keys() -> None:
     assert out["val_reconst_loss"] == pytest.approx(0.0)
     assert policy.seen_obs is not None
     assert set(policy.seen_obs) == {"observation.state"}
+
+
+def test_policy_trainer_zero_reconstruction_bypasses_policy_prediction() -> None:
+    trainer = PolicyTrainer.__new__(PolicyTrainer)
+    gt_action = torch.tensor([[[1.0, -1.0], [2.0, -2.0]]])
+
+    class _Runtime:
+        is_main_process = True
+
+        def autocast(self):
+            return nullcontext()
+
+        def reduce(self, tensor, *, reduction: str):
+            assert reduction == "sum"
+            return tensor
+
+    class _Policy:
+        io = _policy_io()
+
+        def eval(self) -> None:
+            pass
+
+        def predict_action_chunk(self, obs, **kwargs):
+            raise AssertionError("zero reconstruction must bypass policy prediction")
+
+    stub = cast(Any, trainer)
+    stub.val_dataloader = [{"action": gt_action}]
+    stub.action_key = "action"
+    stub.reconst_action_mode = "zero"
+    stub.device = torch.device("cpu")
+    stub.runtime = _Runtime()
+    stub.max_reconst_batches = None
+    stub.preprocess_batch = lambda batch: batch
+    stub._move_batch_tensors_to_device = lambda batch, phase: batch
+    stub._eval_progress = lambda iterable, desc, total: iterable
+    stub._ema_eval_scope = lambda: nullcontext(_Policy())
+    stub.model = SimpleNamespace(train=lambda: None)
+    stub.cfg = SimpleNamespace()
+
+    out = trainer.reconstruct()
+
+    assert out["val_reconst_loss"] == pytest.approx(2.5)
 
 
 def test_policy_trainer_reconstruct_fails_clearly_on_missing_policy_io_key() -> None:

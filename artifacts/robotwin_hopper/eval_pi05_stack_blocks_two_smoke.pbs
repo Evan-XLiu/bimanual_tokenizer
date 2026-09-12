@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N pi05_stack2
+#PBS -P CFP05-CF-002
+#PBS -l walltime=04:00:00
+#PBS -l select=1:ncpus=12:mem=225gb:ngpus=1
+
+set -euo pipefail
+
+ROBOTWIN_ROOT=/scratch/xuanweiliu/RoboTwin
+PI05_ROOT="${ROBOTWIN_ROOT}/XPolicyLab/policy/Pi_05"
+
+# Pi05's setup_eval_policy_server.sh calls `conda info --base` before it
+# activates the uv environment. PBS starts a non-interactive shell, so the
+# user's shell initialization is not loaded and conda is otherwise missing
+# from PATH. Keep the site default configurable for other Hopper accounts.
+CONDA_ROOT=${CONDA_ROOT:-/home/svu/xuanweiliu/miniconda3}
+if ! command -v conda >/dev/null 2>&1 && [[ -x "${CONDA_ROOT}/condabin/conda" ]]; then
+  export PATH="${CONDA_ROOT}/condabin:${PATH}"
+fi
+if ! command -v conda >/dev/null 2>&1; then
+  echo "Pi05 evaluation requires conda; set CONDA_ROOT to a Miniconda installation." >&2
+  exit 1
+fi
+
+cd "${PI05_ROOT}"
+export EVAL_ENV_TYPE=sim
+export OPENPI_LOCAL_CACHE_ROOT="/scratch/xuanweiliu/RoboTwin/.cache/openpi-$(hostname)"
+
+# The deploy.yml in this checkout pins the downloaded 29999 checkpoint and
+# its bundled RoboTwin_lerobot_v30 normalization statistics.
+bash eval.sh \
+  RoboTwin2.0 \
+  stack_blocks_two \
+  cotrain \
+  aloha_agilex \
+  joint \
+  0 \
+  0 \
+  0 \
+  uv \
+  robotwin

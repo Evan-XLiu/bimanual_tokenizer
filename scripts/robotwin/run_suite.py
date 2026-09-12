@@ -55,6 +55,23 @@ def load_official_tasks(path: str | Path = DEFAULT_TASKS_PATH) -> list[str]:
     return tasks
 
 
+def select_tasks(
+    path: str | Path = DEFAULT_TASKS_PATH,
+    *,
+    excluded_tasks: list[str] | tuple[str, ...] = (),
+) -> list[str]:
+    """Load the official 50-task set and optionally remove named tasks."""
+    tasks = load_official_tasks(path)
+    excluded = set(excluded_tasks)
+    unknown = excluded.difference(tasks)
+    if unknown:
+        raise ValueError(f"Unknown RoboTwin task exclusions: {sorted(unknown)}")
+    selected = [task for task in tasks if task not in excluded]
+    if not selected:
+        raise ValueError("Task exclusions removed every RoboTwin task.")
+    return selected
+
+
 def assigned_tasks(
     tasks: list[str], *, worker_index: int, worker_count: int
 ) -> list[str]:
@@ -109,12 +126,13 @@ def supervise_suite(
     episodes_per_task: int = 20,
     max_seed_attempts: int = 1000,
     resume: bool = False,
+    excluded_tasks: list[str] | tuple[str, ...] = (),
     task_runner: Callable[..., dict[str, Any]] = run_task_eval,
 ) -> dict[str, Any]:
     """Dynamically assign whole tasks to fixed simulator/policy slots."""
     if gpu_count <= 0 or simulators_per_gpu <= 0 or server_count <= 0:
         raise ValueError("GPU, simulator, and server counts must be positive.")
-    tasks = load_official_tasks(tasks_path)
+    tasks = select_tasks(tasks_path, excluded_tasks=excluded_tasks)
     root = output_dir.expanduser().resolve()
     slot_count = gpu_count * simulators_per_gpu
     completed = {task for task in tasks if resume and _task_is_completed(root, task)}
@@ -229,6 +247,7 @@ def supervise_suite(
         "gpu_count": gpu_count,
         "simulators_per_gpu": simulators_per_gpu,
         "server_count": server_count,
+        "excluded_tasks": sorted(set(excluded_tasks)),
     }
     with lock:
         emit_locked("supervisor_complete")
@@ -253,9 +272,10 @@ def run_worker(
     episodes_per_task: int = 20,
     max_seed_attempts: int = 1000,
     resume: bool = False,
+    excluded_tasks: list[str] | tuple[str, ...] = (),
 ) -> list[dict[str, Any]]:
     tasks = assigned_tasks(
-        load_official_tasks(tasks_path),
+        select_tasks(tasks_path, excluded_tasks=excluded_tasks),
         worker_index=worker_index,
         worker_count=worker_count,
     )
@@ -308,8 +328,9 @@ def aggregate_suite(
     expected_checkpoint: Path,
     run_id: str,
     episodes_per_task: int = 20,
+    excluded_tasks: list[str] | tuple[str, ...] = (),
 ) -> dict[str, Any]:
-    tasks = load_official_tasks(tasks_path)
+    tasks = select_tasks(tasks_path, excluded_tasks=excluded_tasks)
     root = output_dir.expanduser().resolve()
     checkpoint = expected_checkpoint.expanduser().resolve()
     task_results: list[dict[str, Any]] = []
@@ -364,6 +385,7 @@ def aggregate_suite(
         "aggregate_success_rate": aggregate_success,
         "tasks": task_results,
         "media_manifest_paths": media_manifest_paths,
+        "excluded_tasks": sorted(set(excluded_tasks)),
     }
     _atomic_text(
         root / "comparison.json", json.dumps(summary, indent=2, sort_keys=True) + "\n"
@@ -405,6 +427,7 @@ def _parser() -> argparse.ArgumentParser:
     worker.add_argument("--episodes-per-task", type=int, default=20)
     worker.add_argument("--max-seed-attempts", type=int, default=1000)
     worker.add_argument("--resume", action="store_true")
+    worker.add_argument("--exclude-task", action="append", default=[])
 
     aggregate = subparsers.add_parser("aggregate")
     aggregate.add_argument("--tasks", default=DEFAULT_TASKS_PATH, type=Path)
@@ -412,6 +435,7 @@ def _parser() -> argparse.ArgumentParser:
     aggregate.add_argument("--run-id", required=True)
     aggregate.add_argument("--expected-checkpoint", required=True, type=Path)
     aggregate.add_argument("--episodes-per-task", type=int, default=20)
+    aggregate.add_argument("--exclude-task", action="append", default=[])
 
     supervise = subparsers.add_parser("supervise")
     supervise.add_argument("--robotwin-root", required=True, type=Path)
@@ -427,6 +451,7 @@ def _parser() -> argparse.ArgumentParser:
     supervise.add_argument("--episodes-per-task", type=int, default=20)
     supervise.add_argument("--max-seed-attempts", type=int, default=1000)
     supervise.add_argument("--resume", action="store_true")
+    supervise.add_argument("--exclude-task", action="append", default=[])
     return parser
 
 
@@ -446,6 +471,7 @@ def main() -> None:
             episodes_per_task=args.episodes_per_task,
             max_seed_attempts=args.max_seed_attempts,
             resume=args.resume,
+            excluded_tasks=args.exclude_task,
         )
     elif args.command == "aggregate":
         result = aggregate_suite(
@@ -454,6 +480,7 @@ def main() -> None:
             expected_checkpoint=args.expected_checkpoint,
             run_id=args.run_id,
             episodes_per_task=args.episodes_per_task,
+            excluded_tasks=args.exclude_task,
         )
     else:
         result = supervise_suite(
@@ -470,6 +497,7 @@ def main() -> None:
             episodes_per_task=args.episodes_per_task,
             max_seed_attempts=args.max_seed_attempts,
             resume=args.resume,
+            excluded_tasks=args.exclude_task,
         )
     print(json.dumps(result, indent=2, sort_keys=True))
     if args.command == "supervise":

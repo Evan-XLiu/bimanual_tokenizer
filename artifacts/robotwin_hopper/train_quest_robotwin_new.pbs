@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N quest_robotwin_new
+#PBS -P CFP05-CF-002
+#PBS -l walltime=72:00:00
+#PBS -l select=1:ncpus=12:mem=225gb:ngpus=1:gpu_model=H200
+
+set -Eeuo pipefail
+cd "${PBS_O_WORKDIR:?Submit from the bimanual_tokenizer repository root}"
+
+HOPPER_SINGULARITY_IMAGE=${HOPPER_SINGULARITY_IMAGE:-/app1/common/singularity-img/hopper/pytorch/pytorch_2.7.0_cuda_12.8.sif}
+test -f "$HOPPER_SINGULARITY_IMAGE"
+
+module load singularity/1.3.1
+singularity exec --nv --bind /scratch:/scratch "$HOPPER_SINGULARITY_IMAGE" \
+  bash artifacts/robotwin_hopper/train_quest_robotwin_new.sh

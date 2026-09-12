@@ -8,9 +8,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import torch
 import yaml
 
 from scripts.tokenizer.evaluate_reconstruction import (
+    evaluate_reconstruction,
     load_train_split_config,
     resolve_checkpoint_paths,
     resolve_eval_episodes,
@@ -18,6 +20,25 @@ from scripts.tokenizer.evaluate_reconstruction import (
     supported_keep_ks,
     validate_keep_ks,
 )
+
+
+def test_evaluate_reconstruction_zero_mode_uses_all_zero_actions() -> None:
+    actions = torch.tensor([[[1.0, -1.0], [2.0, -2.0]]], dtype=torch.float32)
+
+    result = evaluate_reconstruction(
+        tokenizer=None,
+        dataloader=[{"action": actions}],
+        action_key="action",
+        device="cpu",
+        max_batches=None,
+        keep_ks=[],
+        prediction_mode="zero",
+    )
+
+    assert result.full.mse == pytest.approx(2.5)
+    assert result.full.mae == pytest.approx(1.5)
+    assert result.full.samples == 1
+    assert result.full.batches == 1
 
 
 def _write_train_config(path: Path) -> None:

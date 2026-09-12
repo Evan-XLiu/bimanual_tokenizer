@@ -96,6 +96,47 @@ def _build_reconstruction_obs(
     return obs
 
 
+def _static_reconstruction_prediction(
+    *,
+    mode: str,
+    batch: dict[str, Any],
+    gt_action: torch.Tensor,
+) -> tuple[torch.Tensor, dict[str, Any]]:
+    """Build a model-free reconstruction baseline in raw action space."""
+    if mode == "zero":
+        return torch.zeros_like(gt_action), {"reconst_action_mode": mode}
+
+    if mode != "hold":
+        raise ValueError(
+            "trainer.reconst_action_mode must be one of "
+            f"{{'policy', 'zero', 'hold'}}, got {mode!r}."
+        )
+
+    state = batch.get("observation.state")
+    if not isinstance(state, torch.Tensor):
+        raise KeyError(
+            "trainer.reconst_action_mode='hold' requires tensor key "
+            "'observation.state' in the reconstruction batch."
+        )
+    if state.ndim == gt_action.ndim - 1:
+        anchor = state.unsqueeze(1)
+    elif state.ndim == gt_action.ndim:
+        anchor = state[:, -1:]
+    else:
+        raise ValueError(
+            "Hold reconstruction expects observation.state shape (B, D) or "
+            f"(B, T_obs, D), got {tuple(state.shape)} for action shape "
+            f"{tuple(gt_action.shape)}."
+        )
+    if anchor.shape[0] != gt_action.shape[0] or anchor.shape[-1] != gt_action.shape[-1]:
+        raise ValueError(
+            "Hold reconstruction requires observation.state and action to have "
+            "matching batch and feature dimensions, got "
+            f"state={tuple(state.shape)} action={tuple(gt_action.shape)}."
+        )
+    return anchor.expand_as(gt_action), {"reconst_action_mode": mode}
+
+
 class PolicyTrainer(DefaultTrainer):
     """Extends DefaultTrainer with reconstruction eval and optional sim eval."""
 
@@ -110,6 +151,17 @@ class PolicyTrainer(DefaultTrainer):
 
         self.reconst_every = tc.reconst_every
         self.max_reconst_batches = tc.max_reconst_batches
+        self.reconst_action_mode = (
+            str(OmegaConf.select(tc, "reconst_action_mode", default="policy"))
+            .strip()
+            .lower()
+        )
+        if self.reconst_action_mode not in {"policy", "zero", "hold"}:
+            raise ValueError(
+                "trainer.reconst_action_mode must be one of "
+                "{'policy', 'zero', 'hold'}, got "
+                f"{self.reconst_action_mode!r}."
+            )
 
         self.sim_eval_every = (
             None
@@ -470,6 +522,7 @@ class PolicyTrainer(DefaultTrainer):
         if self.action_key is None:
             raise RuntimeError("action_key must be initialized before reconstruct")
         action_key = self.action_key
+        action_mode = str(getattr(self, "reconst_action_mode", "policy"))
 
         warned_missing_chunk_api = False
         total_batches = len(self.val_dataloader)
@@ -508,28 +561,37 @@ class PolicyTrainer(DefaultTrainer):
                     )
                     batch = self.preprocess_batch(batch)
                     with self.runtime.autocast():
-                        obs = _build_reconstruction_obs(
-                            policy=policy,
-                            batch=batch,
-                            fallback_io=getattr(self, "io", None),
-                        )
-                        try:
-                            pred_action, reconst_info = policy.predict_action_chunk(
-                                obs,
-                                decode_temperature=0.0,
-                                decode_top_k=1,
+                        if action_mode == "policy":
+                            obs = _build_reconstruction_obs(
+                                policy=policy,
+                                batch=batch,
+                                fallback_io=getattr(self, "io", None),
                             )
-                        except NotImplementedError:
-                            if (
-                                self.runtime.is_main_process
-                                and not warned_missing_chunk_api
-                            ):
-                                print(
-                                    "Policy does not implement predict_action_chunk(); "
-                                    "skipping reconstruction metric."
+                            try:
+                                pred_action, reconst_info = policy.predict_action_chunk(
+                                    obs,
+                                    decode_temperature=0.0,
+                                    decode_top_k=1,
                                 )
-                                warned_missing_chunk_api = True
-                            continue
+                            except NotImplementedError:
+                                if (
+                                    self.runtime.is_main_process
+                                    and not warned_missing_chunk_api
+                                ):
+                                    print(
+                                        "Policy does not implement predict_action_chunk(); "
+                                        "skipping reconstruction metric."
+                                    )
+                                    warned_missing_chunk_api = True
+                                continue
+                        else:
+                            pred_action, reconst_info = (
+                                _static_reconstruction_prediction(
+                                    mode=action_mode,
+                                    batch=batch,
+                                    gt_action=batch[action_key],
+                                )
+                            )
 
                     gt_action = batch[action_key]
                     if pred_action.shape != gt_action.shape:

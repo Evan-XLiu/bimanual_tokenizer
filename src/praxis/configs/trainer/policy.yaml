@@ -12,6 +12,7 @@ lrs: null
 # Reconstruction eval (action prediction MSE on val set)
 reconst_every: 1000          # every N steps
 max_reconst_batches: 100     # max val batches for reconstruction (null = all)
+reconst_action_mode: policy  # policy | zero | hold (repeat observation.state)
 
 # Sim eval (optional; set a non-null interval to opt in)
 sim_eval_every: null             # run sim eval every N optimizer steps (null to disable)

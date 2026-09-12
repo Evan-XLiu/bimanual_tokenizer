@@ -18,6 +18,10 @@ Usage:
         [--batch-size 512] \
         [--num-workers 4] \
         [--max-batches 100]
+
+    uv run python scripts/tokenizer/evaluate_reconstruction.py \
+        --checkpoint outputs/train_codecs/<date>/<run>/checkpoints/latest \
+        --prediction-mode zero --split all
 """
 
 from __future__ import annotations
@@ -36,6 +40,7 @@ from omegaconf import OmegaConf
 
 from praxis.codecs.factory import make_codec
 from praxis.codecs.tokens.core import BaseTokenizer
+from praxis.core.types import PolicyIO
 from praxis.data.lerobot_adapter import LeRobotActionOnlyDatasetAdapter
 from praxis.training.core.episode_splits import (
     split_validation_episodes as _split_validation_episodes,
@@ -242,6 +247,18 @@ def _load_tokenizer(
     return tokenizer
 
 
+def _load_policy_io(pretrained_model: Path) -> PolicyIO:
+    io_path = pretrained_model / "policy_io.json"
+    if not io_path.is_file():
+        raise FileNotFoundError(
+            f"Checkpoint is missing required PolicyIO sidecar: {io_path}"
+        )
+    payload = json.loads(io_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise TypeError(f"PolicyIO sidecar must contain a mapping: {io_path}")
+    return PolicyIO.from_dict(payload)
+
+
 def supported_keep_ks(
     tokenizer: BaseTokenizer, *, tokenizer_name: str
 ) -> list[int] | None:
@@ -289,13 +306,22 @@ def validate_keep_ks(
 
 def evaluate_reconstruction(
     *,
-    tokenizer: BaseTokenizer,
+    tokenizer: BaseTokenizer | None,
     dataloader: Any,
     action_key: str,
     device: str,
     max_batches: int | None,
     keep_ks: list[int],
+    prediction_mode: str = "tokenizer",
 ) -> EvalResult:
+    if prediction_mode not in {"tokenizer", "zero"}:
+        raise ValueError(
+            "prediction_mode must be one of {'tokenizer', 'zero'}, "
+            f"got {prediction_mode!r}."
+        )
+    if prediction_mode == "zero" and keep_ks:
+        raise ValueError("--keep-ks cannot be used with --prediction-mode zero.")
+
     full_accum = MetricAccumulator()
     keep_accum = {k: MetricAccumulator() for k in keep_ks}
 
@@ -305,8 +331,15 @@ def evaluate_reconstruction(
                 break
 
             actions = batch[action_key].to(device)
-            tokens = tokenizer.tokenize(actions)
-            recon_actions = tokenizer.detokenize(tokens)
+            if prediction_mode == "zero":
+                recon_actions = torch.zeros_like(actions)
+            else:
+                if tokenizer is None:
+                    raise ValueError(
+                        "prediction_mode='tokenizer' requires a loaded tokenizer."
+                    )
+                tokens = tokenizer.tokenize(actions)
+                recon_actions = tokenizer.detokenize(tokens)
             full_accum.update(recon_actions, actions)
 
             if keep_ks:
@@ -381,6 +414,15 @@ def parse_args() -> argparse.Namespace:
             "and BOAT (cumulative block_schedule values)."
         ),
     )
+    parser.add_argument(
+        "--prediction-mode",
+        choices=("tokenizer", "zero"),
+        default="tokenizer",
+        help=(
+            "Prediction used for reconstruction loss. 'zero' bypasses tokenizer "
+            "inference and evaluates an all-zero raw-action baseline."
+        ),
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
         "--json",
@@ -406,23 +448,34 @@ def main() -> None:
         else split_cfg.dataset_episodes
     )
 
-    print(
-        f"Loading tokenizer {tokenizer_name!r} from {checkpoint_paths.pretrained_model} ..."
-    )
-    tokenizer = _load_tokenizer(
-        tokenizer_name=tokenizer_name,
-        pretrained_model=checkpoint_paths.pretrained_model,
-        device=args.device,
-    )
-    assert tokenizer.io is not None
-    if tokenizer.io.action_feature is None:
-        raise RuntimeError("Tokenizer PolicyIO has no action feature.")
-    action_key = tokenizer.action_key
-    keep_ks = validate_keep_ks(
-        args.keep_ks,
-        tokenizer=tokenizer,
-        tokenizer_name=tokenizer_name,
-    )
+    if args.prediction_mode == "zero" and args.keep_ks:
+        raise ValueError("--keep-ks cannot be used with --prediction-mode zero.")
+    if args.prediction_mode == "zero":
+        print(f"Loading PolicyIO from {checkpoint_paths.pretrained_model} ...")
+        tokenizer = None
+        io = _load_policy_io(checkpoint_paths.pretrained_model)
+        keep_ks: list[int] = []
+    else:
+        print(
+            f"Loading tokenizer {tokenizer_name!r} from "
+            f"{checkpoint_paths.pretrained_model} ..."
+        )
+        tokenizer = _load_tokenizer(
+            tokenizer_name=tokenizer_name,
+            pretrained_model=checkpoint_paths.pretrained_model,
+            device=args.device,
+        )
+        assert tokenizer.io is not None
+        io = tokenizer.io
+        keep_ks = validate_keep_ks(
+            args.keep_ks,
+            tokenizer=tokenizer,
+            tokenizer_name=tokenizer_name,
+        )
+
+    if io.action_feature is None:
+        raise RuntimeError("Checkpoint PolicyIO has no action feature.")
+    action_key = io.action_feature.key
     if keep_ks:
         print(f"  keep_ks={keep_ks}")
 
@@ -449,7 +502,7 @@ def main() -> None:
         del temp_ds
 
     drop_n_first_frames, drop_n_last_frames = resolve_sampler_frame_drops(
-        tokenizer.io,
+        io,
         configured_drop_n_first_frames=split_cfg.drop_n_first_frames,
         configured_drop_n_last_frames=split_cfg.drop_n_last_frames,
     )
@@ -471,7 +524,7 @@ def main() -> None:
 
     dataset = LeRobotActionOnlyDatasetAdapter(
         repo_id=dataset_repo_id,
-        io=tokenizer.io,
+        io=io,
         root=dataset_root,
         episodes=cast(list[int] | None, eval_episodes),
     )
@@ -497,11 +550,17 @@ def main() -> None:
         device=args.device,
         max_batches=args.max_batches,
         keep_ks=keep_ks,
+        prediction_mode=args.prediction_mode,
     )
 
     metrics = result.full
     print("\n" + "=" * 52)
-    print("Tokenizer Reconstruction")
+    title = (
+        "Zero-action Reconstruction Baseline"
+        if args.prediction_mode == "zero"
+        else "Tokenizer Reconstruction"
+    )
+    print(title)
     print("=" * 52)
     print(f"checkpoint: {checkpoint_paths.pretrained_model}")
     print(f"codec:      {tokenizer_name}")
@@ -510,7 +569,7 @@ def main() -> None:
     print(f"samples:    {metrics.samples}")
     print(f"batches:    {metrics.batches}")
     print()
-    print("Raw action-space reconstruction:")
+    print(f"Raw action-space reconstruction ({args.prediction_mode}):")
     print(f"mse:        {metrics.mse:.9e}")
     print(f"rmse:       {metrics.rmse:.9e}")
     print(f"mae:        {metrics.mae:.9e}")
@@ -532,6 +591,7 @@ def main() -> None:
             "codec": tokenizer_name,
             "dataset_repo_id": dataset_repo_id,
             "split": args.split,
+            "prediction_mode": args.prediction_mode,
             "samples": metrics.samples,
             "batches": metrics.batches,
             "mse": metrics.mse,
