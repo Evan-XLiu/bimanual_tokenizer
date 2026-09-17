@@ -1,0 +1,35 @@
+# Bimanual temporal tokenizer config
+name: btt
+kind: tokens
+pretrained_path: null
+
+# Fixed bimanual action geometry
+action_dim: 14
+arm_dim: 7
+action_horizon: 32
+latent_horizon_per_arm: 8
+max_fit_chunks: 50000
+
+# Shared per-arm encoder and joint query decoder
+model_dim: 256
+num_heads: 8
+decoder_nhead: 8
+decoder_nlayer: 6
+dropout: 0.1
+use_causal_decoder: true
+
+# Two causal stride-2 stages produce eight latents per arm.
+conv_kernel_sizes: [5, 3]
+conv_strides: [2, 2]
+
+# Each arm keeps its own 1920-entry FSQ token at every latent timestep.
+latent_dim: 4
+fsq_levels: [8, 8, 6, 5]
+
+# Shared canonical arm convention and normalization ranges
+right_arm_sign: [-1, 1, 1, 1, -1, -1, 1]
+shared_action_min:
+  [-1.3947148, -0.5742835, -0.1190902, -1.9893787, -1.4216828, -3.4687879, 0.0]
+shared_action_max:
+  [2.9455960, 3.3889313, 3.4514999, 1.9530925, 1.6339467, 3.0108311, 1.0]
+clamp_normalized_actions: false

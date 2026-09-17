@@ -35,6 +35,7 @@ _CODEC_REGISTRY: dict[tuple[str, str], str] = {
         "tokens.offline_targets.tokenizer", "OfflineTargetTokenizer"
     ),
     ("tokens", "quest"): _ref("tokens.quest.tokenizer", "QueSTTokenizer"),
+    ("tokens", "btt"): _ref("tokens.btt.tokenizer", "BTTTokenizer"),
     ("latents", "acodec"): _ref("latents.acodec.autoencoder", "ActionCodecAutoencoder"),
     ("latents", "oat"): _ref("latents.oat.autoencoder", "OATAutoencoder"),
     ("latents", "quest"): _ref("latents.quest.autoencoder", "QueSTAutoencoder"),
