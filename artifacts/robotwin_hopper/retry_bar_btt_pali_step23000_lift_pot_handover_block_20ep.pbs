@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N btt23000_2t20
+#PBS -P CFP05-CF-002
+#PBS -l walltime=24:00:00
+#PBS -l select=1:ncpus=12:mem=64gb:ngpus=1:gpu_model=H200
+
+set -Eeuo pipefail
+
+cd "${PBS_O_WORKDIR:?Submit this job from the bimanual_tokenizer repository root}"
+
+export ROBOTWIN_ROOT=${ROBOTWIN_ROOT:-/scratch/xuanweiliu/RoboTwin}
+export ROBOTWIN_PYTHON=${ROBOTWIN_PYTHON:-/scratch/xuanweiliu/conda_envs/robotwin/bin/python}
+export PRAXIS_CHECKPOINT=${PRAXIS_CHECKPOINT:-/scratch/xuanweiliu/bimanual_tokenizer/outputs/hopper_bar_btt_pali_robotwin_new_30k/622038.hopper-m-02/train/checkpoints/best/step_23000/pretrained_model}
+export EVAL_MODEL_LABEL=${EVAL_MODEL_LABEL:-bar_btt_pali_step23000}
+export ROBOTWIN_OUTPUT_BASE=${ROBOTWIN_OUTPUT_BASE:-/scratch/xuanweiliu/bimanual_tokenizer/outputs/robotwin_eval/best-checkpoint-8tasks-20ep}
+export ROBOTWIN_OUTPUT_DIR="$ROBOTWIN_OUTPUT_BASE/$EVAL_MODEL_LABEL"
+export EPISODES_PER_TASK=20
+export RECORD_EPISODES_PER_TASK=20
+export MAX_SEED_ATTEMPTS=${MAX_SEED_ATTEMPTS:-1000}
+# Keep this retry distinct from both port 50100 and the QueST retry.
+export POLICY_PORT=${POLICY_PORT:-50104}
+
+test -x "$ROBOTWIN_PYTHON"
+test -f "$PRAXIS_CHECKPOINT/config.json"
+test -f "$PRAXIS_CHECKPOINT/model.safetensors"
+test -d "$ROBOTWIN_OUTPUT_DIR"
+
+for task_name in lift_pot handover_block; do
+  export ROBOTWIN_TASK="$task_name"
+  export ROBOTWIN_RUN_ID="$EVAL_MODEL_LABEL-$task_name-20ep"
+  bash artifacts/robotwin_hopper/run_eval.sh
+done

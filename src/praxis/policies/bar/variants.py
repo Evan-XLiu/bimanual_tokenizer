@@ -154,6 +154,38 @@ class QueSTPaliPolicy(PaliPolicyBase):
 
 
 @dataclass
+class BQuestPaliPolicyConfig(PaliPolicyConfig):
+    """Hyperparameters for bimanual QueST blockwise Pali VLM policy."""
+
+    name: str = "bar_bquest_pali"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bquest")
+    )
+
+
+class BQuestPaliPolicy(PaliPolicyBase):
+    """Bimanual QueST Pali policy routed through the blockwise VLM path."""
+
+    CONFIG_CLASS = BQuestPaliPolicyConfig
+
+
+@dataclass
+class BTTPaliPolicyConfig(PaliPolicyConfig):
+    """Hyperparameters for bimanual temporal-tokenizer Pali VLM policy."""
+
+    name: str = "bar_btt_pali"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt")
+    )
+
+
+class BTTPaliPolicy(PaliPolicyBase):
+    """BTT Pali policy routed through the blockwise VLM path."""
+
+    CONFIG_CLASS = BTTPaliPolicyConfig
+
+
+@dataclass
 class ACodecQwenPolicyConfig(QwenPolicyConfig):
     """Hyperparameters for ACodec-backed blockwise Qwen VLM policy."""
 
@@ -273,6 +305,38 @@ class QueSTQwenPolicy(QwenPolicyBase):
     """QueST Qwen policy routed through the shared blockwise VLM path."""
 
     CONFIG_CLASS = QueSTQwenPolicyConfig
+
+
+@dataclass
+class BQuestQwenPolicyConfig(QwenPolicyConfig):
+    """Hyperparameters for bimanual QueST blockwise Qwen VLM policy."""
+
+    name: str = "bar_bquest_qwen"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bquest")
+    )
+
+
+class BQuestQwenPolicy(QwenPolicyBase):
+    """Bimanual QueST Qwen policy routed through the blockwise VLM path."""
+
+    CONFIG_CLASS = BQuestQwenPolicyConfig
+
+
+@dataclass
+class BTTQwenPolicyConfig(QwenPolicyConfig):
+    """Hyperparameters for bimanual temporal-tokenizer Qwen VLM policy."""
+
+    name: str = "bar_btt_qwen"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt")
+    )
+
+
+class BTTQwenPolicy(QwenPolicyBase):
+    """BTT Qwen policy routed through the blockwise VLM path."""
+
+    CONFIG_CLASS = BTTQwenPolicyConfig
 
 
 @dataclass
@@ -397,6 +461,38 @@ class QueSTSmolPolicy(SmolPolicyBase):
     CONFIG_CLASS = QueSTSmolPolicyConfig
 
 
+@dataclass
+class BQuestSmolPolicyConfig(SmolPolicyConfig):
+    """Hyperparameters for bimanual QueST blockwise Smol VLM policy."""
+
+    name: str = "bar_bquest_smol"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bquest")
+    )
+
+
+class BQuestSmolPolicy(SmolPolicyBase):
+    """Bimanual QueST Smol policy routed through the blockwise VLM path."""
+
+    CONFIG_CLASS = BQuestSmolPolicyConfig
+
+
+@dataclass
+class BTTSmolPolicyConfig(SmolPolicyConfig):
+    """Hyperparameters for bimanual temporal-tokenizer Smol VLM policy."""
+
+    name: str = "bar_btt_smol"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt")
+    )
+
+
+class BTTSmolPolicy(SmolPolicyBase):
+    """BTT Smol policy routed through the blockwise VLM path."""
+
+    CONFIG_CLASS = BTTSmolPolicyConfig
+
+
 __all__ = [
     "ACodecPaliPolicy",
     "ACodecPaliPolicyConfig",
@@ -416,6 +512,18 @@ __all__ = [
     "BimanualOATQwenPolicyConfig",
     "BimanualOATSmolPolicy",
     "BimanualOATSmolPolicyConfig",
+    "BQuestPaliPolicy",
+    "BQuestPaliPolicyConfig",
+    "BQuestQwenPolicy",
+    "BQuestQwenPolicyConfig",
+    "BQuestSmolPolicy",
+    "BQuestSmolPolicyConfig",
+    "BTTPaliPolicy",
+    "BTTPaliPolicyConfig",
+    "BTTQwenPolicy",
+    "BTTQwenPolicyConfig",
+    "BTTSmolPolicy",
+    "BTTSmolPolicyConfig",
     "BOATPaliPolicy",
     "BOATPaliPolicyConfig",
     "BOATQwenPolicy",

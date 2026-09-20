@@ -1,0 +1,28 @@
+# Bimanual QueST token codec config
+name: bquest
+kind: tokens
+pretrained_path: null
+
+# Fixed bimanual action geometry
+action_dim: 14
+action_horizon: 32
+max_fit_chunks: 50000
+downsample_factor: 4
+
+# QueST-style shared arm encoder / decoder
+encoder_dim: 256
+encoder_nhead: 8
+encoder_nlayer: 6
+decoder_dim: 256
+decoder_nhead: 8
+decoder_nlayer: 6
+dropout: 0.1
+use_causal_encoder: true
+use_causal_decoder: true
+
+# Optional right-arm canonicalization
+canonicalize_right_arm: true
+right_arm_sign: [-1, 1, 1, 1, -1, -1, 1]
+
+# Both coarse and residual streams use a 1920-entry FSQ vocabulary.
+fsq_levels: [8, 8, 6, 5]

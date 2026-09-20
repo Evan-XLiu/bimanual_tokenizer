@@ -1,0 +1,6 @@
+defaults:
+  - bar/backbone@_here_: smol
+  - bar/codec@_here_: bquest
+  - _self_
+
+name: bar_bquest_smol

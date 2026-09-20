@@ -133,6 +133,9 @@ CODEC_OVERRIDES: dict[str, list[str]] = {
     "quest": [
         "codecs@codec=tokens/quest",
     ],
+    "bquest": [
+        "codecs@codec=tokens/bquest",
+    ],
 }
 
 CODEC_TRAINER_OVERRIDES: list[str] = [

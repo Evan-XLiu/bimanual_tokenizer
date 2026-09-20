@@ -21,6 +21,8 @@ POLICY_CODECS: tuple[str, ...] = (
     "fast",
     "bin",
     "quest",
+    "bquest",
+    "btt",
 )
 POLICY_BACKBONES: tuple[str, ...] = ("pali", "qwen", "smol")
 
@@ -81,6 +83,8 @@ _CODEC_CLASS_PREFIXES: dict[str, str] = {
     "fast": "FAST",
     "oat": "OAT",
     "quest": "QueST",
+    "bquest": "BQuest",
+    "btt": "BTT",
     "xtokenizer": "XTokenizer",
 }
 _BACKBONE_CLASS_NAMES: dict[str, str] = {
@@ -94,7 +98,7 @@ POLICY_FAMILIES: tuple[PolicyFamily, ...] = (
     PolicyFamily(method="bar", codecs=POLICY_CODECS),
     PolicyFamily(
         method="ki",
-        codecs=("oat", "bimanualoat", "acodec", "fast", "bin", "quest"),
+        codecs=("oat", "bimanualoat", "acodec", "fast", "bin", "quest", "bquest"),
     ),
     PolicyFamily(method="fm", codecs=None),
 )

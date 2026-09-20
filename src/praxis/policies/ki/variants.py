@@ -119,6 +119,22 @@ class QueSTPaliPolicy(PaliPolicyBase):
 
 
 @dataclass
+class BQuestPaliPolicyConfig(PaliPolicyConfig):
+    """Hyperparameters for bimanual QueST Pali co-training."""
+
+    name: str = "ki_bquest_pali"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bquest")
+    )
+
+
+class BQuestPaliPolicy(PaliPolicyBase):
+    """PaliGemma co-training with bimanual QueST tokens."""
+
+    CONFIG_CLASS = BQuestPaliPolicyConfig
+
+
+@dataclass
 class ACodecQwenPolicyConfig(QwenPolicyConfig):
     """Hyperparameters for ACodec Qwen co-training."""
 
@@ -241,6 +257,22 @@ class QueSTQwenPolicy(QwenPolicyBase):
 
 
 @dataclass
+class BQuestQwenPolicyConfig(QwenPolicyConfig):
+    """Hyperparameters for bimanual QueST Qwen co-training."""
+
+    name: str = "ki_bquest_qwen"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bquest")
+    )
+
+
+class BQuestQwenPolicy(QwenPolicyBase):
+    """Qwen co-training with bimanual QueST tokens."""
+
+    CONFIG_CLASS = BQuestQwenPolicyConfig
+
+
+@dataclass
 class ACodecSmolPolicyConfig(SmolPolicyConfig):
     """Hyperparameters for ACodec Smol co-training."""
 
@@ -337,6 +369,22 @@ class QueSTSmolPolicy(SmolPolicyBase):
     CONFIG_CLASS = QueSTSmolPolicyConfig
 
 
+@dataclass
+class BQuestSmolPolicyConfig(SmolPolicyConfig):
+    """Hyperparameters for bimanual QueST Smol co-training."""
+
+    name: str = "ki_bquest_smol"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("bquest")
+    )
+
+
+class BQuestSmolPolicy(SmolPolicyBase):
+    """Smol co-training with bimanual QueST tokens."""
+
+    CONFIG_CLASS = BQuestSmolPolicyConfig
+
+
 __all__ = [
     "ACodecPaliPolicy",
     "ACodecPaliPolicyConfig",
@@ -356,6 +404,12 @@ __all__ = [
     "BimanualOATQwenPolicyConfig",
     "BimanualOATSmolPolicy",
     "BimanualOATSmolPolicyConfig",
+    "BQuestPaliPolicy",
+    "BQuestPaliPolicyConfig",
+    "BQuestQwenPolicy",
+    "BQuestQwenPolicyConfig",
+    "BQuestSmolPolicy",
+    "BQuestSmolPolicyConfig",
     "FASTPaliPolicy",
     "FASTPaliPolicyConfig",
     "FASTQwenPolicy",

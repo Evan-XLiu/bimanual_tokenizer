@@ -82,6 +82,7 @@ wandb/
 *.wandb
 logs/
 *.log
+*.o[0-9]*
 
 # ======================== gRPC / Protobuf Generated ========================
 *_pb2.py

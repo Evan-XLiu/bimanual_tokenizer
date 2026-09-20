@@ -1,0 +1,8 @@
+action_tokenizer:
+  name: bquest
+  kind: tokens
+  pretrained_path: null
+freeze_action_tokenizer: true
+decode_keep_k: null
+block_ce_weighting: block_mean
+ce_vocab_scope: full
