@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N bttmic15k19k100
+#PBS -P CFP05-CF-002
+#PBS -l walltime=72:00:00
+#PBS -l select=1:ncpus=12:mem=128gb:ngpus=1:gpu_model=H200
+
+set -Eeuo pipefail
+
+cd "${PBS_O_WORKDIR:?Submit this job from the bimanual_tokenizer repository root}"
+
+export ROBOTWIN_ROOT=${ROBOTWIN_ROOT:-/scratch/xuanweiliu/RoboTwin}
+export ROBOTWIN_PYTHON=${ROBOTWIN_PYTHON:-/scratch/xuanweiliu/conda_envs/robotwin/bin/python}
+export ROBOTWIN_OUTPUT_BASE=${ROBOTWIN_OUTPUT_BASE:-/scratch/xuanweiliu/bimanual_tokenizer/outputs/robotwin_eval/rollout8task_100/BTT_handover_test}
+export EPISODES_PER_TASK=100
+export RECORD_EPISODES_PER_TASK=100
+export MAX_SEED_ATTEMPTS=${MAX_SEED_ATTEMPTS:-5000}
+export POLICY_PORT=${POLICY_PORT:-51205}
+
+test -x "$ROBOTWIN_PYTHON"
+
+check_checkpoint() {
+  local checkpoint="$1"
+  test -f "$checkpoint/config.json"
+  test -f "$checkpoint/model.safetensors"
+}
+
+run_checkpoint() {
+  local step="$1"
+  local checkpoint="/scratch/xuanweiliu/bimanual_tokenizer/outputs/hopper_bar_btt_pali_robotwin_new_step300000_30k/630822.hopper-m-02/train/checkpoints/best/step_${step}/pretrained_model"
+  export PRAXIS_CHECKPOINT="$checkpoint"
+  export EVAL_MODEL_LABEL="bar_btt_pali_step${step}"
+  export ROBOTWIN_OUTPUT_DIR="$ROBOTWIN_OUTPUT_BASE/step${step}"
+  export ROBOTWIN_TASK=handover_mic
+  export ROBOTWIN_RUN_ID="$EVAL_MODEL_LABEL-handover_mic-100ep"
+  check_checkpoint "$PRAXIS_CHECKPOINT"
+  echo "ROBOTWIN_HANDOVER_MIC_100EP_JOB step=$step checkpoint=$PRAXIS_CHECKPOINT output=$ROBOTWIN_OUTPUT_DIR"
+  bash artifacts/robotwin_hopper/run_eval.sh
+}
+
+nvidia-smi --query-gpu=name,uuid --format=csv,noheader
+run_checkpoint 15000
+run_checkpoint 19000
+
+echo "ROBOTWIN_HANDOVER_MIC_100EP_COMPLETE output=$ROBOTWIN_OUTPUT_BASE"
