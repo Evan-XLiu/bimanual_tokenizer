@@ -1,0 +1,290 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{Problem Formulation and Design Overview}
+\label{sec:method_overview}
+
+We study discrete action tokenization for bimanual manipulation.  An action
+chunk is denoted by
+\begin{equation}
+    \mathbf{A}
+    = [\mathbf{A}^{L},\mathbf{A}^{R}]
+    \in \mathbb{R}^{H\times 2d_a},
+\end{equation}
+where $H$ is the action horizon, $d_a$ is the action dimension of one arm, and
+$L$ and $R$ indicate the left and right arms, respectively.  Our goal is to
+learn a tokenizer $\mathcal{T}$ and a detokenizer $\mathcal{D}$ such that
+\begin{equation}
+    (\mathbf{y}^{L},\mathbf{y}^{R}) = \mathcal{T}(\mathbf{A}),
+    \qquad
+    \widehat{\mathbf{A}}
+    = \mathcal{D}(\mathbf{y}^{L},\mathbf{y}^{R}),
+    \label{eq:btt_mapping}
+\end{equation}
+where each arm is represented by $M\ll H$ categorical tokens,
+$\mathbf{y}^{r}\in\{0,\ldots,K-1\}^{M}$ for
+$r\in\{L,R\}$.  In our default configuration,
+$(H,d_a,M,K)=(32,7,8,1920)$, resulting in 16 tokens for a 32-step,
+14-dimensional bimanual action chunk.
+
+A bimanual tokenizer must preserve two complementary structures.  Each arm
+obeys similar local kinematics, favoring arm-shared representations, while task
+completion depends on precisely timed inter-arm coordination, favoring joint
+modeling.  Treating the full 14-dimensional trajectory as a monolithic signal
+obscures the former structure; tokenizing the two arms independently discards
+the latter.  We therefore propose \emph{Bimanual Temporal Tokenization (BTT)},
+which factorizes token identity by arm but couples the two streams on both
+sides of the discrete bottleneck.  Specifically, BTT consists of: (i) a shared
+causal temporal encoder that extracts single-arm motion primitives;
+(ii) symmetric causal cross-attention that injects coordination before
+quantization; (iii) a shared finite scalar quantizer that produces separate
+left- and right-arm token streams; and (iv) a query-based decoder that pairs
+the two dequantized streams at corresponding latent timesteps and jointly
+reconstructs both arms.  This design keeps arm tokens directly addressable
+without forcing the decoder to infer coordination from two unrelated latent
+sequences.
+
+\subsection{Canonical Bimanual Action Space}
+\label{sec:btt_canonicalization}
+
+Physical left and right arms commonly use mirrored joint conventions.  Naively
+sharing an encoder across their raw coordinates would therefore assign
+different meanings to the same feature channel.  Before encoding, we map both
+arms into a common kinematic convention.  Let
+$\mathbf{s}\in\{-1,+1\}^{d_a}$ be a fixed sign vector.  For timestep $t$, we
+define
+\begin{equation}
+    \overline{\mathbf{a}}^{L}_{t}=\mathbf{a}^{L}_{t},
+    \qquad
+    \overline{\mathbf{a}}^{R}_{t}
+    =\mathbf{s}\odot\mathbf{a}^{R}_{t},
+    \label{eq:btt_canonicalization}
+\end{equation}
+where $\odot$ denotes element-wise multiplication.  Because
+$s_j\in\{-1,+1\}$, this transformation is self-inverse.
+
+We then normalize both canonical arms with the \emph{same} joint-wise bounds.
+The bounds $\boldsymbol{\ell},\mathbf{u}\in\mathbb{R}^{d_a}$ are computed by
+pooling the left-arm data and canonicalized right-arm data.  The normalized
+action is
+\begin{equation}
+    \mathbf{x}^{r}_{t}
+    = 2\frac{\overline{\mathbf{a}}^{r}_{t}-\boldsymbol{\ell}}
+             {\mathbf{u}-\boldsymbol{\ell}}-1,
+    \qquad r\in\{L,R\},
+    \label{eq:btt_normalization}
+\end{equation}
+with all operations applied element-wise.  Sharing both the coordinate
+convention and the normalization statistics makes weight sharing structural:
+a motion executed by either arm is presented to the encoder in the same
+feature space.
+
+\subsection{Symmetry-Aware Causal Encoder}
+\label{sec:btt_encoder}
+
+The BTT encoder first models per-arm dynamics with shared parameters and then
+models cross-arm coordination.  This separation provides an arm-swap
+equivariance in canonical coordinates while allowing every token to carry
+information about the other arm.
+
+\paragraph{Shared causal temporal compression.}
+For each arm $r$, a shared linear layer lifts
+$\mathbf{X}^{r}_{0}=\mathbf{x}^{r}_{1:H}$ from $d_a$ to the model dimension
+$d$.  We subsequently apply two weight-shared causal convolutional stages,
+\begin{equation}
+    \mathbf{X}^{r}_{\ell}
+    = \operatorname{Mish}\!\left(
+        \operatorname{LN}\!\left(
+        \operatorname{CConv}_{k_{\ell},s_{\ell}}
+        (\mathbf{X}^{r}_{\ell-1})\right)\right),
+    \quad \ell\in\{1,2\}.
+    \label{eq:btt_causal_conv}
+\end{equation}
+The convolution uses left-only padding $k_{\ell}-s_{\ell}$.  Consequently,
+output position $i$ is aligned with the end of its stride interval and cannot
+depend on a later input.  With kernels $(5,3)$ and strides $(2,2)$, the two
+stages reduce $H=32$ steps to $M=8$ latent positions.  Layer normalization is
+applied independently at each timestep, avoiding temporal-statistics leakage.
+
+We add a fixed sinusoidal position embedding $\mathbf{P}^{M}$ after temporal
+compression and use a shared pre-normalized, causally masked self-attention
+layer:
+\begin{equation}
+    \mathbf{S}^{r}
+    = \operatorname{CSA}_{\theta}
+      (\mathbf{X}^{r}_{2}+\mathbf{P}^{M}),
+    \qquad r\in\{L,R\}.
+    \label{eq:btt_single_arm}
+\end{equation}
+The same projection, convolutions, normalization layers, and self-attention
+parameters $\theta$ are used for both arms.  Thus, BTT learns one reusable
+model of single-arm dynamics instead of duplicating arm-specific encoders.
+
+\paragraph{Symmetric causal coordination.}
+Independent arm features are insufficient for motions such as handovers,
+cooperative grasping, or synchronized placement.  We therefore exchange
+information between the two streams before discretization.  Using one shared
+cross-attention operator in both directions, we compute
+\begin{align}
+    \mathbf{C}^{L}
+    &= \mathbf{S}^{L}
+       + \operatorname{CA}_{\phi}
+       \!\left(\operatorname{LN}(\mathbf{S}^{L}),
+               \operatorname{LN}(\mathbf{S}^{R}),
+               \operatorname{LN}(\mathbf{S}^{R});\mathbf{M}_{\mathrm{c}}\right),
+       \nonumber\\
+    \mathbf{C}^{R}
+    &= \mathbf{S}^{R}
+       + \operatorname{CA}_{\phi}
+       \!\left(\operatorname{LN}(\mathbf{S}^{R}),
+               \operatorname{LN}(\mathbf{S}^{L}),
+               \operatorname{LN}(\mathbf{S}^{L});\mathbf{M}_{\mathrm{c}}\right),
+    \label{eq:btt_cross_attention}
+\end{align}
+where $\mathbf{M}_{\mathrm{c}}[i,j]=0$ for $j\leq i$ and $-\infty$
+otherwise.  Both updates are evaluated in parallel from the original
+$(\mathbf{S}^{L},\mathbf{S}^{R})$, and the attention parameters $\phi$ are
+shared across directions.  Hence swapping the two canonical input arms swaps
+the two encoder outputs.  The causal mask further ensures that coordinated
+latent position $i$ only summarizes motion observed up to its aligned action
+timestep, rather than leaking future actions into earlier tokens.
+
+\subsection{Arm-Factorized Finite Scalar Quantization}
+\label{sec:btt_quantization}
+
+The coordinated features remain separated by arm.  A shared projection maps
+each feature vector to a compact latent,
+\begin{equation}
+    \mathbf{v}^{r}_{i}
+    = \mathbf{W}_{q}\mathbf{C}^{r}_{i}+\mathbf{b}_{q}
+    \in\mathbb{R}^{d_z},
+    \qquad i=1,\ldots,M.
+    \label{eq:btt_prequant}
+\end{equation}
+We discretize every scalar channel with finite scalar quantization (FSQ).  For
+per-channel level counts $\mathbf{L}=(L_1,\ldots,L_{d_z})$, FSQ smoothly bounds
+each coordinate, rounds it to the corresponding finite grid, and uses a
+straight-through estimator for the rounding operation.  If
+$n^{r}_{i,j}\in\{0,\ldots,L_j-1\}$ denotes the resulting digit, its mixed-radix
+token ID is
+\begin{equation}
+    y^{r}_{i}
+    = \sum_{j=1}^{d_z} n^{r}_{i,j}
+      \prod_{m<j}L_m,
+    \qquad
+    K=\prod_{j=1}^{d_z}L_j.
+    \label{eq:btt_fsq}
+\end{equation}
+We use $d_z=4$ and levels $(8,8,6,5)$, giving $K=1920$ possible symbols.  The
+pre-quantization projection and FSQ grid are shared across arms, so a token ID
+has the same quantization semantics for the left and right streams.
+
+Crucially, BTT does not collapse an aligned left--right pair into a single
+categorical variable.  It emits two length-$M$ sequences and serializes them as
+\begin{equation}
+    \mathbf{y}
+    = [y^{L}_{1},\ldots,y^{L}_{M},
+       y^{R}_{1},\ldots,y^{R}_{M}].
+    \label{eq:btt_serialization}
+\end{equation}
+This retains an ordinary $K$-way vocabulary and exposes the arm structure to a
+downstream policy, while the pre-quantization cross-attention ensures that the
+symbols are not learned in isolation.
+
+\subsection{Timestep-Paired Joint Decoder}
+\label{sec:btt_decoder}
+
+The decoder deliberately complements the factorized token interface.  Given
+token IDs, we first recover their FSQ embeddings
+$\widehat{\mathbf{z}}^{L},\widehat{\mathbf{z}}^{R}
+\in\mathbb{R}^{M\times d_z}$.  Rather than concatenating the two arm streams
+along time or decoding each arm separately, we pair embeddings at every
+aligned latent timestep:
+\begin{equation}
+    \mathbf{m}_{i}
+    = \mathbf{W}_{m}
+      [\widehat{\mathbf{z}}^{L}_{i}\,\Vert\,
+       \widehat{\mathbf{z}}^{R}_{i}]
+      +\mathbf{b}_{m}
+    \in\mathbb{R}^{d},
+    \quad i=1,\ldots,M,
+    \label{eq:btt_paired_memory}
+\end{equation}
+where $\Vert$ denotes feature concatenation.  The resulting $M$ memory slots
+explicitly preserve which two arm codes describe the same temporal segment.
+Pairing is performed after dequantization; it therefore captures the joint
+state without requiring a $K^2$-sized pair vocabulary.
+
+To reconstruct an $H$-step action chunk, we instantiate $H$ zero-valued queries
+and add fixed sinusoidal position embeddings
+$\mathbf{Q}_{0}=\mathbf{P}^{H}$.  A Transformer decoder maps the queries and
+paired memory to action features,
+\begin{equation}
+    \mathbf{F}
+    = \operatorname{TrDec}_{\psi}
+      (\mathbf{Q}_{0},\mathbf{m}_{1:M};\mathbf{M}_{\mathrm{c}}),
+    \qquad
+    \widehat{\mathbf{X}}
+    = \mathbf{F}\mathbf{W}_{o}^{\top}+\mathbf{b}_{o},
+    \label{eq:btt_decode}
+\end{equation}
+where $\widehat{\mathbf{X}}\in\mathbb{R}^{H\times 2d_a}$.  Self-attention among
+the action queries is causally masked, whereas cross-attention is unmasked so
+that every output timestep can access all $M$ paired memory slots.  No previous
+ground-truth action is supplied to the decoder, and all $H$ outputs are
+reconstructed in one forward pass.  A single output head predicts the complete
+14-dimensional bimanual vector, forcing the decoder to resolve coordination
+jointly rather than with two independent reconstruction heads.
+
+Finally, we split $\widehat{\mathbf{X}}$ into two normalized arm trajectories,
+invert Eq.~\eqref{eq:btt_normalization}, and apply the same sign transform in
+Eq.~\eqref{eq:btt_canonicalization} to the reconstructed right arm.  This
+returns $\widehat{\mathbf{A}}$ in the original physical action convention.
+
+\subsection{Learning Objective and Policy Interface}
+\label{sec:btt_training}
+
+We train the tokenizer end-to-end using reconstruction in the shared normalized
+space.  For the set $\mathcal{V}$ of action chunks containing no padded
+timesteps, the objective is
+\begin{equation}
+    \mathcal{L}_{\mathrm{rec}}
+    = \frac{1}{|\mathcal{V}|H(2d_a)}
+      \sum_{b\in\mathcal{V}}
+      \left\|
+      \widehat{\mathbf{X}}_{b}-\mathbf{X}_{b}
+      \right\|_{F}^{2}.
+    \label{eq:btt_objective}
+\end{equation}
+FSQ is parameter-free and is optimized through the straight-through estimator,
+so BTT requires neither a learned codebook nor auxiliary commitment and
+codebook losses.  The objective jointly trains the shared temporal encoder,
+inter-arm attention, pre-quantization projection, paired decoder, and action
+head.
+
+After tokenizer pretraining, we freeze $\mathcal{T}$ and $\mathcal{D}$ and use
+the 16 symbols in Eq.~\eqref{eq:btt_serialization} as action targets for a
+vision-language-action policy.  The serialization naturally induces two
+prediction blocks of sizes $(M,M)$: the policy predicts the left-arm block in
+parallel from multimodal context $\mathbf{o}$ and then predicts the right-arm
+block conditioned on the completed left block,
+\begin{equation}
+    p(\mathbf{y}\mid\mathbf{o})
+    = \prod_{i=1}^{M}p(y^{L}_{i}\mid\mathbf{o})
+      \prod_{i=1}^{M}p(y^{R}_{i}\mid\mathbf{o},\mathbf{y}^{L}).
+    \label{eq:btt_policy_factorization}
+\end{equation}
+We optimize categorical cross-entropy with equal weight for the two blocks.
+At inference, two blockwise decoding iterations produce the complete token
+sequence, which the frozen BTT decoder converts into an executable bimanual
+action chunk.  This interface preserves the computational advantage of
+parallel prediction within each arm while exposing an explicit causal route
+from one arm's plan to the other.
+
+\paragraph{Architecture details.}
+Unless stated otherwise, BTT uses model width $d=256$, eight attention heads,
+and dropout $0.1$.  The query decoder contains six pre-normalized Transformer
+layers with GELU feed-forward networks of width $4d$.  Both encoder and decoder
+use fixed sinusoidal temporal embeddings.  For our 7-DoF arms, the right-arm
+canonicalization vector is
+$\mathbf{s}=(-1,1,1,1,-1,-1,1)$.

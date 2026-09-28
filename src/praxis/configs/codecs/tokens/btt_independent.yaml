@@ -1,0 +1,36 @@
+# BTT ablation: independent arm normalization, encoders, cross-attention and projections.
+name: btt_independent
+kind: tokens
+pretrained_path: null
+
+# Fixed bimanual action geometry
+action_dim: 14
+arm_dim: 7
+action_horizon: 32
+latent_horizon_per_arm: 8
+max_fit_chunks: 50000
+
+# Independent per-arm encoders and original joint query decoder
+model_dim: 256
+num_heads: 8
+decoder_nhead: 8
+decoder_nlayer: 6
+dropout: 0.1
+use_causal_decoder: true
+
+# Two causal stride-2 stages produce eight latents per arm.
+conv_kernel_sizes: [5, 3]
+conv_strides: [2, 2]
+
+# Each arm keeps its own 1920-entry FSQ token at every latent timestep.
+latent_dim: 4
+fsq_levels: [8, 8, 6, 5]
+
+# Retain original convention; per-arm bounds from robotwin_new_demo_clean/meta/stats.json.
+# Right min/max are computed after sign conversion, with endpoints reordered.
+right_arm_sign: [-1, 1, 1, 1, -1, -1, 1]
+left_action_min: [-1.3947148323059082, -0.0003164021181873977, -0.1190902441740036, -1.9268131256103516, -1.4216828346252441, -3.468787908554077, 0.0]
+left_action_max: [0.4364263713359833, 3.3889312744140625, 3.4514999389648438, 1.789766788482666, 1.5632697343826294, 3.010831117630005, 1.0]
+right_action_min: [-1.3892723321914673, -0.5742834806442261, -0.005311839282512665, -1.9893786907196045, -1.397123098373413, -3.4247944355010986, 0.0]
+right_action_max: [2.9455959796905518, 2.9950597286224365, 3.333350419998169, 1.9530924558639526, 1.6339466571807861, 2.9398255348205566, 1.0]
+clamp_normalized_actions: false

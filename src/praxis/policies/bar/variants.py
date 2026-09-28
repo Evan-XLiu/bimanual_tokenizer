@@ -186,6 +186,22 @@ class BTTPaliPolicy(PaliPolicyBase):
 
 
 @dataclass
+class BTTIndependentPaliPolicyConfig(PaliPolicyConfig):
+    """Hyperparameters for the independent-arm BTT ablation with Pali."""
+
+    name: str = "bar_btt_independent_pali"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt_independent")
+    )
+
+
+class BTTIndependentPaliPolicy(PaliPolicyBase):
+    """Independent-arm BTT ablation routed through the Pali VLM path."""
+
+    CONFIG_CLASS = BTTIndependentPaliPolicyConfig
+
+
+@dataclass
 class ACodecQwenPolicyConfig(QwenPolicyConfig):
     """Hyperparameters for ACodec-backed blockwise Qwen VLM policy."""
 
@@ -337,6 +353,22 @@ class BTTQwenPolicy(QwenPolicyBase):
     """BTT Qwen policy routed through the blockwise VLM path."""
 
     CONFIG_CLASS = BTTQwenPolicyConfig
+
+
+@dataclass
+class BTTIndependentQwenPolicyConfig(QwenPolicyConfig):
+    """Hyperparameters for the independent-arm BTT ablation with Qwen."""
+
+    name: str = "bar_btt_independent_qwen"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt_independent")
+    )
+
+
+class BTTIndependentQwenPolicy(QwenPolicyBase):
+    """Independent-arm BTT ablation routed through the Qwen VLM path."""
+
+    CONFIG_CLASS = BTTIndependentQwenPolicyConfig
 
 
 @dataclass
@@ -493,6 +525,22 @@ class BTTSmolPolicy(SmolPolicyBase):
     CONFIG_CLASS = BTTSmolPolicyConfig
 
 
+@dataclass
+class BTTIndependentSmolPolicyConfig(SmolPolicyConfig):
+    """Hyperparameters for the independent-arm BTT ablation with Smol."""
+
+    name: str = "bar_btt_independent_smol"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt_independent")
+    )
+
+
+class BTTIndependentSmolPolicy(SmolPolicyBase):
+    """Independent-arm BTT ablation routed through the Smol VLM path."""
+
+    CONFIG_CLASS = BTTIndependentSmolPolicyConfig
+
+
 __all__ = [
     "ACodecPaliPolicy",
     "ACodecPaliPolicyConfig",
@@ -520,6 +568,12 @@ __all__ = [
     "BQuestSmolPolicyConfig",
     "BTTPaliPolicy",
     "BTTPaliPolicyConfig",
+    "BTTIndependentPaliPolicy",
+    "BTTIndependentPaliPolicyConfig",
+    "BTTIndependentQwenPolicy",
+    "BTTIndependentQwenPolicyConfig",
+    "BTTIndependentSmolPolicy",
+    "BTTIndependentSmolPolicyConfig",
     "BTTQwenPolicy",
     "BTTQwenPolicyConfig",
     "BTTSmolPolicy",

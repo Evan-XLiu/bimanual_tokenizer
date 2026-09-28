@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N quest26k8t100
+#PBS -P CFP05-CF-002
+#PBS -l walltime=72:00:00
+#PBS -l select=1:ncpus=12:mem=128gb:ngpus=1:gpu_model=H200
+
+set -Eeuo pipefail
+
+cd "${PBS_O_WORKDIR:?Submit this job from the bimanual_tokenizer repository root}"
+
+export ROBOTWIN_ROOT=${ROBOTWIN_ROOT:-/scratch/xuanweiliu/RoboTwin}
+export ROBOTWIN_PYTHON=${ROBOTWIN_PYTHON:-/scratch/xuanweiliu/conda_envs/robotwin/bin/python}
+export PRAXIS_CHECKPOINT=${PRAXIS_CHECKPOINT:-/scratch/xuanweiliu/bimanual_tokenizer/outputs/hopper_bar_quest_pali_robotwin_new_30k/613537.hopper-m-02/train/checkpoints/best/step_26000/pretrained_model}
+export EVAL_MODEL_LABEL=${EVAL_MODEL_LABEL:-bar_quest_pali_step26000_retry}
+export ROBOTWIN_OUTPUT_DIR=${ROBOTWIN_OUTPUT_DIR:-/scratch/xuanweiliu/bimanual_tokenizer/outputs/robotwin_eval/rollout8task_100/QueST}
+export EPISODES_PER_TASK=100
+export RECORD_EPISODES_PER_TASK=100
+export MAX_SEED_ATTEMPTS=${MAX_SEED_ATTEMPTS:-5000}
+export POLICY_PORT=${POLICY_PORT:-51201}
+
+test -x "$ROBOTWIN_PYTHON"
+test -f "$PRAXIS_CHECKPOINT/config.json"
+test -f "$PRAXIS_CHECKPOINT/model.safetensors"
+test "$(basename "${PRAXIS_CHECKPOINT%/pretrained_model}")" = "step_26000"
+
+echo "ROBOTWIN_QUEST_8TASK_100EP_JOB model=$EVAL_MODEL_LABEL checkpoint=$PRAXIS_CHECKPOINT output=$ROBOTWIN_OUTPUT_DIR"
+nvidia-smi --query-gpu=name,uuid --format=csv,noheader
+
+# These are the eight requested tasks after excluding lift_pot and
+# handover_block from the ten-task evaluation set.
+tasks=(
+  shake_bottle_horizontally
+  place_container_plate
+  stack_blocks_two
+  dump_bin_bigbin
+  stack_bowls_three
+  place_bread_skillet
+  put_bottles_dustbin
+  handover_mic
+)
+
+for task_name in "${tasks[@]}"; do
+  export ROBOTWIN_TASK="$task_name"
+  export ROBOTWIN_RUN_ID="$EVAL_MODEL_LABEL-$task_name-100ep"
+  bash artifacts/robotwin_hopper/run_eval.sh
+done
+
+echo "ROBOTWIN_QUEST_8TASK_100EP_COMPLETE model=$EVAL_MODEL_LABEL output=$ROBOTWIN_OUTPUT_DIR"

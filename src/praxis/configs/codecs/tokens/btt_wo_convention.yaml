@@ -1,0 +1,37 @@
+# BTT convention ablation: raw bimanual coordinates with no right-arm sign map.
+# The model architecture and parameter sharing are identical to tokens/btt.
+name: btt
+kind: tokens
+pretrained_path: null
+
+# Fixed bimanual action geometry
+action_dim: 14
+arm_dim: 7
+action_horizon: 32
+latent_horizon_per_arm: 8
+max_fit_chunks: 50000
+
+# Shared per-arm encoder and joint query decoder
+model_dim: 256
+num_heads: 8
+decoder_nhead: 8
+decoder_nlayer: 6
+dropout: 0.1
+use_causal_decoder: true
+
+# Two causal stride-2 stages produce eight latents per arm.
+conv_kernel_sizes: [5, 3]
+conv_strides: [2, 2]
+
+# Each arm keeps its own 1920-entry FSQ token at every latent timestep.
+latent_dim: 4
+fsq_levels: [8, 8, 6, 5]
+
+# Strict convention ablation: preserve raw coordinates and pool the raw
+# left/right range of each corresponding joint into one shared normalizer.
+right_arm_sign: [1, 1, 1, 1, 1, 1, 1]
+shared_action_min:
+  [-2.9455960, -0.5742835, -0.1190902, -1.9893787, -1.6339467, -3.4687879, 0.0]
+shared_action_max:
+  [1.3892723, 3.3889313, 3.4514999, 1.9530925, 1.5632697, 3.4247944, 1.0]
+clamp_normalized_actions: false

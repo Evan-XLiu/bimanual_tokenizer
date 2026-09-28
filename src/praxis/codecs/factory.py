@@ -37,6 +37,9 @@ _CODEC_REGISTRY: dict[tuple[str, str], str] = {
     ("tokens", "quest"): _ref("tokens.quest.tokenizer", "QueSTTokenizer"),
     ("tokens", "bquest"): _ref("tokens.bquest.tokenizer", "BQuestTokenizer"),
     ("tokens", "btt"): _ref("tokens.btt.tokenizer", "BTTTokenizer"),
+    ("tokens", "btt_independent"): _ref(
+        "tokens.btt_independent.tokenizer", "BTTIndependentTokenizer"
+    ),
     ("latents", "acodec"): _ref("latents.acodec.autoencoder", "ActionCodecAutoencoder"),
     ("latents", "oat"): _ref("latents.oat.autoencoder", "OATAutoencoder"),
     ("latents", "quest"): _ref("latents.quest.autoencoder", "QueSTAutoencoder"),
