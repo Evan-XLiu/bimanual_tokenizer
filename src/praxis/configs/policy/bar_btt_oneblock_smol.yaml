@@ -1,0 +1,6 @@
+defaults:
+  - bar/backbone@_here_: smol
+  - bar/codec@_here_: btt_oneblock
+  - _self_
+
+name: bar_btt_oneblock_smol

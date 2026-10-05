@@ -105,6 +105,13 @@ def tokenize_fixed_actions(action_tokenizer, actions: Tensor) -> list[list[int]]
     return tokenize_actions(action_tokenizer, actions)
 
 
+def swap_btt_arm_token_blocks(batch_ids: list[list[int]]) -> list[list[int]]:
+    """Convert between native [L0..7,R0..7] and VLA [R0..7,L0..7]."""
+    if any(len(ids) != 16 for ids in batch_ids):
+        raise ValueError("BTT arm reordering requires all 16 tokens (8 per arm).")
+    return [ids[8:] + ids[:8] for ids in batch_ids]
+
+
 def detokenize_fixed_action_ids(
     *,
     action_tokenizer,

@@ -541,7 +541,61 @@ class BTTIndependentSmolPolicy(SmolPolicyBase):
     CONFIG_CLASS = BTTIndependentSmolPolicyConfig
 
 
+@dataclass
+class BTTOneBlockPaliPolicyConfig(PaliPolicyConfig):
+    """Single-block BTT generation using the Pali backbone."""
+
+    name: str = "bar_btt_oneblock_pali"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt_oneblock")
+    )
+
+
+class BTTOneBlockPaliPolicy(PaliPolicyBase):
+    """Predict the 16 unchanged BTT tokens in one parallel block."""
+
+    CONFIG_CLASS = BTTOneBlockPaliPolicyConfig
+
+
+@dataclass
+class BTTOneBlockQwenPolicyConfig(QwenPolicyConfig):
+    """Single-block BTT generation using the Qwen backbone."""
+
+    name: str = "bar_btt_oneblock_qwen"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt_oneblock")
+    )
+
+
+class BTTOneBlockQwenPolicy(QwenPolicyBase):
+    """Predict the 16 unchanged BTT tokens in one parallel block."""
+
+    CONFIG_CLASS = BTTOneBlockQwenPolicyConfig
+
+
+@dataclass
+class BTTOneBlockSmolPolicyConfig(SmolPolicyConfig):
+    """Single-block BTT generation using the Smol backbone."""
+
+    name: str = "bar_btt_oneblock_smol"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt_oneblock")
+    )
+
+
+class BTTOneBlockSmolPolicy(SmolPolicyBase):
+    """Predict the 16 unchanged BTT tokens in one parallel block."""
+
+    CONFIG_CLASS = BTTOneBlockSmolPolicyConfig
+
+
 __all__ = [
+    "BTTOneBlockPaliPolicy",
+    "BTTOneBlockPaliPolicyConfig",
+    "BTTOneBlockQwenPolicy",
+    "BTTOneBlockQwenPolicyConfig",
+    "BTTOneBlockSmolPolicy",
+    "BTTOneBlockSmolPolicyConfig",
     "ACodecPaliPolicy",
     "ACodecPaliPolicyConfig",
     "ACodecQwenPolicy",

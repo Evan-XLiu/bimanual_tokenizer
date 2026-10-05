@@ -5,3 +5,4 @@ action_tokenizer:
 freeze_action_tokenizer: true
 block_ce_weighting: block_mean
 ce_vocab_scope: full
+btt_arm_order: left_then_right

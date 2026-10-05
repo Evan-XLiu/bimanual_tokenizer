@@ -23,6 +23,7 @@ POLICY_CODECS: tuple[str, ...] = (
     "quest",
     "bquest",
     "btt",
+    "btt_oneblock",
     "btt_independent",
 )
 POLICY_BACKBONES: tuple[str, ...] = ("pali", "qwen", "smol")
@@ -86,6 +87,7 @@ _CODEC_CLASS_PREFIXES: dict[str, str] = {
     "quest": "QueST",
     "bquest": "BQuest",
     "btt": "BTT",
+    "btt_oneblock": "BTTOneBlock",
     "btt_independent": "BTTIndependent",
     "xtokenizer": "XTokenizer",
 }

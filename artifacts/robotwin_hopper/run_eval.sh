@@ -12,6 +12,8 @@ TASKS=${ROBOTWIN_TASKS_FILE:-$SOURCE_ROOT/scripts/robotwin/all_tasks.yml}
 
 RUN_ID=${ROBOTWIN_RUN_ID:-robotwin-hopper-${PBS_JOBID:-manual}}
 OUT=${ROBOTWIN_OUTPUT_DIR:-$SOURCE_ROOT/outputs/robotwin2_clean/$RUN_ID}
+# Separate support files when independent jobs share a model result root.
+AUX_ROOT=${ROBOTWIN_AUX_DIR:-$OUT}
 POLICY_PORT=${POLICY_PORT:-50100}
 EPISODES_PER_TASK=${EPISODES_PER_TASK:-20}
 MAX_SEED_ATTEMPTS=${MAX_SEED_ATTEMPTS:-1000}
@@ -45,20 +47,20 @@ print(name)
 PY
 )
 
-mkdir -p "$OUT/_logs"
+mkdir -p "$AUX_ROOT/_logs"
 cd "$SOURCE_ROOT"
 
 if [ "${ROBOTWIN_ENABLE_POLICY_TRACE:-0}" = "1" ]; then
-  export ROBOTWIN_POLICY_TRACE_PATH="${ROBOTWIN_POLICY_TRACE_PATH:-$OUT/policy_trace.jsonl}"
+  export ROBOTWIN_POLICY_TRACE_PATH="${ROBOTWIN_POLICY_TRACE_PATH:-$AUX_ROOT/policy_trace.jsonl}"
 fi
 
 if [ "${ROLLOUT_PROFILE:-0}" = "1" ]; then
-  export ROLLOUT_PROFILE_SERVER_TRACE="${ROLLOUT_PROFILE_SERVER_TRACE:-$OUT/rollout_profile_server.jsonl}"
+  export ROLLOUT_PROFILE_SERVER_TRACE="${ROLLOUT_PROFILE_SERVER_TRACE:-$AUX_ROOT/rollout_profile_server.jsonl}"
 fi
 
 # Warp/CuRobo kernels are GPU-architecture-specific.  Never reuse the shared
 # home-directory caches across heterogeneous Hopper compute nodes.
-CACHE_ROOT=${ROBOTWIN_CUROBO_CACHE_ROOT:-$OUT/_cache}
+CACHE_ROOT=${ROBOTWIN_CUROBO_CACHE_ROOT:-$AUX_ROOT/_cache}
 export WARP_CACHE_PATH="$CACHE_ROOT/warp"
 export CUDA_CACHE_PATH="$CACHE_ROOT/cuda"
 export TORCH_EXTENSIONS_DIR="$CACHE_ROOT/torch_extensions"
@@ -67,13 +69,13 @@ mkdir -p "$WARP_CACHE_PATH" "$CUDA_CACHE_PATH" "$TORCH_EXTENSIONS_DIR"
 # The editable RoboTwin environment contains CuRobo extensions compiled on a
 # different GPU architecture.  Shadow only the Python/CUDA sources so CuRobo
 # JIT-builds compatible extensions into this run's isolated cache.
-CUROBO_SHADOW_ROOT="$OUT/_runtime/curobo_src"
+CUROBO_SHADOW_ROOT="$AUX_ROOT/_runtime/curobo_src"
 mkdir -p "$CUROBO_SHADOW_ROOT"
 tar -C "$ROBOTWIN_ROOT/envs/curobo/src" --exclude='*.so' -cf - curobo \
   | tar -C "$CUROBO_SHADOW_ROOT" -xf -
 export PYTHONPATH="$CUROBO_SHADOW_ROOT${PYTHONPATH:+:$PYTHONPATH}"
 
-RUNTIME_OVERLAY="$OUT/_logs/praxis-runtime-overlay.tar"
+RUNTIME_OVERLAY="$AUX_ROOT/_logs/praxis-runtime-overlay.tar"
 {
   git diff --name-only -z HEAD -- src scripts tests
   git ls-files --others --exclude-standard -z -- src scripts tests
@@ -117,10 +119,10 @@ fi
   host=127.0.0.1 \
   port="$POLICY_PORT" \
   device=cuda \
-  >"$OUT/_logs/policy-server.log" 2>&1 &
+  >"$AUX_ROOT/_logs/policy-server.log" 2>&1 &
 POLICY_PID=$!
 
-"$POLICY_PYTHON" - "$POLICY_PORT" "$PRAXIS_CHECKPOINT" "$POLICY_PID" <<'PY'
+"$POLICY_PYTHON" - "$POLICY_PORT" "$PRAXIS_CHECKPOINT" "$POLICY_PID" "${PRAXIS_EXPECTED_CHECKPOINT_SHA256:-}" <<'PY'
 import json
 import os
 import sys
@@ -132,6 +134,7 @@ from praxis_remote import PolicyClient
 port = int(sys.argv[1])
 expected = Path(sys.argv[2]).resolve()
 server_pid = int(sys.argv[3])
+expected_fingerprint = sys.argv[4]
 deadline = time.time() + 1800
 while time.time() < deadline:
     try:
@@ -141,8 +144,14 @@ while time.time() < deadline:
     client = PolicyClient(host="127.0.0.1", port=port, timeout=5.0)
     try:
         ready, info = client.health_check()
-        loaded = Path(json.loads(info)["serving_artifact"]["checkpoint"]["path"]).resolve()
+        checkpoint_info = json.loads(info)["serving_artifact"]["checkpoint"]
+        loaded = Path(checkpoint_info["path"]).resolve()
         if ready and loaded == expected:
+            if expected_fingerprint and checkpoint_info.get("artifact_sha256") != expected_fingerprint:
+                raise SystemExit(
+                    "Served checkpoint fingerprint differs from the existing evaluation: "
+                    f"expected={expected_fingerprint}, actual={checkpoint_info.get('artifact_sha256')}"
+                )
             print(f"ROBOTWIN_HOPPER_POLICY_READY port={port}", flush=True)
             break
     except Exception:
@@ -168,7 +177,7 @@ if [ -n "$ROBOTWIN_TASK" ]; then
     --expected-checkpoint "$PRAXIS_CHECKPOINT" \
     --max-seed-attempts "$MAX_SEED_ATTEMPTS" \
     --resume \
-    2>&1 | tee -a "$OUT/_logs/eval-$ROBOTWIN_TASK.log"
+    2>&1 | tee -a "$AUX_ROOT/_logs/eval-$ROBOTWIN_TASK.log"
   echo "ROBOTWIN_HOPPER_EVAL_COMPLETE task=$ROBOTWIN_TASK output_dir=$OUT"
   exit 0
 fi
@@ -188,7 +197,7 @@ fi
   --max-seed-attempts "$MAX_SEED_ATTEMPTS" \
     --resume \
     "${EXCLUDE_TASK_ARGS[@]}" \
-    2>&1 | tee -a "$OUT/_logs/supervisor.log"
+    2>&1 | tee -a "$AUX_ROOT/_logs/supervisor.log"
 
 "$ROBOTWIN_PYTHON" -u scripts/robotwin/run_suite.py aggregate \
   --tasks "$TASKS" \
@@ -197,6 +206,6 @@ fi
   --expected-checkpoint "$PRAXIS_CHECKPOINT" \
   --episodes-per-task "$EPISODES_PER_TASK" \
   "${EXCLUDE_TASK_ARGS[@]}" \
-  2>&1 | tee -a "$OUT/_logs/aggregate.log"
+  2>&1 | tee -a "$AUX_ROOT/_logs/aggregate.log"
 
 echo "ROBOTWIN_HOPPER_EVAL_COMPLETE output_dir=$OUT"

@@ -76,6 +76,8 @@ class VlmActionTokenPolicyConfig:
     # --- Action tokenizer ---
     action_tokenizer: dict[str, Any] = field(default_factory=dict)
     freeze_action_tokenizer: bool = True
+    # VLA serialization only; the BTT codec always consumes [left, right].
+    btt_arm_order: Literal["left_then_right", "right_then_left"] = "left_then_right"
 
     # --- Action tokens in VLM vocabulary ---
     num_action_tokens: int | None = None
@@ -105,6 +107,10 @@ class VlmActionTokenPolicyConfig:
     n_action_steps: int = 16
 
     def __post_init__(self) -> None:
+        if self.btt_arm_order not in {"left_then_right", "right_then_left"}:
+            raise ValueError("btt_arm_order must be left_then_right or right_then_left.")
+        if self.btt_arm_order == "right_then_left" and self.action_tokenizer.get("name") != "btt":
+            raise ValueError("right_then_left requires the standard btt tokenizer.")
         self.decode_stop_mode = validate_decode_stop_mode(self.decode_stop_mode)
         validate_decode_keep_k_for_stop_mode(
             decode_stop_mode=self.decode_stop_mode,

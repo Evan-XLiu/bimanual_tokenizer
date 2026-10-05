@@ -1,0 +1,6 @@
+# Experiment 2: all numerical tokenizer settings inherit standard BTT.
+defaults:
+  - /codecs/tokens/btt@_here_
+  - _self_
+
+name: btt_oneblock

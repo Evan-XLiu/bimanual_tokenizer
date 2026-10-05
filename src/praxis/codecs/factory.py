@@ -37,6 +37,9 @@ _CODEC_REGISTRY: dict[tuple[str, str], str] = {
     ("tokens", "quest"): _ref("tokens.quest.tokenizer", "QueSTTokenizer"),
     ("tokens", "bquest"): _ref("tokens.bquest.tokenizer", "BQuestTokenizer"),
     ("tokens", "btt"): _ref("tokens.btt.tokenizer", "BTTTokenizer"),
+    ("tokens", "btt_oneblock"): _ref(
+        "tokens.btt_oneblock.tokenizer", "BTTOneBlockTokenizer"
+    ),
     ("tokens", "btt_independent"): _ref(
         "tokens.btt_independent.tokenizer", "BTTIndependentTokenizer"
     ),

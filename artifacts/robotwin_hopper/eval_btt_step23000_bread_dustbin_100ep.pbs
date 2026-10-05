@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N btt23k2t100
+#PBS -P CFP05-CF-002
+#PBS -l walltime=72:00:00
+#PBS -l select=1:ncpus=12:mem=128gb:ngpus=1:gpu_model=H200
+
+set -Eeuo pipefail
+cd "${PBS_O_WORKDIR:?Submit from the bimanual_tokenizer repository root}"
+
+export ROBOTWIN_ROOT=/scratch/xuanweiliu/RoboTwin
+export ROBOTWIN_PYTHON=/scratch/xuanweiliu/conda_envs/robotwin/bin/python
+export PRAXIS_CHECKPOINT="$PWD/outputs/hopper_bar_btt_pali_robotwin_new_30k/622038.hopper-m-02/train/checkpoints/best/step_23000/pretrained_model"
+export EVAL_MODEL_LABEL=bar_btt_pali_step23000
+export ROBOTWIN_OUTPUT_DIR="$PWD/outputs/robotwin_eval/rollout8task_100/BTT_handover_test/step23000"
+export EPISODES_PER_TASK=100
+export RECORD_EPISODES_PER_TASK=100
+export MAX_SEED_ATTEMPTS=5000
+export POLICY_PORT=51236
+
+test -x "$ROBOTWIN_PYTHON"
+test -x "$PWD/.venv/bin/praxis-serve"
+test -f "$PRAXIS_CHECKPOINT/config.json"
+test -f "$PRAXIS_CHECKPOINT/model.safetensors"
+test -f "$PWD/outputs/hopper_btt_robotwin_new/621340.hopper-m-02/train/checkpoints/best/step_297000/pretrained_model/model.safetensors"
+
+if [ "${ROBOTWIN_DRY_RUN:-0}" != "1" ]; then
+  nvidia-smi --query-gpu=name,uuid --format=csv,noheader
+fi
+
+failed_tasks=()
+for task_name in place_bread_skillet put_bottles_dustbin; do
+  test -f "$ROBOTWIN_ROOT/envs/$task_name.py"
+  export ROBOTWIN_TASK="$task_name"
+  export ROBOTWIN_RUN_ID="$EVAL_MODEL_LABEL-$task_name-100ep"
+  # Keep existing handover logs and each task's support files separate.
+  export ROBOTWIN_AUX_DIR="$ROBOTWIN_OUTPUT_DIR/_${task_name}_100ep"
+  echo "BTT_STEP23000_TASK task=$task_name episodes=100 checkpoint=$PRAXIS_CHECKPOINT output=$ROBOTWIN_OUTPUT_DIR aux=$ROBOTWIN_AUX_DIR"
+  if [ "${ROBOTWIN_DRY_RUN:-0}" = "1" ]; then
+    continue
+  fi
+  if bash artifacts/robotwin_hopper/run_eval.sh; then
+    echo "BTT_STEP23000_TASK_COMPLETE task=$task_name"
+  else
+    task_status=$?
+    failed_tasks+=("$task_name:$task_status")
+    echo "BTT_STEP23000_TASK_FAILED task=$task_name exit=$task_status" >&2
+  fi
+done
+
+if [ "${#failed_tasks[@]}" -ne 0 ]; then
+  echo "BTT_STEP23000_FAILED tasks=${failed_tasks[*]}" >&2
+  exit 1
+fi
+echo "BTT_STEP23000_BREAD_DUSTBIN_COMPLETE output=$ROBOTWIN_OUTPUT_DIR"

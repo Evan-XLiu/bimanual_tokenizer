@@ -34,6 +34,7 @@ from praxis.policies.bar.core.token_sequence import (
     resolve_max_code_seq_len,
     resolve_pad_horizon,
     tokenize_fixed_actions,
+    swap_btt_arm_token_blocks,
 )
 from praxis.policies.bar.core.vlm.decoding import run_blockwise_decode
 from praxis.policies.core.action_tokens import (
@@ -305,9 +306,16 @@ class VlmActionTokenPolicyBase(
 
     def _init_token_modeling(self) -> None:
         self.tokenizer_vocab_size = int(self.action_tokenizer.codebook_size)
+        if getattr(self.config, "btt_arm_order", "left_then_right") == "right_then_left":
+            if (self.action_tokenizer.max_code_seq_len != 16
+                    or tuple(self.action_tokenizer.block_schedule) != (8, 8)):
+                raise ValueError("right_then_left requires BTT's 16 tokens and (8, 8) schedule.")
 
     def tokenize_actions_to_policy_tokens(self, actions: Tensor) -> list[list[int]]:
-        return tokenize_fixed_actions(self.action_tokenizer, actions)
+        tokens = tokenize_fixed_actions(self.action_tokenizer, actions)
+        if getattr(self.config, "btt_arm_order", "left_then_right") == "right_then_left":
+            tokens = swap_btt_arm_token_blocks(tokens)
+        return tokens
 
     def _decode_generated_action_tokens(
         self,
@@ -316,6 +324,10 @@ class VlmActionTokenPolicyBase(
         device: torch.device,
         horizon: int | None = None,
     ) -> Tensor:
+        if getattr(self.config, "btt_arm_order", "left_then_right") == "right_then_left":
+            if horizon not in (None, 16):
+                raise ValueError("right_then_left requires decoding the full 16-token sequence.")
+            batch_token_ids = swap_btt_arm_token_blocks(batch_token_ids)
         return detokenize_fixed_action_ids(
             action_tokenizer=self.action_tokenizer,
             batch_token_ids=batch_token_ids,
