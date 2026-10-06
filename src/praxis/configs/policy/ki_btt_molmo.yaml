@@ -1,0 +1,6 @@
+defaults:
+  - ki/backbone@_here_: molmo
+  - ki/codec@_here_: btt
+  - _self_
+
+name: ki_btt_molmo

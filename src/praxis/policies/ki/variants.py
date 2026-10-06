@@ -13,6 +13,8 @@ from praxis.policies.core.action_tokens import (
     VariableLengthActionTokenMixin,
     action_tokenizer_config_factory,
 )
+from praxis.policies.ki.backbones.molmo.molmo_base import MolmoPolicyBase
+from praxis.policies.ki.backbones.molmo.molmo_config import MolmoPolicyConfig
 from praxis.policies.ki.backbones.pali.pali_base import PaliPolicyBase
 from praxis.policies.ki.backbones.pali.pali_config import PaliPolicyConfig
 from praxis.policies.ki.backbones.qwen.qwen_base import QwenPolicyBase
@@ -385,6 +387,55 @@ class BQuestSmolPolicy(SmolPolicyBase):
     CONFIG_CLASS = BQuestSmolPolicyConfig
 
 
+@dataclass
+class FASTMolmoPolicyConfig(MolmoPolicyConfig):
+    """Hyperparameters for FAST variable-length Molmo co-training."""
+
+    name: str = "ki_fast_molmo"
+    ce_supervise_eos: bool = True
+    action_tokenizer: dict[str, object] = field(
+        default_factory=default_fast_tokenizer_config
+    )
+
+
+class FASTMolmoPolicy(VariableLengthActionTokenMixin, MolmoPolicyBase):
+    """Molmo VLM CE plus detached-prefix-K/V FM expert."""
+
+    CONFIG_CLASS = FASTMolmoPolicyConfig
+
+
+@dataclass
+class BTTMolmoPolicyConfig(MolmoPolicyConfig):
+    """Hyperparameters for BTT Molmo co-training."""
+
+    name: str = "ki_btt_molmo"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt")
+    )
+
+
+class BTTMolmoPolicy(MolmoPolicyBase):
+    """Molmo2-ER VLM CE plus detached-prefix-K/V BTT expert."""
+
+    CONFIG_CLASS = BTTMolmoPolicyConfig
+
+
+@dataclass
+class OATMolmoPolicyConfig(MolmoPolicyConfig):
+    """Hyperparameters for OAT Molmo co-training."""
+
+    name: str = "ki_oat_molmo"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("oat")
+    )
+
+
+class OATMolmoPolicy(MolmoPolicyBase):
+    """Molmo VLM CE plus detached-prefix-K/V FM expert."""
+
+    CONFIG_CLASS = OATMolmoPolicyConfig
+
+
 __all__ = [
     "ACodecPaliPolicy",
     "ACodecPaliPolicyConfig",
@@ -428,4 +479,10 @@ __all__ = [
     "QueSTQwenPolicyConfig",
     "QueSTSmolPolicy",
     "QueSTSmolPolicyConfig",
+    "BTTMolmoPolicy",
+    "BTTMolmoPolicyConfig",
+    "FASTMolmoPolicy",
+    "FASTMolmoPolicyConfig",
+    "OATMolmoPolicy",
+    "OATMolmoPolicyConfig",
 ]

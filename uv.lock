@@ -3076,6 +3076,9 @@ smol = [
     { name = "num2words" },
     { name = "peft" },
 ]
+molmo = [
+    { name = "peft" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -3102,6 +3105,7 @@ requires-dist = [
     { name = "peft", marker = "extra == 'pali'" },
     { name = "peft", marker = "extra == 'qwen'" },
     { name = "peft", marker = "extra == 'smol'" },
+    { name = "peft", marker = "extra == 'molmo'" },
     { name = "pillow", specifier = ">=10.0.0" },
     { name = "praxis-eval", specifier = "==0.1.2" },
     { name = "praxis-eval", extras = ["libero"], marker = "extra == 'libero'", specifier = "==0.1.2" },
@@ -3113,6 +3117,7 @@ requires-dist = [
     { name = "praxis-remote", specifier = "==0.1.1" },
     { name = "praxis-vla", extras = ["libero"], marker = "extra == 'all'" },
     { name = "praxis-vla", extras = ["logging"], marker = "extra == 'all'" },
+    { name = "praxis-vla", extras = ["molmo"], marker = "extra == 'all'" },
     { name = "praxis-vla", extras = ["metaworld"], marker = "extra == 'all'" },
     { name = "praxis-vla", extras = ["mshab"], marker = "extra == 'all'" },
     { name = "praxis-vla", extras = ["pali"], marker = "extra == 'all'" },
@@ -3135,7 +3140,7 @@ requires-dist = [
     { name = "transformers", specifier = ">=4.57.6,<5" },
     { name = "wandb", marker = "extra == 'logging'", specifier = ">=0.16.0" },
 ]
-provides-extras = ["serving", "libero", "robocasa", "robomimic", "metaworld", "simpler", "mshab", "logging", "slurm", "qwen", "smol", "pali", "all"]
+provides-extras = ["serving", "libero", "robocasa", "robomimic", "metaworld", "simpler", "mshab", "logging", "slurm", "qwen", "smol", "pali", "molmo", "all"]
 
 [package.metadata.requires-dev]
 dev = [

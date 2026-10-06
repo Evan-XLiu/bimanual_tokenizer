@@ -103,7 +103,7 @@ def _resolve_partition(
     if stage == "policy":
         if backbone == "smol":
             return "kempner"
-        if backbone in {"qwen", "pali"}:
+        if backbone in {"qwen", "pali", "molmo"}:
             return "kempner_h100"
     return "kempner"
 

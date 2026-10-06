@@ -25,6 +25,9 @@ POLICY_CODECS: tuple[str, ...] = (
     "btt",
     "btt_independent",
 )
+# Molmo2-ER is currently wired for the KI objective.  Keep the shared
+# default matrix for the existing BAR/FM cells and opt KI into the new
+# backbone explicitly below.
 POLICY_BACKBONES: tuple[str, ...] = ("pali", "qwen", "smol")
 
 DEFAULT_POLICY_METHOD = "bar"
@@ -93,6 +96,7 @@ _BACKBONE_CLASS_NAMES: dict[str, str] = {
     "pali": "Pali",
     "qwen": "Qwen",
     "smol": "Smol",
+    "molmo": "Molmo",
 }
 
 
@@ -109,6 +113,10 @@ POLICY_FAMILIES_BY_METHOD: dict[str, PolicyFamily] = {
 }
 EXTRA_POLICY_SPECS: tuple[PolicySpec, ...] = (
     PolicySpec(method="ki", codec="xtokenizer", backbone="qwen"),
+    # Molmo2-ER is intentionally limited to the requested KI tokenizers.
+    PolicySpec(method="ki", codec="oat", backbone="molmo"),
+    PolicySpec(method="ki", codec="fast", backbone="molmo"),
+    PolicySpec(method="ki", codec="btt", backbone="molmo"),
 )
 POLICY_METHODS: tuple[str, ...] = tuple(POLICY_FAMILIES_BY_METHOD)
 POLICY_CODECS_BY_METHOD: dict[str, tuple[str, ...]] = {
@@ -135,7 +143,18 @@ def policy_name(method: str, codec: str | None, backbone: str) -> str:
 
 def policy_spec(method: str, codec: str | None, backbone: str) -> PolicySpec:
     """Return a concrete policy spec after matrix validation."""
-    family = policy_family(method)
+    normalized_method = method.strip().lower()
+    normalized_codec = None if codec is None else codec.strip().lower()
+    normalized_backbone = backbone.strip().lower()
+    for extra in EXTRA_POLICY_SPECS:
+        if (
+            extra.method == normalized_method
+            and extra.codec == normalized_codec
+            and extra.backbone == normalized_backbone
+        ):
+            return extra
+
+    family = policy_family(normalized_method)
     resolved_codec: str | None
     if family.uses_codec:
         if codec is None:
@@ -143,7 +162,7 @@ def policy_spec(method: str, codec: str | None, backbone: str) -> PolicySpec:
                 f"Policy method {family.method!r} requires a codec. "
                 f"Expected one of: {', '.join(family.codecs or ())}."
             )
-        resolved_codec = codec.strip().lower()
+        resolved_codec = normalized_codec
     elif codec is not None:
         raise ValueError(f"Policy method {family.method!r} does not use a codec.")
     else:
@@ -153,7 +172,7 @@ def policy_spec(method: str, codec: str | None, backbone: str) -> PolicySpec:
             f"Unsupported policy codec {codec!r} for method {family.method!r}. "
             f"Expected one of: {', '.join(family.codecs)}."
         )
-    resolved_backbone = backbone.strip().lower()
+    resolved_backbone = normalized_backbone
     if resolved_backbone not in family.backbones:
         raise ValueError(
             f"Unsupported policy backbone {backbone!r} for method {family.method!r}. "

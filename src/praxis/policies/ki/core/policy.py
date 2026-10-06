@@ -199,9 +199,14 @@ class PolicyBase(
     @staticmethod
     def _is_vocab_matrix_param_name(name: str) -> bool:
         base_name = name[4:] if name.startswith("vlm.") else name
-        if not base_name.endswith(".weight"):
+        is_embedding_parameter = base_name.endswith((".weight", ".embedding", ".new_embedding"))
+        if not is_embedding_parameter:
             return False
-        return ("embed_tokens" in base_name) or ("lm_head" in base_name)
+        return (
+            ("embed_tokens" in base_name)
+            or ("wte" in base_name)
+            or ("lm_head" in base_name)
+        )
 
     def _build_trainable_vocab_rows(self, *, vocab_size: int) -> torch.LongTensor:
         vocab = self._require_action_token_vocabulary()
@@ -213,6 +218,28 @@ class PolicyBase(
             eos_token_id=self._eos_token_id,
         )
 
+    def _build_trainable_vocab_rows_for_param(
+        self,
+        name: str,
+        vocab_size: int,
+    ) -> torch.LongTensor:
+        """Map global action-token ids onto Molmo2 split-embedding rows."""
+        if not name.endswith(".new_embedding") and not name.endswith(".embedding"):
+            return self._build_trainable_vocab_rows(vocab_size=vocab_size)
+        embedding = self.vlm.get_input_embeddings()
+        base_embedding = getattr(embedding, "embedding", None)
+        new_embedding = getattr(embedding, "new_embedding", None)
+        if base_embedding is None or new_embedding is None:
+            return self._build_trainable_vocab_rows(vocab_size=vocab_size)
+        base_rows = int(base_embedding.shape[0])
+        total_rows = base_rows + int(new_embedding.shape[0])
+        rows = self._build_trainable_vocab_rows(vocab_size=total_rows)
+        if name.endswith(".new_embedding"):
+            rows = rows - base_rows
+        else:
+            rows = rows[rows < base_rows]
+        return rows[(rows >= 0) & (rows < int(vocab_size))]
+
     def _install_vocab_row_gradient_masks(self) -> None:
         install_vocab_row_gradient_masks(
             named_parameters=cast(nn.Module, self.vlm).named_parameters(),
@@ -221,6 +248,7 @@ class PolicyBase(
             build_trainable_rows=lambda vocab_size: self._build_trainable_vocab_rows(
                 vocab_size=vocab_size
             ),
+            build_trainable_rows_for_param=self._build_trainable_vocab_rows_for_param,
             hook_handles=self._vocab_row_grad_mask_hooks,
         )
 

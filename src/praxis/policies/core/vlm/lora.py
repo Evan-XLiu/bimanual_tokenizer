@@ -41,16 +41,28 @@ def resolve_lora_modules_to_save(
     if not require_vocab_modules:
         return resolved
     module_set = set(resolved)
+    # Molmo2 names its input embedding ``wte`` (and exposes no
+    # ``embed_tokens`` module), while most decoder families use the latter.
+    # Resolve the vocabulary module from the actual model before validating
+    # the config so LoRA can preserve newly-added action-token rows for both.
+    module_names = {name.rsplit(".", 1)[-1] for name, _ in vlm.named_modules()}
+    embedding_module = (
+        "embed_tokens"
+        if "embed_tokens" in module_names
+        else "wte"
+        if "wte" in module_names
+        else "embed_tokens"
+    )
     if vlm_ties_input_output_embeddings(vlm):
-        if "embed_tokens" not in module_set:
+        if embedding_module not in module_set:
             raise ValueError(
                 "LoRA VLM policies with tied input/output embeddings must save "
-                "the embedding action-token rows. policy.lora_modules_to_save "
-                "must include 'embed_tokens'."
+                f"the embedding action-token rows. policy.lora_modules_to_save "
+                f"must include {embedding_module!r}."
             )
         return tuple(module for module in resolved if module != "lm_head")
 
-    required_modules_to_save = {"embed_tokens", "lm_head"}
+    required_modules_to_save = {embedding_module, "lm_head"}
     missing = required_modules_to_save - module_set
     if missing:
         raise ValueError(

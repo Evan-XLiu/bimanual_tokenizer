@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from contextlib import suppress
 from dataclasses import dataclass
 
 import torch
@@ -176,14 +177,18 @@ def resolve_or_add_special_tokens(
         validate_contiguous_token_ids(token_ids)
         return token_ids
 
-    old_size = int(vlm.get_input_embeddings().weight.shape[0])
+    embedding = vlm.get_input_embeddings()
+    old_size = _embedding_num_rows(embedding)
     tokenizer.add_special_tokens({"additional_special_tokens": tokens})
     vocab = tokenizer.get_vocab()
     token_ids = [int(vocab[token]) for token in tokens]
     validate_contiguous_token_ids(token_ids)
 
     required_size = max(old_size, max(token_ids) + 1)
-    vlm.resize_token_embeddings(required_size, mean_resizing=False)
+    if _is_split_embedding(embedding):
+        _resize_split_embedding(vlm, required_size)
+    else:
+        vlm.resize_token_embeddings(required_size, mean_resizing=False)
     initialize_embedding_rows(
         embedding=vlm.get_input_embeddings(),
         row_ids=token_ids,
@@ -214,34 +219,125 @@ def initialize_embedding_rows(
     init_mode: str,
 ) -> None:
     """Initialize newly-added embedding rows using the requested strategy."""
-    rows = torch.as_tensor(row_ids, dtype=torch.long, device=embedding.weight.device)
+    embedding_weight = _embedding_weight(embedding)
+    rows = torch.as_tensor(row_ids, dtype=torch.long, device=embedding_weight.device)
     if rows.numel() == 0:
         return
     if init_mode == "normal":
         values = torch.empty(
-            (len(row_ids), int(embedding.weight.shape[1])),
-            dtype=embedding.weight.dtype,
-            device=embedding.weight.device,
+            (len(row_ids), int(embedding_weight.shape[1])),
+            dtype=embedding_weight.dtype,
+            device=embedding_weight.device,
         )
         nn.init.normal_(values, mean=0.0, std=0.02)
     elif init_mode == "avg":
         values = (
-            embedding.weight.data[:old_size]
+            embedding_weight.data[:old_size]
             .mean(dim=0)
             .expand(len(row_ids), -1)
             .clone()
         )
     elif init_mode == "zero":
         values = torch.zeros(
-            (len(row_ids), int(embedding.weight.shape[1])),
-            dtype=embedding.weight.dtype,
-            device=embedding.weight.device,
+            (len(row_ids), int(embedding_weight.shape[1])),
+            dtype=embedding_weight.dtype,
+            device=embedding_weight.device,
         )
     else:
         raise ValueError(
             f"Unsupported action_embed_init={init_mode!r}. Expected one of {{'normal', 'avg', 'zero'}}."
         )
-    embedding.weight.data.index_copy_(0, rows, values)
+    if _is_split_embedding(embedding):
+        base = embedding.embedding
+        base_rows = int(base.shape[0])
+        base_rows_to_copy = rows < base_rows
+        if bool(base_rows_to_copy.any()):
+            base.data.index_copy_(
+                0, rows[base_rows_to_copy], values[base_rows_to_copy]
+            )
+        extra_rows = ~base_rows_to_copy
+        if bool(extra_rows.any()):
+            embedding.new_embedding.data.index_copy_(
+                0,
+                rows[extra_rows] - base_rows,
+                values[extra_rows],
+            )
+    else:
+        embedding.weight.data.index_copy_(0, rows, values)
+
+
+def _is_split_embedding(embedding: object) -> bool:
+    """Return whether an embedding stores base and additional vocab separately."""
+    return hasattr(embedding, "embedding") and hasattr(embedding, "new_embedding")
+
+
+def _embedding_weight(embedding) -> Tensor:
+    weight = getattr(embedding, "weight", None)
+    if isinstance(weight, Tensor):
+        return weight
+    if _is_split_embedding(embedding):
+        return torch.cat((embedding.embedding, embedding.new_embedding), dim=0)
+    raise AttributeError(
+        f"Input embedding {type(embedding).__name__} exposes neither weight nor "
+        "Molmo-style embedding/new_embedding parameters."
+    )
+
+
+def _embedding_num_rows(embedding) -> int:
+    return int(_embedding_weight(embedding).shape[0])
+
+
+def _resize_split_embedding(vlm, required_size: int) -> None:
+    """Resize Molmo2's split vocabulary and untied output projection."""
+    old_embedding = vlm.get_input_embeddings()
+    base = old_embedding.embedding
+    extra = old_embedding.new_embedding
+    old_total = int(base.shape[0] + extra.shape[0])
+    if int(required_size) > old_total:
+        base_size = int(base.shape[0])
+        new_extra_size = int(required_size) - base_size
+        try:
+            new_embedding = type(old_embedding)(
+                base_size,
+                new_extra_size,
+                int(base.shape[1]),
+                device=base.device,
+            )
+        except TypeError:
+            new_embedding = type(old_embedding)(
+                base_size,
+                new_extra_size,
+                int(base.shape[1]),
+            )
+        new_embedding = new_embedding.to(device=base.device, dtype=base.dtype)
+        with torch.no_grad():
+            new_embedding.embedding.copy_(base)
+            new_embedding.new_embedding[: extra.shape[0]].copy_(extra)
+        vlm.set_input_embeddings(new_embedding)
+
+    lm_head = getattr(vlm, "lm_head", None)
+    if isinstance(lm_head, nn.Linear) and int(lm_head.out_features) < int(required_size):
+        new_head = nn.Linear(
+            int(lm_head.in_features),
+            int(required_size),
+            bias=lm_head.bias is not None,
+            device=lm_head.weight.device,
+            dtype=lm_head.weight.dtype,
+        )
+        with torch.no_grad():
+            new_head.weight[: lm_head.out_features].copy_(lm_head.weight)
+            if lm_head.bias is not None:
+                new_head.bias[: lm_head.out_features].copy_(lm_head.bias)
+        vlm.lm_head = new_head
+    if hasattr(vlm, "vocab_size"):
+        vlm.vocab_size = int(required_size)
+    config = getattr(vlm, "config", None)
+    if config is not None and hasattr(config, "vocab_size"):
+        with suppress(AttributeError):
+            config.vocab_size = int(required_size)
+    text_config = getattr(config, "text_config", None)
+    if text_config is not None and hasattr(text_config, "additional_vocab_size"):
+        text_config.additional_vocab_size = int(required_size) - int(base.shape[0])
 
 
 def install_vocab_row_gradient_masks(
@@ -251,6 +347,8 @@ def install_vocab_row_gradient_masks(
     is_vocab_matrix_param_name: Callable[[str], bool],
     build_trainable_rows: Callable[[int], torch.LongTensor],
     hook_handles: list[RemovableHandle],
+    build_trainable_rows_for_param: Callable[[str, int], torch.LongTensor]
+    | None = None,
 ) -> None:
     """Restrict LoRA-updated vocab-matrix grads to the selected trainable rows."""
     for handle in hook_handles:
@@ -266,7 +364,10 @@ def install_vocab_row_gradient_masks(
         if not is_vocab_matrix_param_name(name):
             continue
 
-        allowed_rows = build_trainable_rows(int(param.shape[0]))
+        if build_trainable_rows_for_param is None:
+            allowed_rows = build_trainable_rows(int(param.shape[0]))
+        else:
+            allowed_rows = build_trainable_rows_for_param(name, int(param.shape[0]))
         if allowed_rows.numel() == 0:
             continue
 

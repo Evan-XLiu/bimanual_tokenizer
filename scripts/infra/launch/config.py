@@ -107,6 +107,7 @@ RESOURCE_DEFAULTS: dict[str, tuple[int, str]] = {
     "policy_qwen": (4, "64G"),
     "policy_pali": (4, "64G"),
     "policy_smol": (4, "64G"),
+    "policy_molmo": (4, "64G"),
     "eval": (1, "64G"),
     "eval_monitor": (1, "64G"),
 }
@@ -150,6 +151,9 @@ POLICY_OVERRIDES: dict[str, list[str]] = {
         "policy.gradient_checkpointing=true",
     ],
     "smol": [],
+    "molmo": [
+        "policy.gradient_checkpointing=true",
+    ],
 }
 
 POLICY_TRAINER_OVERRIDES: dict[str, list[str]] = {
@@ -182,6 +186,16 @@ POLICY_TRAINER_OVERRIDES: dict[str, list[str]] = {
         "trainer.log_every=100",
         "trainer.val_every=500",
         "trainer.reconst_every=500",
+        "trainer.checkpoint_every=500",
+        "trainer.sim_eval_every=null",
+        "trainer.wandb_upload_eval_videos=false",
+    ],
+    "molmo": [
+        "trainer.batch_size=4",
+        "trainer.num_workers=2",
+        "trainer.ema_decay=0.99",
+        "trainer.log_every=100",
+        "trainer.val_every=500",
         "trainer.checkpoint_every=500",
         "trainer.sim_eval_every=null",
         "trainer.wandb_upload_eval_videos=false",
