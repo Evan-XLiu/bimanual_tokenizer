@@ -396,6 +396,29 @@ def test_build_policy_command_sets_canonical_ki_policy_name() -> None:
     assert "policy.gradient_checkpointing=true" not in cmd
 
 
+@pytest.mark.parametrize("codec", ["fast", "oat", "btt"])
+def test_build_policy_command_supports_molmo_ki_specs(codec: str) -> None:
+    mod = _load_fasrc_launch_module()
+    cmd = mod.build_policy_command(
+        method="ki",
+        codec=codec,
+        backbone="molmo",
+        dataset="libero_10",
+        gpus=4,
+        num_nodes=1,
+        main_process_ip=None,
+        main_process_port=29500,
+        run_name="run",
+        output_dir="out",
+        tokenizer_ckpt="tokenizer_path",
+        extra_overrides=[],
+    )
+
+    assert f"policy=ki_{codec}_molmo" in cmd
+    assert "train_recipe/policy@_global_=ki" in cmd
+    assert "policy.action_tokenizer.pretrained_path=tokenizer_path" in cmd
+
+
 def test_build_policy_command_sets_canonical_fm_policy_name() -> None:
     mod = _load_fasrc_launch_module()
     cmd = mod.build_policy_command(

@@ -20,7 +20,11 @@ from praxis.policies.catalog import (
 )
 
 CODECS = POLICY_CODECS
-BACKBONES = POLICY_BACKBONES
+# The catalog's default matrix intentionally excludes Molmo2-ER because it is
+# currently available only for the explicit KI OAT/FAST/BTT policy specs.  The
+# launcher still needs to expose that backbone so those extra specs can be
+# submitted through the normal Slurm path.
+BACKBONES = (*POLICY_BACKBONES, "molmo")
 METHODS = POLICY_METHODS
 DEFAULT_METHOD = DEFAULT_POLICY_METHOD
 DEFAULT_CODEC = DEFAULT_POLICY_CODEC
