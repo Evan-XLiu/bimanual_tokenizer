@@ -1,0 +1,13 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 541a755..2559d17 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -17,7 +17,7 @@ dependencies = [
+     "numpy<2.0.0",
+     "torch==2.3.0",
+     "pytransform3d>=3.5.0",
+-    "pin>=2.7.0",
++    # Pinocchio 3.1.0 (including CasADi bindings) is supplied by the locked conda environment.
+     "nlopt>=2.6.1,<2.8.0",
+     "trimesh>=4.4.0",
+     "anytree>=2.12.0",

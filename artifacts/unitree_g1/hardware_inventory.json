@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "inventory_only_not_a_runtime_config",
+  "motion_enabled": false,
+  "confirmed": {
+    "robot_family": "G1 EDU",
+    "end_effector_description": "Unitree official gripper; exact model unconfirmed",
+    "arm_dof_per_side": 7,
+    "gripper_action_dof_per_side": 1,
+    "learning_action_dim": 16,
+    "readonly_subscription_seconds": 30
+  },
+  "pending": {
+    "robot_total_dof": null,
+    "firmware": null,
+    "gripper_model": null,
+    "gripper_interface": null,
+    "gripper_command_units": null,
+    "gripper_feedback_units": null,
+    "joint_names_and_indices_verified": null,
+    "hardware_limits": null,
+    "initial_pose": null,
+    "waist_leg_control_owner": null,
+    "support_acceptance": null,
+    "stop_and_release_sequence": null,
+    "camera_configuration": null,
+    "task_definition": null
+  },
+  "notes": [
+    "Full-body motor slots 31/33 were observed; this is not proof of gripper model or units.",
+    "Existing publishers were discovered; do not start a competing publisher.",
+    "dex1_internal and motion are incompatible in this baseline."
+  ]
+}

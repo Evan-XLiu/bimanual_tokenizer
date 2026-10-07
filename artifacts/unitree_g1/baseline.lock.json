@@ -1,0 +1,649 @@
+{
+  "schema_version": 1,
+  "baseline_date": "2026-10-07",
+  "scope": "offline software baseline; no robot motion or Quest hardware acceptance",
+  "platform": "linux-64",
+  "python_minor": "3.10",
+  "environment": ".venv-g1-xr",
+  "source_root": ".local/unitree_g1",
+  "repositories": [
+    {
+      "name": "xr_teleoperate",
+      "path": ".local/unitree_g1/xr_teleoperate",
+      "url": "https://github.com/unitreerobotics/xr_teleoperate.git",
+      "commit": "817fb00c63cde15e5f24a0f8fa08e1e33ed89d3b",
+      "commit_date": "2026-09-07",
+      "role": "runtime"
+    },
+    {
+      "name": "televuer",
+      "path": ".local/unitree_g1/xr_teleoperate/teleop/televuer",
+      "url": "https://github.com/unitreerobotics/televuer",
+      "commit": "766de45e74373ae0ea66321d942ce538385655a5",
+      "commit_date": "2026-05-27",
+      "role": "runtime"
+    },
+    {
+      "name": "teleimager",
+      "path": ".local/unitree_g1/xr_teleoperate/teleop/teleimager",
+      "url": "https://github.com/unitreerobotics/teleimager.git",
+      "commit": "57cf2a40572227273fa001cd17833b755331ec97",
+      "commit_date": "2026-06-26",
+      "role": "runtime"
+    },
+    {
+      "name": "dex-retargeting",
+      "path": ".local/unitree_g1/xr_teleoperate/teleop/robot_control/dex-retargeting",
+      "url": "https://github.com/silencht/dex-retargeting",
+      "commit": "d7753d38c9ff11f80bafea6cd168351fd3db9b0e",
+      "commit_date": "2025-07-07",
+      "patch": "artifacts/unitree_g1/dex-retargeting-conda-pinocchio.patch",
+      "role": "runtime"
+    },
+    {
+      "name": "unitree_sdk2_python",
+      "path": ".local/unitree_g1/unitree_sdk2_python",
+      "url": "https://github.com/unitreerobotics/unitree_sdk2_python.git",
+      "commit": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "commit_date": "2026-09-21",
+      "role": "runtime"
+    },
+    {
+      "name": "unitree_lerobot",
+      "path": ".local/unitree_g1/unitree_lerobot",
+      "url": "https://github.com/unitreerobotics/unitree_lerobot.git",
+      "commit": "41c2805742de879ddab2d8d6beaeaf215f876395",
+      "commit_date": "2026-05-25",
+      "role": "source_reference_only"
+    },
+    {
+      "name": "lerobot",
+      "path": ".local/unitree_g1/unitree_lerobot/unitree_lerobot/lerobot",
+      "url": "https://github.com/huggingface/lerobot",
+      "commit": "a5b29d430105f5235eb05bbf2db5a0d747a869d6",
+      "commit_date": "2025-11-10",
+      "role": "source_reference_only"
+    }
+  ],
+  "python_packages": {
+    "aiohappyeyeballs": "2.7.1",
+    "aiohttp": "3.10.5",
+    "aiohttp-cors": "0.8.1",
+    "aioice": "0.10.2",
+    "aiortc": "1.14.0",
+    "aiosignal": "1.4.0",
+    "anytree": "2.13.0",
+    "argcomplete": "3.7.2",
+    "asttokens": "3.0.2",
+    "async-timeout": "4.0.3",
+    "attrs": "26.1.0",
+    "av": "16.1.0",
+    "casadi": "3.6.7",
+    "cffi": "2.1.1",
+    "click": "8.5.0",
+    "contourpy": "1.3.2",
+    "cryptography": "50.0.2",
+    "cycler": "0.12.1",
+    "cyclonedds": "0.10.2",
+    "decorator": "5.3.1",
+    "dex_retargeting": "0.4.7",
+    "dnspython": "2.8.0",
+    "exceptiongroup": "1.3.1",
+    "executing": "2.2.1",
+    "expandvars": "1.1.2",
+    "filelock": "3.32.3",
+    "fonttools": "4.65.0",
+    "frozenlist": "1.8.0",
+    "fsspec": "2026.7.0",
+    "google-crc32c": "1.9.0",
+    "idna": "3.20",
+    "ifaddr": "0.2.0",
+    "ipython": "8.39.0",
+    "jedi": "0.20.0",
+    "Jinja2": "3.1.6",
+    "killport": "1.2.0",
+    "kiwisolver": "1.5.1",
+    "logging-mp": "0.2.5",
+    "lxml": "6.1.3",
+    "markdown-it-py": "4.2.0",
+    "MarkupSafe": "3.0.3",
+    "matplotlib": "3.7.5",
+    "matplotlib-inline": "0.2.2",
+    "mdurl": "0.1.2",
+    "meshcat": "0.3.2",
+    "mpmath": "1.3.0",
+    "msgpack": "1.2.3",
+    "multidict": "6.9.1",
+    "networkx": "3.4.2",
+    "nlopt": "2.7.1",
+    "numpy": "1.26.4",
+    "opencv-python": "4.11.0.86",
+    "packaging": "26.3",
+    "params_proto": "2.13.2",
+    "parso": "0.8.7",
+    "pexpect": "4.9.0",
+    "pillow": "12.3.0",
+    "pip": "26.2.1",
+    "prompt_toolkit": "3.0.53",
+    "propcache": "0.5.4",
+    "psutil": "7.2.2",
+    "ptyprocess": "0.7.0",
+    "pure_eval": "0.2.4",
+    "pyarrow": "25.0.1",
+    "pycparser": "3.0",
+    "pyee": "13.0.1",
+    "Pygments": "2.21.0",
+    "pylibsrtp": "1.0.0",
+    "pyngrok": "8.1.2",
+    "pyOpenSSL": "26.4.0",
+    "pyparsing": "3.3.3",
+    "python-dateutil": "2.9.0.post0",
+    "pytransform3d": "3.17.0",
+    "PyYAML": "6.0.3",
+    "pyzmq": "27.2.0",
+    "rerun-sdk": "0.20.1",
+    "rich": "15.0.0",
+    "rich-click": "1.9.9",
+    "scipy": "1.15.2",
+    "setuptools": "84.0.0",
+    "six": "1.17.0",
+    "sshkeyboard": "2.3.1",
+    "stack-data": "0.6.3",
+    "sympy": "1.14.0",
+    "teleimager": "1.6.0",
+    "televuer": "4.0.0",
+    "termcolor": "3.3.0",
+    "torch": "2.3.0+cpu",
+    "tornado": "6.5.10",
+    "traitlets": "5.16.1",
+    "trimesh": "5.1.1",
+    "typing_extensions": "4.16.0",
+    "u-msgpack-python": "2.8.0",
+    "unitree_sdk2py": "1.0.1",
+    "vuer": "0.0.60",
+    "waterbear": "2.6.8",
+    "wcwidth": "0.9.2",
+    "websockets": "16.1.1",
+    "wheel": "0.48.0",
+    "yarl": "1.25.1"
+  },
+  "conda_packages": [
+    {
+      "name": "_openmp_mutex",
+      "version": "4.5",
+      "build_string": "20_gnu"
+    },
+    {
+      "name": "_x86_64-microarch-level",
+      "version": "3",
+      "build_string": "3_skylake"
+    },
+    {
+      "name": "ampl-asl",
+      "version": "1.0.0",
+      "build_string": "h5888daf_2"
+    },
+    {
+      "name": "assimp",
+      "version": "5.4.2",
+      "build_string": "he2e0bbc_1"
+    },
+    {
+      "name": "bzip2",
+      "version": "1.0.8",
+      "build_string": "hda65f42_10"
+    },
+    {
+      "name": "ca-certificates",
+      "version": "2026.7.22",
+      "build_string": "hbd8a1cb_0"
+    },
+    {
+      "name": "casadi",
+      "version": "3.6.7",
+      "build_string": "py310h45b02c1_5"
+    },
+    {
+      "name": "console_bridge",
+      "version": "1.0.2",
+      "build_string": "h924138e_1"
+    },
+    {
+      "name": "eigen",
+      "version": "5.0.1",
+      "build_string": "h19c2612_3"
+    },
+    {
+      "name": "eigenpy",
+      "version": "3.8.0",
+      "build_string": "py310hff9a374_0"
+    },
+    {
+      "name": "hpp-fcl",
+      "version": "2.4.5",
+      "build_string": "py310h89901e3_2"
+    },
+    {
+      "name": "icu",
+      "version": "75.1",
+      "build_string": "he02047a_0"
+    },
+    {
+      "name": "ipopt",
+      "version": "3.14.17",
+      "build_string": "h7fd866c_2"
+    },
+    {
+      "name": "ld_impl_linux-64",
+      "version": "2.46.1",
+      "build_string": "default_hbd61a6d_102"
+    },
+    {
+      "name": "libblas",
+      "version": "3.11.0",
+      "build_string": "11_h4a7cf45_openblas"
+    },
+    {
+      "name": "libblasfeo",
+      "version": "0.1.4.3",
+      "build_string": "h63b39a6_300"
+    },
+    {
+      "name": "libboost",
+      "version": "1.86.0",
+      "build_string": "hed09d94_4"
+    },
+    {
+      "name": "libboost-devel",
+      "version": "1.86.0",
+      "build_string": "hfcd1e18_4"
+    },
+    {
+      "name": "libboost-headers",
+      "version": "1.86.0",
+      "build_string": "ha770c72_4"
+    },
+    {
+      "name": "libboost-python",
+      "version": "1.86.0",
+      "build_string": "py310hc563356_4"
+    },
+    {
+      "name": "libboost-python-devel",
+      "version": "1.86.0",
+      "build_string": "py310hb70c0da_4"
+    },
+    {
+      "name": "libcblas",
+      "version": "3.11.0",
+      "build_string": "11_h0358290_openblas"
+    },
+    {
+      "name": "libexpat",
+      "version": "2.8.5",
+      "build_string": "hd2095e1_0"
+    },
+    {
+      "name": "libfatrop",
+      "version": "0.0.4",
+      "build_string": "h5888daf_1"
+    },
+    {
+      "name": "libffi",
+      "version": "3.7.0",
+      "build_string": "h81df57d_1"
+    },
+    {
+      "name": "libgcc",
+      "version": "16.2.0",
+      "build_string": "ha9f2e26_7"
+    },
+    {
+      "name": "libgcc-ng",
+      "version": "16.2.0",
+      "build_string": "h69a702a_7"
+    },
+    {
+      "name": "libgfortran",
+      "version": "16.2.0",
+      "build_string": "h69a702a_7"
+    },
+    {
+      "name": "libgfortran-ng",
+      "version": "16.2.0",
+      "build_string": "h69a702a_7"
+    },
+    {
+      "name": "libgfortran5",
+      "version": "16.2.0",
+      "build_string": "h6b99dfc_7"
+    },
+    {
+      "name": "libgomp",
+      "version": "16.2.0",
+      "build_string": "he0feb66_7"
+    },
+    {
+      "name": "libhwloc",
+      "version": "2.11.2",
+      "build_string": "default_h3d81e11_1002"
+    },
+    {
+      "name": "libiconv",
+      "version": "1.18",
+      "build_string": "h0cb94f2_3"
+    },
+    {
+      "name": "liblapack",
+      "version": "3.11.0",
+      "build_string": "11_h47877c9_openblas"
+    },
+    {
+      "name": "liblzma",
+      "version": "5.8.3",
+      "build_string": "hb03c661_1"
+    },
+    {
+      "name": "liblzma-devel",
+      "version": "5.8.3",
+      "build_string": "hb03c661_1"
+    },
+    {
+      "name": "libnsl",
+      "version": "2.0.1",
+      "build_string": "hb9d3cd8_1"
+    },
+    {
+      "name": "libopenblas",
+      "version": "0.3.34",
+      "build_string": "pthreads_hf13c14d_2"
+    },
+    {
+      "name": "libosqp",
+      "version": "0.6.3",
+      "build_string": "h5888daf_1"
+    },
+    {
+      "name": "libqdldl",
+      "version": "0.1.7",
+      "build_string": "hcb278e6_0"
+    },
+    {
+      "name": "libscotch",
+      "version": "7.0.4",
+      "build_string": "h2fe6a88_5"
+    },
+    {
+      "name": "libspral",
+      "version": "2025.03.06",
+      "build_string": "h39c1cf3_0"
+    },
+    {
+      "name": "libsqlite",
+      "version": "3.53.4",
+      "build_string": "h0737f62_102"
+    },
+    {
+      "name": "libstdcxx",
+      "version": "16.2.0",
+      "build_string": "h934c35e_7"
+    },
+    {
+      "name": "libstdcxx-ng",
+      "version": "16.2.0",
+      "build_string": "hdf11a46_7"
+    },
+    {
+      "name": "libuuid",
+      "version": "2.42.4",
+      "build_string": "hcfc3c73_0"
+    },
+    {
+      "name": "libxcrypt",
+      "version": "4.4.38",
+      "build_string": "h280c20c_0"
+    },
+    {
+      "name": "libxml2",
+      "version": "2.13.9",
+      "build_string": "h04c0eec_0"
+    },
+    {
+      "name": "libzlib",
+      "version": "1.3.2",
+      "build_string": "h25fd6f3_3"
+    },
+    {
+      "name": "metis",
+      "version": "5.1.0",
+      "build_string": "h86e3903_1008"
+    },
+    {
+      "name": "mumps-include",
+      "version": "5.7.3",
+      "build_string": "h82cca05_10"
+    },
+    {
+      "name": "mumps-seq",
+      "version": "5.7.3",
+      "build_string": "h27a6a8b_0"
+    },
+    {
+      "name": "ncurses",
+      "version": "6.6",
+      "build_string": "hdb14827_1"
+    },
+    {
+      "name": "numpy",
+      "version": "1.26.4",
+      "build_string": "py310hb13e2d6_0"
+    },
+    {
+      "name": "octomap",
+      "version": "1.9.8",
+      "build_string": "h924138e_0"
+    },
+    {
+      "name": "openssl",
+      "version": "3.6.5",
+      "build_string": "h781a0a9_0"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "build_string": "pyhc364b38_0"
+    },
+    {
+      "name": "pinocchio",
+      "version": "3.1.0",
+      "build_string": "py310h4a8bb0c_2"
+    },
+    {
+      "name": "pip",
+      "version": "26.2.1",
+      "build_string": "pyh8b19718_0"
+    },
+    {
+      "name": "proxsuite",
+      "version": "0.7.3",
+      "build_string": "py310h03d9f68_0"
+    },
+    {
+      "name": "python",
+      "version": "3.10.22",
+      "build_string": "h267e890_0_cpython"
+    },
+    {
+      "name": "python_abi",
+      "version": "3.10",
+      "build_string": "9_cp310"
+    },
+    {
+      "name": "qhull",
+      "version": "2020.2",
+      "build_string": "h434a139_5"
+    },
+    {
+      "name": "qhull-static",
+      "version": "2020.2",
+      "build_string": "h434a139_5"
+    },
+    {
+      "name": "readline",
+      "version": "8.3",
+      "build_string": "hd6e31c0_1"
+    },
+    {
+      "name": "scipy",
+      "version": "1.15.2",
+      "build_string": "py310h1d65ade_0"
+    },
+    {
+      "name": "setuptools",
+      "version": "84.0.0",
+      "build_string": "pyh332efcf_0"
+    },
+    {
+      "name": "simde",
+      "version": "0.8.2",
+      "build_string": "h84d6215_0"
+    },
+    {
+      "name": "tinyxml2",
+      "version": "10.0.0",
+      "build_string": "h3f2d84a_2"
+    },
+    {
+      "name": "tk",
+      "version": "8.6.13",
+      "build_string": "noxft_h1df4ec4_4"
+    },
+    {
+      "name": "tzdata",
+      "version": "2026c",
+      "build_string": "h151e31d_0"
+    },
+    {
+      "name": "urdfdom",
+      "version": "4.0.1",
+      "build_string": "h2e5d1f2_2"
+    },
+    {
+      "name": "urdfdom_headers",
+      "version": "1.1.2",
+      "build_string": "h84d6215_0"
+    },
+    {
+      "name": "wheel",
+      "version": "0.48.0",
+      "build_string": "pyhd8ed1ab_0"
+    },
+    {
+      "name": "xz",
+      "version": "5.8.3",
+      "build_string": "ha02ee65_1"
+    },
+    {
+      "name": "xz-gpl-tools",
+      "version": "5.8.3",
+      "build_string": "ha02ee65_1"
+    },
+    {
+      "name": "xz-tools",
+      "version": "5.8.3",
+      "build_string": "hb03c661_1"
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2",
+      "build_string": "h25fd6f3_3"
+    },
+    {
+      "name": "zstd",
+      "version": "1.5.7",
+      "build_string": "hb78ec9c_7"
+    }
+  ],
+  "g1_asset_sha256": {
+    ".local/unitree_g1/xr_teleoperate/assets/g1/.gitignore": "acdd5ec3957b037ea3f5641c0143f01a26c7635abbda843c80bdd81c33d72af5",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/README.md": "357325d9cdfbbf0a9683c114296e42232c00b8ae1edc34dd5707f3cf03a33b8c",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/g1_body23.urdf": "2d61264aaae95eac2545497a34ef316f270b0cd3d856bf9a4941ebff2592aca2",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/g1_body29_hand14.urdf": "8bbf006633fc50b616f665c7a970780cc296577a0adfd7d28b049e751c238735",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/g1_body29_hand14.xml": "c7bec8183aebdc23be735bdc6705a0adc4b0fba230ecbd46a42f0fe4a7269951",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/head_link.STL": "005fb67fbd3eff94aa8bf4a6e83238174e9f91b6721f7111594322f223724411",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_ankle_pitch_link.STL": "d49e3abc6f5b12e532062cd575b87b5ef40cd2a3fc18f54a1ca5bba4f773d51d",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_ankle_roll_link.STL": "c4092af943141d4d9f74232f3cfa345afc6565f46a077793b8ae0e68b39dc33f",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_elbow_link.STL": "fa752198accd104d5c4c3a01382e45165b944fbbc5acce085059223324e5bed3",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_index_0_link.STL": "6b35f2f77211d5a366f0b9a4e47c4ee35e536731266f1a34e9efa12db579b892",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_index_1_link.STL": "9e315ebc8a7a0cb98e033985b586b20d81cf8aa761181ae61ce56fcb14077a06",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_middle_0_link.STL": "6b35f2f77211d5a366f0b9a4e47c4ee35e536731266f1a34e9efa12db579b892",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_middle_1_link.STL": "9e315ebc8a7a0cb98e033985b586b20d81cf8aa761181ae61ce56fcb14077a06",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_palm_link.STL": "23a486b75bd78a9bf03cec25d84d87f97f3dae038cf21a743b6d469b337e4004",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_thumb_0_link.STL": "a90c721661c0622685488a3c74d1e122c7da89242d3a1daef75edb83422d05e0",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_thumb_1_link.STL": "445c54a45bc13ce36001556f66bc0f49c83cb40321205ae4d676bb2874325684",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hand_thumb_2_link.STL": "3d8dbe5085acfc213d21aa8b0782e89cd79084e9678f3a85fc7b04a86b029db5",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hip_pitch_link.STL": "4725168105ee768ee31638ef22b53f6be2d7641bfd7cfefe803488d884776fa4",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hip_roll_link.STL": "91f25922ee8a7c3152790051bebad17b4d9cd243569c38fe340285ff93a97acf",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_hip_yaw_link.STL": "a16d88aa6ddac8083aa7ad55ed317bea44b1fa003d314fba88965b7ed0f3b55b",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_knee_link.STL": "8d92b9e3d3a636761150bb8025e32514c4602b91c7028d523ee42b3e632de477",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_rubber_hand.STL": "cff2221a690fa69303f61fce68f2d155c1517b52efb6ca9262dd56e0bc6e70fe",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_shoulder_pitch_link.STL": "f0d1cfd02fcf0d42f95e678eeca33da3afbcc366ffba5c052847773ec4f31d52",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_shoulder_roll_link.STL": "fb9df21687773522598dc384f1a2945c7519f11cbc8bd372a49170316d6eee88",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_shoulder_yaw_link.STL": "1aa97e9748e924336567992181f78c7cd0652fd52a4afcca3df6b2ef6f9e712e",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_wrist_pitch_link.STL": "b251d8e05047f695d0f536cd78c11973cfa4e78d08cfe82759336cc3471de3a9",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_wrist_roll_link.STL": "edc387c9a0ba8c2237e9b296d32531426fabeb6f53e58df45c76106bca74148c",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_wrist_roll_rubber_hand.STL": "e81030abd023bd9e4a308ef376d814a2c12d684d8a7670c335bbd5cd7809c909",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/left_wrist_yaw_link.STL": "83f8fb3a726bf9613d65dd14f0f447cb918c3c95b3938042a0c9c09749267d3b",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/logo_link.STL": "8571a0a19bc4916fa55f91449f51d5fdefd751000054865a842449429d5f155b",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/pelvis.STL": "5ba6bbc888e630550140d3c26763f10206da8c8bd30ed886b8ede41c61f57a31",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/pelvis_contour_link.STL": "5cc5c2c7a312329e3feeb2b03d3fc09fc29705bd01864f6767e51be959662420",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_ankle_pitch_link.STL": "15be426539ec1be70246d4d82a168806db64a41301af8b35c197a33348c787a9",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_ankle_roll_link.STL": "4b66222ea56653e627711b56d0a8949b4920da5df091da0ceb343f54e884e3a5",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_elbow_link.STL": "1be925d7aa268bb8fddf5362b9173066890c7d32092c05638608126e59d1e2ab",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_index_0_link.STL": "12ab4300c95e437e834f9aef772b3b431c671bf34338930b52ad11aef73bbd0d",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_index_1_link.STL": "c9c34efce4563cacdcfd29fc838a982976d40f5442c71219811dcbbf3923a33d",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_middle_0_link.STL": "12ab4300c95e437e834f9aef772b3b431c671bf34338930b52ad11aef73bbd0d",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_middle_1_link.STL": "c9c34efce4563cacdcfd29fc838a982976d40f5442c71219811dcbbf3923a33d",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_palm_link.STL": "86c0b231cc44477d64a6493e5a427ba16617a00738112dd187c652675b086fb9",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_thumb_0_link.STL": "544298d0ea1088f5b276a10cc6a6a9e533efdd91594955fdc956c46211d07f83",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_thumb_1_link.STL": "0a9a820da8dd10f298778b714f1364216e8a5976f4fd3a05689ea26327d44bf6",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hand_thumb_2_link.STL": "3f1bfb37668e8f61801c8d25f171fa1949e08666be86c67acad7e0079937cc45",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hip_pitch_link.STL": "e4f3c99d7f4a7d34eadbef9461fc66e3486cb5442db1ec50c86317d459f1a9c6",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hip_roll_link.STL": "4c254ef66a356f492947f360dd931965477b631e3fcc841f91ccc46d945d54f6",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_hip_yaw_link.STL": "e479c2936ca2057e9eb2f7dff6c189b7419d7b8484dea0b298cbb36a2a6aa668",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_knee_link.STL": "63c4008449c9bbe701a6e2b557b7a252e90cf3a5abcf54cee46862b9a69f8ec8",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_rubber_hand.STL": "99533b778bca6246144fa511bb9d4e555e075c641f2a0251e04372869cd99d67",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_shoulder_pitch_link.STL": "24cdb387e0128dfe602770a81c56cdce3a0181d34d039a11d1aaf8819b7b8c02",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_shoulder_roll_link.STL": "962b97c48f9ce9e8399f45dd9522e0865d19aa9fd299406b2d475a8fc4a53e81",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_shoulder_yaw_link.STL": "a0b76489271da0c72461a344c9ffb0f0c6e64f019ea5014c1624886c442a2fe5",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_wrist_pitch_link.STL": "d22f8f3b3127f15a63e5be1ee273cd5075786c3142f1c3d9f76cbf43d2a26477",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_wrist_roll_link.STL": "a7ee9212ff5b94d6cb7f52bb1bbf3f352194d5b598acff74f4c77d340c5b344f",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_wrist_roll_rubber_hand.STL": "0729aff1ac4356f9314de13a46906267642e58bc47f0d8a7f17f6590a6242ccf",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/right_wrist_yaw_link.STL": "bc9dece2d12509707e0057ba2e48df8f3d56db0c79410212963a25e8a50f61a6",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/torso_constraint_L_link.STL": "82be7f93e85b3d303a1d1e1847e2c916939bd61c424ed1ebd28691ec33909dd1",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/torso_constraint_L_rod_link.STL": "c10de1effa7ea797ac268006aa2a739036c7e1f326b2012d711ee2c20c5a6e96",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/torso_constraint_R_link.STL": "54ded433a3a0c76027365856fdbd55215643de88846f7d436598a4071e682725",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/torso_constraint_R_rod_link.STL": "cb83fd38a9f06c99e3f301c70f12d94ae770a8f0cf9501f83580a27f908990b4",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/torso_link.STL": "e96d023f0368a4e3450b86ca5d4f10227d8141156a373e7da8cb3c93266523e0",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/torso_link_23dof_rev_1_0.STL": "3cd0d56fde14b73c1623304684805029971c4f84b596f9914e823ca70a107fd2",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/torso_link_rev_1_0.STL": "11ddb46f2098efbbd8816b1d65893632d8e78be936376c7cdcd6771899ccc723",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/waist_constraint_L.STL": "8ebafdcb4de6871113f0ca2c356618d6e46b1d50f6c0bf9e37f47b9d8e100d99",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/waist_constraint_R.STL": "791902a291ffbd35ab97383b7b44ea5d975de7c80eef838797c970790b382ca9",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/waist_roll_link.STL": "34f0aa73f41131230be4d25876c944fdf6c24d62553f199ff8b980c15e8913df",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/waist_roll_link_rev_1_0.STL": "b67c347a05abc3e8ddae600d98a082bee273bb39f8e651647708b0a7140a8a97",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/waist_support_link.STL": "1fae9e1bb609848a1667d32eed8d6083ae443538a306843056a2a660f1b2926a",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/waist_yaw_link.STL": "2883f20e03f09b669b5b4ce10677ee6b5191c0934b584d7cbaef2d0662856ffb",
+    ".local/unitree_g1/xr_teleoperate/assets/g1/meshes/waist_yaw_link_rev_1_0.STL": "ec6db442b11f25eed898b5add07940c85d804f300de24dcbd264ccd8be7d554c"
+  },
+  "lock_sha256": {
+    "artifacts/unitree_g1/pip-requirements.lock": "d17c01073cd05609b4ce3a34c92fcf4c7ef76d4cacc27c87451c5387787435db",
+    "artifacts/unitree_g1/conda-linux-64.lock": "d664085a09af0dc0f27dbaa8394e053c5be102ca407b313f52b4e92b027ed478",
+    "artifacts/unitree_g1/dex-retargeting-conda-pinocchio.patch": "b6a0fcbf912efe493915fcaaf90f019ad839549b34c7b25541015a522f78eedf"
+  },
+  "hardware_acceptance": false,
+  "conversion_runtime_verified": false,
+  "camera_driver_pending": [
+    "pupil-labs-uvc for UVC cameras if selected",
+    "pyrealsense2 for RealSense cameras if selected"
+  ]
+}

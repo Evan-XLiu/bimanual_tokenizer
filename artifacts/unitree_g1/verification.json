@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "scope": "offline software only",
+  "hardware_motion_tested": false,
+  "checks": [
+    "lock files and 69 G1 asset hashes",
+    "source xr_teleoperate 817fb00c63cd",
+    "source televuer 766de45e7437",
+    "source teleimager 57cf2a405722",
+    "source dex-retargeting d7753d38c9ff",
+    "source unitree_sdk2_python 814556d15970",
+    "source unitree_lerobot 41c2805742de",
+    "source lerobot a5b29d430105",
+    "No broken requirements found.",
+    "import televuer",
+    "import teleimager.image_client",
+    "import teleimager.image_server",
+    "import dex_retargeting",
+    "import teleop.robot_control.robot_arm",
+    "import teleop.robot_control.robot_hand_unitree",
+    "import teleop.robot_control.robot_arm_ik",
+    "import teleop.utils.episode_writer",
+    "import teleop.teleop_hand_and_arm"
+  ],
+  "verified_at_utc": "2026-10-07T06:56:15.280108+00:00",
+  "baseline_sha256": "2666a0a1cf53c0c7f980603f65ba051d5904df4357bc115408959ca84f7ad15d",
+  "ik": {
+    "model_nq": 14,
+    "solver_success": true,
+    "position_error_m": 3.041812057472914e-07
+  }
+}

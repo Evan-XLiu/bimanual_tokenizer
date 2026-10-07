@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-07",
+  "device": "Quest 3S (operator confirmed)",
+  "status": "stopped_by_operator_partial_validation",
+  "official_input_received": true,
+  "hardware_motion_enabled": false,
+  "archive": ".local/unitree_g1/experiments/quest_20261007",
+  "summary": {
+    "state": "stale",
+    "connection_epoch": 1,
+    "counts": {
+      "CAMERA_MOVE": 6469,
+      "CONTROLLER_MOVE": 2170
+    },
+    "invalid_events": 0,
+    "receive_fresh": false,
+    "tracking_validity": "not_exposed_by_upstream",
+    "motion_enabled": false,
+    "end_reason": "operator_stop",
+    "duration_s": 295.3521593530004,
+    "queue_dropped": 0,
+    "field_acceptance": "pending_operator_review",
+    "controller_receive_gap_s": {
+      "max": 26.89713300999938,
+      "p95": 0.04354484599934949
+    }
+  },
+  "controller_events": 2170,
+  "longest_controller_segment": {
+    "duration_s": 68.31524623900077,
+    "events": 2071,
+    "max_receive_gap_s": 0.20905591500013543,
+    "split_gap_threshold_s": 1.0
+  },
+  "receive_gap_s": {
+    "p50": 0.033001350000631646,
+    "p95": 0.04354484599934949,
+    "max": 26.89713300999938,
+    "over_1s": 1
+  },
+  "left": {
+    "position_range_m": [
+      0.9094274044036865,
+      0.9067610204219818,
+      0.8696479387581348
+    ],
+    "analog_range": {
+      "triggerValue": [
+        0,
+        1
+      ],
+      "squeezeValue": [
+        0,
+        1
+      ]
+    },
+    "pressed_seen": {
+      "trigger": true,
+      "squeeze": true,
+      "thumbstick": true,
+      "aButton": true,
+      "bButton": true
+    },
+    "stick_range": [
+      [
+        -0.9065828323364258,
+        0.999542236328125
+      ],
+      [
+        -0.9960325956344604,
+        0.999237060546875
+      ]
+    ]
+  },
+  "right": {
+    "position_range_m": [
+      1.0445962846279144,
+      0.9170156419277191,
+      0.9524119645357132
+    ],
+    "analog_range": {
+      "triggerValue": [
+        0,
+        1
+      ],
+      "squeezeValue": [
+        0,
+        1
+      ]
+    },
+    "pressed_seen": {
+      "trigger": true,
+      "squeeze": true,
+      "thumbstick": true,
+      "aButton": true,
+      "bButton": true
+    },
+    "stick_range": [
+      [
+        -0.999969482421875,
+        1
+      ],
+      [
+        -0.999542236328125,
+        1
+      ]
+    ]
+  },
+  "completed": [
+    "Official pass-through input connection and reconnection observed",
+    "Over 30 seconds continuous controller reception",
+    "Both trigger and squeeze values cover 0..1",
+    "Both sticks cover positive/negative axes; stick clicks and face buttons observed",
+    "Clean operator_stop; no invalid events or queue drops in second session"
+  ],
+  "pending": [
+    "10 minute stability",
+    "Tracking-loss, recenter and deliberate network-disconnect tests",
+    "Physical axis/scale mapping and unexplained jump review",
+    "OS/browser versions",
+    "Explanation of initial 26.897 second controller gap"
+  ],
+  "first_session_note": "Initial service exited without summary; 589 controller events over 19.39 seconds; cause not established.",
+  "evidence_sha256": {
+    "g1-televuer-quest-field-002.log": "a29a09eadb41ae1a113febb976c7bc7e3d21c57dccf943b78020e50e034d62e2",
+    "g1-televuer-quest-field-001/status.json": "1f84f10a07dbe37ce134fbb8cd4413cc978d81ce60fdd4f9f4abe21b020b1220",
+    "g1-televuer-quest-field-001/live_analysis.json": "da518f4cf94f11d89eba6887165b1bd474e9c74bfaeee8d1015567613b3b2089",
+    "g1-televuer-quest-field-001/events.jsonl": "049a7e5be8cf69d73c7e3dbf2461c54289943b1877737e6d07dfcb66fe4f83ae",
+    "g1-televuer-quest-field-001/session.json": "1d55154e64ca06904506f344372e1063499c1ce94406015e64116f88f56f5f65",
+    "g1-televuer-quest-field-002/status.json": "3caa45cf0e4eec6366c26dea3a5d4879a7c99a4e296f86bf07b32a4f48710f2f",
+    "g1-televuer-quest-field-002/live_analysis.json": "fccaa042832dece5af430f46d3cba2771039e3a682315ee84c9e9d20d08d8471",
+    "g1-televuer-quest-field-002/summary.json": "4675c480ab85876041117c5d4c22bc0310279dcc9e4eb8974edf7c26e0d1d8b0",
+    "g1-televuer-quest-field-002/events.jsonl": "44f11ab692b10974dc8ff64e187e2f40c36e6e5e607eb5dc576672bf20421d17",
+    "g1-televuer-quest-field-002/session.json": "1d55154e64ca06904506f344372e1063499c1ce94406015e64116f88f56f5f65"
+  }
+}
