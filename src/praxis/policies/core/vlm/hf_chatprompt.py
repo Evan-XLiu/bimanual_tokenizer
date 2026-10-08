@@ -79,6 +79,7 @@ def render_chat_texts(
     action_token_strings: list[str] | None,
     bsz: int,
     state_texts: list[str] | None = None,
+    include_system: bool = True,
 ) -> list[str]:
     """Render chat-template strings with optional state text."""
     user_body_texts = [
@@ -93,10 +94,12 @@ def render_chat_texts(
     rep_content.append({"type": "text", "text": USER_BODY_SENTINEL})
     is_training = action_token_strings is not None
 
-    rep_msg: list[dict] = [
-        {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
-        {"role": "user", "content": rep_content},
-    ]
+    rep_msg: list[dict] = []
+    if include_system:
+        rep_msg.append(
+            {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]}
+        )
+    rep_msg.append({"role": "user", "content": rep_content})
     if is_training:
         rep_msg.append(
             {

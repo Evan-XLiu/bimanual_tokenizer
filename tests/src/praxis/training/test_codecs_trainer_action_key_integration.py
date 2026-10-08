@@ -201,11 +201,18 @@ def _build_cfg(tmp_path: Path, codec_cfg: dict | None = None):
         },
     ],
 )
+@pytest.mark.parametrize("explicit_action", [False, True])
 def test_codecs_trainer_nondefault_action_key_checkpoint_reload(
-    monkeypatch, tmp_path: Path, codec_cfg: dict
+    monkeypatch, tmp_path: Path, codec_cfg: dict, explicit_action: bool
 ) -> None:
+    class MultiActionDataset(_DummyLeRobotDataset):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.meta.features["action"] = {"dtype": "float32", "shape": [16]}
+
     monkeypatch.setattr(
-        "praxis.training.codecs_trainer.LeRobotDataset", _DummyLeRobotDataset
+        "praxis.training.codecs_trainer.LeRobotDataset",
+        MultiActionDataset if explicit_action else _DummyLeRobotDataset,
     )
     monkeypatch.setattr(
         "praxis.training.codecs_trainer.LeRobotActionOnlyDatasetAdapter",
@@ -217,6 +224,8 @@ def test_codecs_trainer_nondefault_action_key_checkpoint_reload(
     )
 
     cfg = _build_cfg(tmp_path, codec_cfg=codec_cfg)
+    if explicit_action:
+        cfg.dataset.action_key = "robot_action"
     trainer = CodecsTrainer(cfg)
 
     assert trainer.action_key == "robot_action"
@@ -279,7 +288,8 @@ def test_codecs_trainer_val_batch_size_defaults_to_train_batch_size(
     train_dataset = cast(_DummyActionOnlyAdapter, trainer.dataset)
     val_dataset = cast(_DummyActionOnlyAdapter, trainer.val_dataset)
     assert val_dataset.batch_sizes_requested == [3]
-    assert train_dataset.drop_last_requested == [True]
+    # Training drops partial batches; the fit/bootstrap loader keeps them.
+    assert train_dataset.drop_last_requested == [True, False]
     assert val_dataset.drop_last_requested == [False]
 
 
@@ -310,5 +320,5 @@ def test_codecs_trainer_val_batch_size_uses_override(
     train_dataset = cast(_DummyActionOnlyAdapter, trainer.dataset)
     val_dataset = cast(_DummyActionOnlyAdapter, trainer.val_dataset)
     assert val_dataset.batch_sizes_requested == [1]
-    assert train_dataset.drop_last_requested == [True]
+    assert train_dataset.drop_last_requested == [True, False]
     assert val_dataset.drop_last_requested == [False]

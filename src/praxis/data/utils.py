@@ -165,10 +165,23 @@ def collect_action_feature_candidates(
 def resolve_action_feature_from_metadata(
     meta_features: dict[str, Any],
     *,
+    action_key: str | None = None,
     context: str = "dataset metadata",
 ) -> FeatureSpec:
     """Resolve the dataset action feature from LeRobot-style metadata."""
     candidates = collect_action_feature_candidates(meta_features)
+    if action_key is not None:
+        if action_key not in meta_features:
+            raise KeyError(
+                f"Configured action key {action_key!r} missing from {context}."
+            )
+        for candidate in candidates:
+            if candidate.key == action_key:
+                return candidate
+        raise ValueError(
+            f"Configured action key {action_key!r} in {context} must be a "
+            "one-dimensional non-observation action feature."
+        )
     if not candidates:
         raise KeyError(
             f"Unable to infer action feature from {context}. Expected at least "

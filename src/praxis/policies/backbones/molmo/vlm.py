@@ -7,13 +7,59 @@
 from __future__ import annotations
 
 from typing import Any, cast
+from types import MethodType
 
+import torch
 from torch import Tensor
+from torch.utils.checkpoint import checkpoint
 from transformers import AutoModelForImageTextToText, AutoProcessor
 
 from praxis.policies.core.vlm.dtypes import parse_vlm_dtype
 
 MOLMO2_ER_MODEL_NAME = "allenai/Molmo2-ER"
+
+
+def _checkpointed_vision_forward(self: Any, x: Tensor) -> list[Tensor]:
+    hidden_states = []
+    for block in self.resblocks:
+        if self.gradient_checkpointing and self.training and torch.is_grad_enabled():
+            x = checkpoint(block, x, use_reentrant=False)
+        else:
+            x = block(x)
+        hidden_states.append(x)
+    return hidden_states
+
+
+def configure_molmo_vision_checkpointing(vlm: Any, enabled: bool) -> None:
+    """Checkpoint complete ViT blocks while preserving intermediate features."""
+    vision = getattr(getattr(vlm, "model", None), "vision_backbone", None)
+    if vision is None:
+        return
+    transformer = vision.image_vit.transformer
+    transformer.gradient_checkpointing = enabled
+    transformer.forward = MethodType(_checkpointed_vision_forward, transformer)
+
+
+def configure_molmo_vision_precision(vlm: Any, dtype: torch.dtype) -> None:
+    """Keep every vision attention (including pooling) in the model dtype."""
+    vision = vlm.model.vision_backbone
+    vision.to(dtype=dtype)
+    for module in vision.modules():
+        if hasattr(module, "float32_attention"):
+            module.float32_attention = dtype == torch.float32
+    for name in ("vit_config", "adapter_config"):
+        config = getattr(vlm.config, name, None)
+        if config is not None:
+            config.float32_attention = dtype == torch.float32
+
+    # Molmo2's image pooling uses a one-token query with a dynamically sized
+    # key sequence.  On Hopper, PyTorch 2.7's SDPA CUDA kernel can reject some
+    # of these shapes with ``invalid configuration argument`` (especially at
+    # larger batches).  The eager implementation is stable for this small
+    # pooling operation; the main ViT and language-model attention remain SDPA.
+    pooling = getattr(vision, "image_pooling_2d", None)
+    if pooling is not None and hasattr(pooling, "attn_implementation"):
+        pooling.attn_implementation = "eager"
 
 
 def load_molmo_vlm(model_name: str, dtype_str: str) -> tuple[Any, Any]:
@@ -31,6 +77,7 @@ def load_molmo_vlm(model_name: str, dtype_str: str) -> tuple[Any, Any]:
         low_cpu_mem_usage=True,
         trust_remote_code=True,
     )
+    configure_molmo_vision_precision(vlm, dtype)
     processor = AutoProcessor.from_pretrained(
         model_name,
         use_fast=True,
@@ -74,7 +121,13 @@ def run_molmo_processor(
     if text is not None and isinstance(text, list) and len(text) != bsz:
         raise ValueError(f"Text batch size mismatch: got {len(text)}, expected {bsz}.")
     nested_images = [
-        [image_batch[i, j] for j in range(int(image_batch.shape[1]))]
+        [
+            image_batch[i, j].permute(1, 2, 0).contiguous()
+            if image_batch[i, j].ndim == 3
+            and int(image_batch[i, j].shape[0]) in (1, 3, 4)
+            else image_batch[i, j]
+            for j in range(int(image_batch.shape[1]))
+        ]
         for i in range(bsz)
     ]
     return processor(

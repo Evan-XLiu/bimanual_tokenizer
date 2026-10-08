@@ -75,3 +75,23 @@ def test_stack_observation_images_builds_bnchw_batch():
     assert tuple(out.shape) == (1, 2, 3, 1, 1)
     assert out.dtype == torch.uint8
     assert out[0, 0, :, 0, 0].tolist() == [0, 128, 255]
+
+
+@pytest.mark.parametrize("as_uint8", [False, True])
+def test_stack_mixed_camera_resolutions_preserves_pixels_and_history(as_uint8):
+    top = torch.rand(2, 2, 3, 3, 5)
+    wrist = torch.rand(2, 2, 3, 6, 7)
+    out = stack_observation_images(
+        {"top": top, "wrist": wrist},
+        image_features=[DummyFeature("top"), DummyFeature("wrist")],
+        as_uint8=as_uint8,
+    )
+    expected_top, expected_wrist = top[:, -1], wrist[:, -1]
+    if as_uint8:
+        expected_top = (expected_top * 255).round().to(torch.uint8)
+        expected_wrist = (expected_wrist * 255).round().to(torch.uint8)
+    assert out.shape == (2, 2, 3, 6, 7)
+    torch.testing.assert_close(out[:, 0, :, 1:4, 1:6], expected_top)
+    torch.testing.assert_close(out[:, 1], expected_wrist)
+    assert torch.count_nonzero(out[:, 0, :, :1]) == 0
+    assert torch.count_nonzero(out[:, 0, :, 4:]) == 0

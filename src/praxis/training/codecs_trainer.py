@@ -574,6 +574,7 @@ class CodecsTrainer(DefaultTrainer):
         meta_features = temp_ds.meta.features
         raw_action_feature = resolve_action_feature_from_metadata(
             meta_features,
+            action_key=getattr(dc, "action_key", None),
             context="dataset metadata for codec training",
         )
         action_feature = _resolve_xtokenizer_action_feature(

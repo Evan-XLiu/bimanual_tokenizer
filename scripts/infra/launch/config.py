@@ -51,6 +51,8 @@ DATASET_REPO_IDS: dict[str, str] = {
     "robomimic_mt4": "chaoqi-liu/robomimic_mt4_ph",
     "robotwin2_clean": "local/robotwin2_depth_merged_clean",
     "robotwin_new_demo_clean": "local/robotwin_new_demo_clean",
+    "bicat_box": "local/bicat_box",
+    "bicat_bottles": "local/bicat_bottles",
 }
 DATASETS = tuple(DATASET_REPO_IDS)
 

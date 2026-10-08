@@ -1,0 +1,35 @@
+{
+  "source_config": "/scratch/xuanweiliu/bimanual_tokenizer/outputs/hopper_btt_robotwin_new/621340.hopper-m-02/train/train_config.yaml",
+  "scope": "all 100 box episodes (73252 frames), joint actions only",
+  "right_arm_sign": [
+    -1.0,
+    1.0,
+    1.0,
+    1.0,
+    -1.0,
+    -1.0,
+    1.0
+  ],
+  "shared_action_min": [
+    -0.6448844075202942,
+    -0.0020981156267225742,
+    0.0024795911740511656,
+    -1.5421148538589478,
+    -0.4873350262641907,
+    -0.5247195959091187,
+    0.0029124878346920013
+  ],
+  "shared_action_max": [
+    0.38204777240753174,
+    2.3744945526123047,
+    2.2272450923919678,
+    0.2786678969860077,
+    0.6624323129653931,
+    0.8199816942214966,
+    1.0
+  ],
+  "canonical_minmax_rule": "min/max over concatenated left actions and right actions multiplied by right_arm_sign",
+  "normalization": "2 * (canonical_action - min) / (max - min) - 1",
+  "wandb_project": "BiCAT_RealWorld",
+  "run_name": "tokenizer_box_test"
+}

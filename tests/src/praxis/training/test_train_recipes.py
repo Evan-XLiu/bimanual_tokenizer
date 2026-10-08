@@ -63,7 +63,7 @@ def test_ki_train_recipe_adds_warmstart_without_sim_eval_gate() -> None:
     )
 
     assert cfg.policy.name == "ki_oat_pali"
-    assert cfg.policy.ce_warmstart_steps == 10000
+    assert cfg.policy.ce_warmstart_steps == 6000
     assert cfg.trainer.find_unused_parameters is True
     assert cfg.trainer.sim_eval_start_after_step == 0
     assert dict(cfg.trainer.lrs) == pytest.approx(
@@ -75,7 +75,7 @@ def test_ki_train_recipe_adds_warmstart_without_sim_eval_gate() -> None:
         }
     )
     assert cfg.trainer.lr_scheduler == "constant"
-    assert cfg.trainer.warmup_steps == 10000
+    assert cfg.trainer.warmup_steps == 6000
 
 
 def test_codec_train_recipe_uses_scalar_lr_without_family_lrs() -> None:

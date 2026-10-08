@@ -77,3 +77,25 @@ def test_resolve_action_feature_rejects_missing_candidate() -> None:
 
     with pytest.raises(KeyError, match="Unable to infer action feature"):
         resolve_action_feature_from_metadata(features)
+
+
+def test_explicit_action_key_overrides_canonical_and_other_actions() -> None:
+    features = {
+        "action": {"dtype": "float32", "shape": [16]},
+        "action_eef_absolute": {"dtype": "float32", "shape": [16]},
+        "action_eef_delta": {"dtype": "float32", "shape": [16]},
+        "action_joint_angles": {"dtype": "float32", "shape": [14]},
+    }
+    feature = resolve_action_feature_from_metadata(
+        features, action_key="action_joint_angles"
+    )
+    assert feature.key == "action_joint_angles"
+    assert feature.shape == (14,)
+
+
+def test_explicit_action_key_rejects_missing_or_observation_feature() -> None:
+    features = {"observation.state": {"dtype": "float32", "shape": [14]}}
+    with pytest.raises(KeyError, match="Configured action key.*missing"):
+        resolve_action_feature_from_metadata(features, action_key="action_joint_angles")
+    with pytest.raises(ValueError, match="non-observation action feature"):
+        resolve_action_feature_from_metadata(features, action_key="observation.state")

@@ -12,7 +12,7 @@ lora_alpha: 16
 lora_target_modules: [att_proj, attn_out, ff_proj, ff_out]
 lora_dropout: 0.05
 lora_modules_to_save: [lm_head, wte]
-gradient_checkpointing: false
+gradient_checkpointing: true
 
 # KI objectives
 ce_loss_weight: 1.0

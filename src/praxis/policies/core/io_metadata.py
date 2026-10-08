@@ -17,7 +17,10 @@ from praxis.core.types import (
     NormMode,
     PolicyIO,
 )
-from praxis.data.utils import resolve_feature_norm_mode
+from praxis.data.utils import (
+    resolve_action_feature_from_metadata,
+    resolve_feature_norm_mode,
+)
 
 try:
     from lerobot.configs.types import FeatureType as LeRobotFeatureType
@@ -52,6 +55,7 @@ def make_io_from_metadata(
     policy_cfg: DictConfig,
     *,
     observation_keys: list[str] | None = None,
+    action_key: str | None = None,
 ) -> PolicyIO:
     """Build PolicyIO from LeRobot dataset metadata features."""
     obs_features: list[FeatureSpec] = []
@@ -63,11 +67,16 @@ def make_io_from_metadata(
             _collect_obs_and_action_from_policy_features(meta_features, policy_features)
         )
         obs_features.extend(obs_from_policy)
-        action_feature = _select_policy_action_feature(action_candidates)
+        if action_key is None:
+            action_feature = _select_policy_action_feature(action_candidates)
     else:
         obs_features.extend(_collect_obs_from_metadata_fallback(meta_features))
 
-    if action_feature is None:
+    if action_key is not None:
+        action_feature = resolve_action_feature_from_metadata(
+            meta_features, action_key=action_key
+        )
+    elif action_feature is None:
         fallback_action_candidates = _collect_fallback_action_candidates(meta_features)
         action_feature = _infer_action_feature_from_fallback(fallback_action_candidates)
 

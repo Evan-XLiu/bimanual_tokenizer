@@ -1,0 +1,16 @@
+# Local LeRobot v3 task. Use joint targets rather than either EEF representation.
+name: bicat_box
+repo_id: local/bicat_box
+root: ${oc.env:BICAT_DATA_ROOT,/scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/box
+hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
+episodes: null
+action_key: action_joint_angles
+exclude_episodes_file: null
+action_stats_file: null
+observation_keys:
+  - observation.state_joint_angles
+  - observation.images.top
+  - observation.images.left
+  - observation.images.right
+video_backend: pyav
+bypass_force_cache_sync: true

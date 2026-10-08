@@ -1,0 +1,7 @@
+defaults:
+  - bicat_box
+  - _self_
+
+name: bicat_bottles
+repo_id: local/bicat_bottles
+root: ${oc.env:BICAT_DATA_ROOT,/scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/bottles

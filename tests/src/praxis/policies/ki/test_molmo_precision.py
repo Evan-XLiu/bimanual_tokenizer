@@ -15,6 +15,56 @@ from praxis.policies.ki.backbones.molmo.molmo_config import MolmoPolicyConfig
 from praxis.policies.ki.core.policy import PolicyBase
 from praxis.training.core.ema import EMAModel
 from praxis.training.policy_trainer import PolicyTrainer
+from praxis.policies.backbones.molmo.vlm import (
+    configure_molmo_vision_precision,
+    configure_molmo_vision_checkpointing,
+)
+
+
+def test_vision_checkpointing_preserves_gradients_and_recomputes() -> None:
+    transformer = nn.Module()
+    transformer.resblocks = nn.ModuleList([
+        nn.Sequential(nn.Linear(4, 8), nn.GELU(), nn.Linear(8, 4))
+        for _ in range(2)
+    ])
+    model = SimpleNamespace(model=SimpleNamespace(
+        vision_backbone=SimpleNamespace(image_vit=SimpleNamespace(transformer=transformer))
+    ))
+    x = torch.randn(2, 4)  # Images need not require gradients.
+    configure_molmo_vision_checkpointing(model, False)
+    expected = transformer(x)
+    sum(v.sum() for v in expected).backward()
+    grads = [p.grad.clone() for p in transformer.parameters()]
+    transformer.zero_grad(set_to_none=True)
+    configure_molmo_vision_checkpointing(model, True)
+    calls = []
+    handle = transformer.resblocks[0][0].register_forward_pre_hook(
+        lambda *args: calls.append(1)
+    )
+    actual = transformer(x)
+    sum(v.sum() for v in actual).backward()
+    handle.remove()
+    assert len(calls) == 2
+    for a, b in zip(actual, expected):
+        torch.testing.assert_close(a, b)
+    for p, grad in zip(transformer.parameters(), grads):
+        torch.testing.assert_close(p.grad, grad)
+
+
+def test_all_molmo_vision_attention_uses_bf16() -> None:
+    vision = nn.Sequential(nn.Linear(4, 4), nn.Linear(4, 4))
+    for module in vision:
+        module.float32_attention = True
+    config = SimpleNamespace(
+        vit_config=SimpleNamespace(float32_attention=True),
+        adapter_config=SimpleNamespace(float32_attention=True),
+    )
+    model = SimpleNamespace(model=SimpleNamespace(vision_backbone=vision), config=config)
+    configure_molmo_vision_precision(model, torch.bfloat16)
+    assert all(p.dtype == torch.bfloat16 for p in vision.parameters())
+    assert all(not m.float32_attention for m in vision)
+    assert not config.vit_config.float32_attention
+    assert not config.adapter_config.float32_attention
 
 
 def test_molmo_casts_initial_and_io_created_modules(monkeypatch) -> None:

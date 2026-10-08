@@ -5,8 +5,8 @@ trainer:
     bridge: 5.0e-5
     action_expert: 5.0e-5
   lr_scheduler: constant
-  warmup_steps: 10000
+  warmup_steps: 6000
   find_unused_parameters: true
 
 policy:
-  ce_warmstart_steps: 10000
+  ce_warmstart_steps: 6000

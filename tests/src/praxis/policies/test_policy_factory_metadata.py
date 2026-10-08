@@ -13,6 +13,35 @@ from praxis.policies.factory import make_io_from_metadata
 
 
 class TestPolicyFactoryMetadata:
+    def test_bicat_explicit_joint_action_and_observation_selection(self):
+        features = {
+            "observation.state_joint_angles": {"dtype": "float32", "shape": [14]},
+            "observation.state_eef_absolute": {"dtype": "float32", "shape": [16]},
+            "observation.images.top": {"dtype": "video", "shape": [360, 640, 3]},
+            "action_eef_absolute": {"dtype": "float32", "shape": [16]},
+            "action_eef_delta": {"dtype": "float32", "shape": [16]},
+            "action_joint_angles": {"dtype": "float32", "shape": [14]},
+        }
+        cfg = OmegaConf.create({"n_obs_steps": 1, "action_horizon": 32})
+        io = make_io_from_metadata(
+            features,
+            cfg,
+            action_key="action_joint_angles",
+            observation_keys=[
+                "observation.state_joint_angles",
+                "observation.images.top",
+            ],
+        )
+        assert io.action_feature.key == "action_joint_angles"
+        assert io.action_dim == 14
+        assert io.obs_keys == [
+            "observation.state_joint_angles",
+            "observation.images.top",
+        ]
+        assert io.build_delta_timestamps()["action_joint_angles"] == [
+            round(i / 30, 6) for i in range(32)
+        ]
+
     def test_make_io_from_metadata_preserves_camera_keys(self):
         meta_features = {
             "observation.state": {"dtype": "float32", "shape": [8]},

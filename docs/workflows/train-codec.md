@@ -25,6 +25,38 @@ codecs@codec=tokens/quest
 codecs@codec=tokens/acodec
 ```
 
+## BiCAT YAM Joint Actions
+
+Use `dataset=bicat_box` or `dataset=bicat_bottles` for the downloaded local
+BiCAT tasks. Both configurations explicitly select `action_joint_angles`
+(14 dimensions: left six joints and gripper, then right six joints and gripper).
+The other EEF action columns remain in the source dataset and are not training
+targets. `BICAT_DATA_ROOT` can override the parent directory containing both tasks.
+
+```bash
+uv run praxis-train --config-name train_codecs \
+  codecs@codec=tokens/btt dataset=bicat_box
+```
+
+For policy training, use the same dataset choice with your policy and a codec
+checkpoint trained on the same joint-action representation:
+
+```bash
+uv run praxis-train --config-name train_policy \
+  policy=ki_btt_molmo dataset=bicat_box \
+  policy.action_tokenizer.pretrained_path=/absolute/path/to/BiCAT/codec/pretrained_model
+```
+
+The policy uses `observation.state_joint_angles` and the top, left, and right
+cameras. The local datasets supply their own FPS and metadata statistics.
+Camera views with different resolutions are center-padded to a common canvas
+before the VLM stacks them; the downloaded videos remain unchanged.
+For other datasets with multiple action columns, set `dataset.action_key`
+explicitly (`+dataset.action_key=...` when that config does not declare it).
+Robot-specific bimanual sign conventions still need to match the YAM robot.
+BTT uses its configured `shared_action_min` / `shared_action_max` internally;
+check these ranges for YAM rather than assuming metadata statistics replace them.
+
 ## Output
 
 Codec artifacts are written under:

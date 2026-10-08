@@ -304,6 +304,7 @@ class PolicyTrainer(DefaultTrainer):
                 observation_keys=(
                     list(observation_keys) if observation_keys is not None else None
                 ),
+                action_key=getattr(dc, "action_key", None),
             )
             if self.io.action_feature is None:
                 raise RuntimeError(

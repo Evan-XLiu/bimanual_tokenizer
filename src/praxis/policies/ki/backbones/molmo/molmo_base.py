@@ -15,6 +15,7 @@ from praxis.policies.backbones.molmo.prefix import (
     MolmoPrefixAdapter,
 )
 from praxis.policies.backbones.molmo.vlm import (
+    configure_molmo_vision_checkpointing,
     ensure_molmo_vision_eval,
     freeze_molmo_vision,
     load_molmo_vlm,
@@ -46,6 +47,9 @@ class MolmoPolicyBase(PolicyBase):
 
     def __init__(self, config: MolmoPolicyConfig | dict[str, Any], **kwargs) -> None:
         super().__init__(config, **kwargs)
+        configure_molmo_vision_checkpointing(
+            self.vlm, bool(self.config.gradient_checkpointing)
+        )
         # Include codec and optional LoRA parameters created after VLM loading.
         self.to(dtype=parse_vlm_dtype(self.config.vlm_dtype))
 
@@ -123,6 +127,9 @@ class MolmoPolicyBase(PolicyBase):
             instructions=instructions,
             action_token_strings=action_token_strings,
             bsz=bsz,
+            # Molmo2's template only accepts alternating user/assistant roles;
+            # it rejects a leading system message.
+            include_system=False,
         )
         batch_input = run_molmo_processor(
             processor=self.processor,

@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from typing import Any
 
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 
 
@@ -55,6 +56,10 @@ def stack_observation_images(
         imgs = obs[key]
         if imgs.dim() == 5:
             imgs = imgs[:, -1]
+        # LeRobot video decoding yields channels-last images (B, H, W, C),
+        # while tensor/image sources may already be channels-first (B, C, H, W).
+        if imgs.dim() == 4 and int(imgs.shape[-1]) in (1, 3, 4):
+            imgs = imgs.permute(0, 3, 1, 2).contiguous()
         if as_uint8:
             imgs = (
                 (imgs * 255.0).round().clamp(0, 255)
@@ -63,7 +68,17 @@ def stack_observation_images(
             )
             imgs = imgs.to(torch.uint8)
         camera_batches.append(imgs)
-    return torch.stack(camera_batches, dim=1)
+    # Different cameras may record different resolutions (e.g. BiCAT YAM).
+    # Center-pad to a common canvas without stretching either camera view.
+    height = max(int(imgs.shape[-2]) for imgs in camera_batches)
+    width = max(int(imgs.shape[-1]) for imgs in camera_batches)
+    padded_batches: list[Tensor] = []
+    for imgs in camera_batches:
+        dh, dw = height - imgs.shape[-2], width - imgs.shape[-1]
+        if dh or dw:
+            imgs = F.pad(imgs, (dw // 2, dw - dw // 2, dh // 2, dh - dh // 2))
+        padded_batches.append(imgs)
+    return torch.stack(padded_batches, dim=1)
 
 
 def concatenate_state_features(
