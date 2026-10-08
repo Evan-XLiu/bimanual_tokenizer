@@ -228,7 +228,11 @@ class DefaultTrainer:
         if self.tc.use_ema and self._use_ema():
             if str(self.tc.distributed_strategy) != "fsdp":
                 self.model = self.model.to(self.device)
-            self.ema = EMAModel(self.model, decay=self.tc.ema_decay)
+            self.ema = EMAModel(
+                self.model,
+                decay=self.tc.ema_decay,
+                shadow_dtype=self._ema_shadow_dtype(),
+            )
         self.model = self.runtime.prepare_model(
             self.model,
             wrap_for_training=self.run_train_loop,
@@ -499,6 +503,9 @@ class DefaultTrainer:
 
     def _use_ema(self) -> bool:
         return self.run_train_loop
+
+    def _ema_shadow_dtype(self) -> torch.dtype:
+        return torch.float32
 
     def _enable_checkpoint_managers(self) -> bool:
         return bool(self.run_train_loop)

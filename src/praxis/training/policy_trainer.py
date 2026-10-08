@@ -28,6 +28,7 @@ from praxis.data.lerobot_adapter import (
 )
 from praxis.data.utils import stats_to_tensors
 from praxis.policies.core import BasePolicy
+from praxis.policies.core.vlm.dtypes import parse_vlm_dtype
 from praxis.policies.factory import make_io_from_metadata, make_policy
 from praxis.processing.pipelines import make_policy_pre_post_processors
 from praxis.training import inline_policy_eval
@@ -139,6 +140,13 @@ def _static_reconstruction_prediction(
 
 class PolicyTrainer(DefaultTrainer):
     """Extends DefaultTrainer with reconstruction eval and optional sim eval."""
+
+    def _ema_shadow_dtype(self) -> torch.dtype:
+        from praxis.policies.ki.backbones.molmo.molmo_base import MolmoPolicyBase
+
+        if isinstance(self.model, MolmoPolicyBase):
+            return parse_vlm_dtype(self.model.config.vlm_dtype)
+        return super()._ema_shadow_dtype()
 
     def __init__(self, cfg: DictConfig) -> None:
         self._resolved_sim_eval_backend = inline_policy_eval.resolve_preinit_backend(

@@ -135,7 +135,7 @@ def zero_action_token_ce_loss(
     policy: ActionTokenCePolicy, *, device: torch.device
 ) -> Tensor:
     """Return a scalar zero loss that preserves train-time autograd contracts."""
-    zero = torch.zeros((), device=device, dtype=torch.float32)
+    zero = torch.zeros((), device=device, dtype=next(policy.vlm.parameters()).dtype)
     if policy.training:
         zero = zero.requires_grad_(True)
     return zero
@@ -379,7 +379,7 @@ def compute_prepared_action_token_ce_loss(
         )
     if bool(labels.ne(int(ignore_index)).any()):
         loss = compute_blockwise_token_loss(
-            logits=logits.float(),
+            logits=logits,
             labels=labels,
             block_schedule=prepared.block_schedule,
             ignore_index=ignore_index,
@@ -468,7 +468,7 @@ def compute_prepared_action_token_ce_loss_from_hidden(
             )
         ce_chunks.append(
             F.cross_entropy(
-                logits.float(),
+                logits,
                 selected_labels[start:end],
                 reduction="none",
             )

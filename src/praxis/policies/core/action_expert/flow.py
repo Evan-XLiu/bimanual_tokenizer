@@ -37,7 +37,14 @@ def sample_flow_training_point(
     noise = torch.randn_like(actions)
     if sampling == "uniform":
         timesteps = torch.rand(batch_size, device=device, dtype=dtype)
+    elif sampling == "beta" and float(beta_beta) == 1.0:
+        # Beta(alpha, 1) has CDF x**alpha; the default needs no FP32 gamma
+        # sampler (PyTorch's gamma kernel does not support BF16).
+        timesteps = torch.rand(batch_size, device=device, dtype=dtype).pow(
+            1.0 / float(beta_alpha)
+        )
     elif sampling == "beta":
+        # General Beta sampling still requires the supported FP32 gamma kernel.
         dist = torch.distributions.Beta(
             torch.tensor(float(beta_alpha), device=device, dtype=torch.float32),
             torch.tensor(float(beta_beta), device=device, dtype=torch.float32),

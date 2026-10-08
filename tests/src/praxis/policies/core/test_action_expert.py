@@ -500,6 +500,29 @@ def test_forward_runs_with_smolvla_layer_schedule() -> None:
     assert seen == ["self_attn", "cross_attn", "self_attn", "cross_attn"]
 
 
+def test_bf16_expert_keeps_attention_and_gradients_in_bf16(monkeypatch) -> None:
+    expert = _expert().to(dtype=torch.bfloat16)
+    sdpa = expert_module.F.scaled_dot_product_attention
+    seen = []
+
+    def record_sdpa(query, key, value, **kwargs):
+        seen.append((query.dtype, key.dtype, value.dtype))
+        return sdpa(query, key, value, **kwargs)
+
+    monkeypatch.setattr(expert_module.F, "scaled_dot_product_attention", record_sdpa)
+    out = expert(
+        cache=_prefix_cache(),
+        noisy_actions=torch.randn(2, 4, 3, dtype=torch.bfloat16),
+        timesteps=torch.tensor([0.2, 0.8], dtype=torch.bfloat16),
+    )
+    assert out.dtype == torch.bfloat16
+    assert seen == [(torch.bfloat16,) * 3] * 4
+    out.square().mean().backward()
+    grads = [p.grad for p in expert.parameters() if p.grad is not None]
+    assert grads
+    assert all(g.dtype == torch.bfloat16 and torch.isfinite(g).all() for g in grads)
+
+
 def test_layer_uses_sdpa_with_cross_and_self_key_lengths(monkeypatch) -> None:
     layer = ActionExpertLayer(
         hidden_size=8,

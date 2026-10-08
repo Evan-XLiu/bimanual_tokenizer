@@ -347,7 +347,7 @@ class PolicyBase(
         raw_batch = dict(batch)
         raw_actions = self._actions_from_batch(raw_batch)
         if ce_weight == 0.0 and flow_weight == 0.0:
-            zero = torch.zeros((), device=raw_actions.device, dtype=torch.float32)
+            zero = raw_actions.new_zeros(())
             if self.training:
                 zero = zero.requires_grad_(True)
             return zero, {"ce_loss": 0.0, "flow_loss": 0.0}

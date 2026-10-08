@@ -17,6 +17,7 @@ class MolmoPolicyConfig(PolicyConfig):
     """Hyperparameters shared by Molmo-backed policies in this family."""
 
     vlm_model_name: str = MOLMO2_ER_MODEL_NAME
+    vlm_dtype: str = "bfloat16"
     lora_target_modules: tuple[str, ...] = (
         "att_proj",
         "attn_out",

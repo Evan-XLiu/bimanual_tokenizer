@@ -128,7 +128,7 @@ def collect_block_loss_chunks(
         )
         block_w = torch.zeros(
             (active_batch_size, block_size),
-            dtype=torch.float32,
+            dtype=active_ce.dtype,
             device=active_ce.device,
         )
 

@@ -2,7 +2,7 @@ pretrained_path: null
 
 # VLM backbone
 vlm_model_name: allenai/Molmo2-ER
-vlm_dtype: bfloat16
+vlm_dtype: bfloat16  # All floating policy parameters/buffers and model inputs.
 freeze_vision_encoder: false
 
 # LoRA (optional, off = full fine-tuning)

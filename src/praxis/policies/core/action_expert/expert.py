@@ -523,9 +523,9 @@ class ActionExpertLayer(nn.Module):
         key = self._expand_key_value_heads(key)
         value = self._expand_key_value_heads(value)
         attended = F.scaled_dot_product_attention(
-            query.to(dtype=torch.float32),
-            key.to(dtype=torch.float32),
-            value.to(dtype=torch.float32),
+            query,
+            key.to(dtype=query.dtype),
+            value.to(dtype=query.dtype),
             attn_mask=attn_mask,
             dropout_p=0.0,
         )

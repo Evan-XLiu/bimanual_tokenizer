@@ -10,6 +10,7 @@ from typing import Any, ClassVar, Literal
 
 from torch import Tensor
 
+from praxis.core.types import NormMode
 from praxis.policies.backbones.molmo.prefix import (
     MolmoPrefixAdapter,
 )
@@ -20,6 +21,7 @@ from praxis.policies.backbones.molmo.vlm import (
     run_molmo_processor,
 )
 from praxis.policies.core.observations import stack_observation_images
+from praxis.policies.core.vlm.dtypes import parse_vlm_dtype
 from praxis.policies.core.vlm.hf_chatprompt import render_chat_texts
 from praxis.policies.core.vlm.prefix import VlmInputBatch, with_compact_position_ids
 from praxis.policies.ki.backbones.molmo.molmo_config import MolmoPolicyConfig
@@ -41,6 +43,34 @@ class MolmoPolicyBase(PolicyBase):
     )
     vlm: Any
     processor: Any
+
+    def __init__(self, config: MolmoPolicyConfig | dict[str, Any], **kwargs) -> None:
+        super().__init__(config, **kwargs)
+        # Include codec and optional LoRA parameters created after VLM loading.
+        self.to(dtype=parse_vlm_dtype(self.config.vlm_dtype))
+
+    def _post_set_io(self) -> None:
+        super()._post_set_io()
+        # IO creates the expert, state projector, and normalization buffers.
+        self.to(dtype=parse_vlm_dtype(self.config.vlm_dtype))
+
+    def _actions_from_batch(self, batch: dict[str, Tensor]) -> Tensor:
+        return (
+            super()
+            ._actions_from_batch(batch)
+            .to(dtype=parse_vlm_dtype(self.config.vlm_dtype))
+        )
+
+    def set_normalization_stats(
+        self,
+        stats: dict[str, dict[str, Tensor]],
+        modes: dict[str, NormMode] | None = None,
+    ) -> None:
+        super().set_normalization_stats(stats, modes=modes)
+        # Stats can be installed or replaced after IO setup and model loading.
+        for module in (self.normalize, self.unnormalize_action):
+            if module is not None:
+                module.to(dtype=parse_vlm_dtype(self.config.vlm_dtype))
 
     def _load_vlm(self, model_name: str, dtype_str: str) -> None:
         self.vlm, self.processor = load_molmo_vlm(model_name, dtype_str)
@@ -103,4 +133,11 @@ class MolmoPolicyBase(PolicyBase):
         )
         batch_input = batch_input.to(self.vlm.device)
         vlm_inputs = dict(batch_input)
+        dtype = parse_vlm_dtype(self.config.vlm_dtype)
+        vlm_inputs = {
+            key: value.to(dtype=dtype)
+            if isinstance(value, Tensor) and value.is_floating_point()
+            else value
+            for key, value in vlm_inputs.items()
+        }
         return self._add_continuous_state_prefix_embeddings(vlm_inputs, state_prefix)
