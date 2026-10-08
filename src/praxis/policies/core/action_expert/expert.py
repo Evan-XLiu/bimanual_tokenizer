@@ -47,6 +47,13 @@ class ActionExpert(nn.Module):
         time_min_period: float,
         time_max_period: float,
         self_attn_every_n_layers: int,
+        architecture: str = "smolvla",
+        num_attention_heads: int | None = None,
+        mlp_ratio: float = 4.0,
+        ffn_multiple_of: int = 256,
+        qk_norm: bool = True,
+        causal_attn: bool = False,
+        context_layer_norm: bool = True,
     ) -> None:
         super().__init__()
         if time_min_period <= 0.0 or time_max_period <= 0.0:
@@ -60,6 +67,9 @@ class ActionExpert(nn.Module):
                 f"{time_min_period} and {time_max_period}."
             )
         self.action_dim = int(action_dim)
+        self.architecture = str(architecture)
+        if self.architecture not in {"smolvla", "molmoact2"}:
+            raise ValueError(f"Unsupported action-expert architecture {architecture!r}.")
         self.action_horizon = int(action_horizon)
         self.hidden_size = int(hidden_size)
         self.vlm_num_layers = int(vlm_num_layers)
@@ -90,9 +100,22 @@ class ActionExpert(nn.Module):
                 "self_attn_every_n_layers must be -1 or a positive integer, got "
                 f"{self.self_attn_every_n_layers}."
             )
-        self.num_attention_heads = int(vlm_attention.num_attention_heads)
-        self.num_key_value_heads = int(vlm_attention.num_key_value_heads)
-        self.head_dim = int(vlm_attention.head_dim)
+        self.num_attention_heads = int(
+            num_attention_heads
+            if num_attention_heads is not None
+            else vlm_attention.num_attention_heads
+        )
+        self.num_key_value_heads = (
+            self.num_attention_heads if self.architecture == "molmoact2"
+            else int(vlm_attention.num_key_value_heads)
+        )
+        self.head_dim = (
+            self.hidden_size // self.num_attention_heads
+            if self.architecture == "molmoact2"
+            else int(vlm_attention.head_dim)
+        )
+        if self.architecture == "molmoact2" and self.hidden_size % self.num_attention_heads:
+            raise ValueError("MolmoAct2 hidden_size must be divisible by num_attention_heads.")
         if self.num_attention_heads <= 0 or self.num_key_value_heads <= 0:
             raise ValueError(
                 "VLM attention head counts must be positive, got "
@@ -109,21 +132,29 @@ class ActionExpert(nn.Module):
             )
         self.attention_dim = self.num_attention_heads * self.head_dim
         self.kv_dim = self.num_key_value_heads * self.head_dim
+        self.vlm_kv_dim = int(vlm_attention.num_key_value_heads * vlm_attention.head_dim)
         self.time_min_period = float(time_min_period)
         self.time_max_period = float(time_max_period)
 
         self.action_proj = nn.Linear(self.action_dim, self.hidden_size)
         self.action_time_mlp_in = nn.Linear(2 * self.hidden_size, self.hidden_size)
         self.action_time_mlp_out = nn.Linear(self.hidden_size, self.hidden_size)
+        layer_cls = MolmoAct2ActionExpertLayer if self.architecture == "molmoact2" else ActionExpertLayer
         self.layers = nn.ModuleList(
             [
-                ActionExpertLayer(
+                layer_cls(
                     hidden_size=self.hidden_size,
                     num_attention_heads=self.num_attention_heads,
                     num_key_value_heads=self.num_key_value_heads,
                     head_dim=self.head_dim,
                     attention_kind=self._attention_kind(expert_idx * self.layer_stride),
                     dropout=float(dropout),
+                    vlm_kv_dim=self.vlm_kv_dim,
+                    mlp_ratio=float(mlp_ratio),
+                    ffn_multiple_of=int(ffn_multiple_of),
+                    qk_norm=bool(qk_norm),
+                    causal_attn=bool(causal_attn),
+                    context_layer_norm=bool(context_layer_norm),
                 )
                 for expert_idx in range(self.expert_num_layers)
             ]
@@ -268,7 +299,17 @@ class ActionExpert(nn.Module):
             prefix_position_offsets=prefix_position_offsets,
             offset_after_prefix=attention_kind == "self_attn",
         )
-        return self.layers[expert_layer_idx](
+        layer = self.layers[expert_layer_idx]
+        if self.architecture == "molmoact2":
+            return layer(
+                hidden=hidden,
+                layer_kv=layer_kv,
+                prefix_mask=prefix_mask,
+                expert_pad_mask=expert_pad_mask,
+                expert_attention_mask=expert_attention_mask,
+                expert_positions=expert_positions,
+            )
+        return layer(
             hidden=hidden,
             layer_kv=layer_kv,
             prefix_mask=prefix_mask,
@@ -411,8 +452,15 @@ class ActionExpertLayer(nn.Module):
         head_dim: int,
         attention_kind: ExpertAttentionKind,
         dropout: float,
+        vlm_kv_dim: int | None = None,
+        mlp_ratio: float = 4.0,
+        ffn_multiple_of: int = 256,
+        qk_norm: bool = False,
+        causal_attn: bool = True,
+        context_layer_norm: bool = False,
     ) -> None:
         super().__init__()
+        del vlm_kv_dim, mlp_ratio, ffn_multiple_of, qk_norm, causal_attn, context_layer_norm
         self.hidden_size = int(hidden_size)
         self.num_attention_heads = int(num_attention_heads)
         self.num_key_value_heads = int(num_key_value_heads)
@@ -537,6 +585,106 @@ class ActionExpertLayer(nn.Module):
         )
         hidden = hidden + self.mlp(self.post_attention_layernorm(hidden))
         return hidden
+
+
+class MolmoAct2ActionExpertLayer(nn.Module):
+    """MolmoAct2 block: full non-causal self-attention followed by VLM cross-attention."""
+
+    def __init__(
+        self,
+        *,
+        hidden_size: int,
+        num_attention_heads: int,
+        num_key_value_heads: int,
+        head_dim: int,
+        attention_kind: ExpertAttentionKind,
+        dropout: float,
+        vlm_kv_dim: int,
+        mlp_ratio: float,
+        ffn_multiple_of: int,
+        qk_norm: bool,
+        causal_attn: bool,
+        context_layer_norm: bool,
+    ) -> None:
+        super().__init__()
+        del attention_kind
+        self.hidden_size = int(hidden_size)
+        self.num_attention_heads = int(num_attention_heads)
+        self.num_key_value_heads = int(num_key_value_heads)
+        self.head_dim = int(head_dim)
+        self.attention_dim = self.num_attention_heads * self.head_dim
+        self.kv_dim = self.num_key_value_heads * self.head_dim
+        self.vlm_kv_dim = int(vlm_kv_dim)
+        self.num_key_value_groups = self.num_attention_heads // self.num_key_value_heads
+        self.causal_attn = bool(causal_attn)
+        self.context_layer_norm_enabled = bool(context_layer_norm)
+
+        self.input_layernorm = Fp32RMSNorm(self.hidden_size)
+        self.self_q_proj = nn.Linear(self.hidden_size, self.attention_dim)
+        self.self_k_proj = nn.Linear(self.hidden_size, self.kv_dim)
+        self.self_v_proj = nn.Linear(self.hidden_size, self.kv_dim)
+        self.self_o_proj = nn.Linear(self.attention_dim, self.hidden_size)
+        self.context_layer_norm = Fp32RMSNorm(self.vlm_kv_dim) if context_layer_norm else nn.Identity()
+        self.cross_q_proj = nn.Linear(self.hidden_size, self.attention_dim)
+        self.cross_k_proj = nn.Linear(self.vlm_kv_dim, self.kv_dim)
+        self.cross_v_proj = nn.Linear(self.vlm_kv_dim, self.kv_dim)
+        self.cross_o_proj = nn.Linear(self.attention_dim, self.hidden_size)
+        self.q_norm = Fp32RMSNorm(self.head_dim) if qk_norm else nn.Identity()
+        self.k_norm = Fp32RMSNorm(self.head_dim) if qk_norm else nn.Identity()
+        self.rope = RotaryPosEmbed(self.head_dim, pairing="split")
+        inner = int(math.ceil(float(self.hidden_size) * float(mlp_ratio) / int(ffn_multiple_of)) * int(ffn_multiple_of))
+        self.post_attention_layernorm = Fp32RMSNorm(self.hidden_size)
+        self.mlp = nn.Sequential(
+            nn.Linear(self.hidden_size, inner),
+            nn.GELU(),
+            nn.Dropout(float(dropout)),
+            nn.Linear(inner, self.hidden_size),
+            nn.Dropout(float(dropout)),
+        )
+        self.dropout = nn.Dropout(float(dropout))
+
+    def _heads(self, x: Tensor, heads: int) -> Tensor:
+        b, s, _ = x.shape
+        return x.view(b, s, heads, self.head_dim).transpose(1, 2)
+
+    def _expand(self, x: Tensor) -> Tensor:
+        return x if self.num_key_value_groups == 1 else x.repeat_interleave(self.num_key_value_groups, dim=1)
+
+    def _attend(self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor | None) -> Tensor:
+        out = F.scaled_dot_product_attention(q, k.to(q.dtype), v.to(q.dtype), attn_mask=mask, dropout_p=0.0, is_causal=self.causal_attn and mask is None)
+        return out.transpose(1, 2).reshape(q.shape[0], q.shape[2], self.attention_dim)
+
+    def forward(
+        self,
+        *,
+        hidden: Tensor,
+        layer_kv: LayerKV,
+        prefix_mask: Tensor,
+        expert_pad_mask: Tensor,
+        expert_attention_mask: Tensor,
+        expert_positions: Tensor,
+    ) -> Tensor:
+        del expert_attention_mask
+        normed = self.input_layernorm(hidden).to(dtype=self.self_q_proj.weight.dtype)
+        q = self.rope(self.q_norm(self._heads(self.self_q_proj(normed), self.num_attention_heads)), positions=expert_positions)
+        k = self.rope(self.k_norm(self._heads(self.self_k_proj(normed), self.num_key_value_heads)), positions=expert_positions)
+        v = self._heads(self.self_v_proj(normed), self.num_key_value_heads)
+        suffix_mask = expert_pad_mask[:, None, None, :].expand(hidden.shape[0], 1, hidden.shape[1], hidden.shape[1])
+        hidden = hidden + self.dropout(self.self_o_proj(self._attend(q, self._expand(k), self._expand(v), suffix_mask)))
+
+        normed = self.input_layernorm(hidden).to(dtype=self.cross_q_proj.weight.dtype)
+        q = self.rope(self.q_norm(self._heads(self.cross_q_proj(normed), self.num_attention_heads)), positions=expert_positions)
+        prefix_k = flatten_cache_tensor(layer_kv.key).to(device=hidden.device, dtype=self.cross_k_proj.weight.dtype)
+        prefix_v = flatten_cache_tensor(layer_kv.value).to(device=hidden.device, dtype=self.cross_v_proj.weight.dtype)
+        if prefix_k.shape[-1] != self.vlm_kv_dim or prefix_v.shape[-1] != self.vlm_kv_dim:
+            raise ValueError(f"MolmoAct2 VLM KV dim must be {self.vlm_kv_dim}, got {prefix_k.shape[-1]} and {prefix_v.shape[-1]}.")
+        prefix_k = self.context_layer_norm(prefix_k)
+        prefix_v = self.context_layer_norm(prefix_v)
+        k = self.k_norm(self._heads(self.cross_k_proj(prefix_k), self.num_key_value_heads))
+        v = self._heads(self.cross_v_proj(prefix_v), self.num_key_value_heads)
+        cross_mask = prefix_mask.to(device=hidden.device, dtype=torch.bool)[:, None, None, :]
+        hidden = hidden + self.dropout(self.cross_o_proj(self._attend(q, self._expand(k), self._expand(v), cross_mask)))
+        return hidden + self.mlp(self.post_attention_layernorm(hidden))
 
     def _to_query_heads(self, tensor: Tensor) -> Tensor:
         batch_size, seq_len, _ = tensor.shape

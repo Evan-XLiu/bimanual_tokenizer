@@ -1,0 +1,33 @@
+{
+  "reference_config": "/scratch/xuanweiliu/bimanual_tokenizer/outputs/hopper_bar_btt_pali_robotwin_new_30k/622038.hopper-m-02/resolved_config.yaml",
+  "reference_manifest": "/scratch/xuanweiliu/bimanual_tokenizer/outputs/robotwin_eval/rollout8task_100/BTT/handover_mic/run_manifest.json",
+  "tokenizer": {
+    "artifact_sha256": "d879197475567201af4cdee3491a15e70b4b217d2c0816b110d8ac035bbc6f0a",
+    "files": {
+      "config.json": {
+        "sha256": "506ee78ec1cdddcbb9e72fc904e8e420e0d53944ef329118e5d3a9a55e0b8fb7",
+        "size_bytes": 781
+      },
+      "model.safetensors": {
+        "sha256": "fb414143a5cd1f28bb9a07cc6024beedc57fc2d6efd215813bd9c6bfd2ec9381",
+        "size_bytes": 29612324
+      },
+      "norm_stats.pt": {
+        "sha256": "4b9e7e69a4cb1bf67acc655cba23f329c1a6125d8c74ee1b37c19bd2c54a56e5",
+        "size_bytes": 3957
+      },
+      "policy_io.json": {
+        "sha256": "72fa701aa2ad4e46dc1b7777959eac43ffce47c6ef2ccbb33b1131e823e77038",
+        "size_bytes": 234
+      }
+    },
+    "path": "/scratch/xuanweiliu/bimanual_tokenizer/outputs/hopper_btt_robotwin_new/621340.hopper-m-02/train/checkpoints/best/step_297000/pretrained_model",
+    "schema_version": 1
+  },
+  "changed_fields": [
+    "policy.btt_arm_order",
+    "run_name",
+    "output_dir"
+  ],
+  "hyperparameter_parity": true
+}

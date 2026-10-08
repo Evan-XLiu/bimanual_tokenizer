@@ -26,6 +26,7 @@ from praxis.policies.core.state_prefix import (
 )
 
 FlowTimeSampling = Literal["beta", "uniform"]
+ExpertArchitecture = Literal["smolvla", "molmoact2"]
 
 
 @dataclass
@@ -84,6 +85,16 @@ class ActionExpertPolicyConfig:
     expert_hidden_size: int | None = None
     expert_width_multiplier: float = 0.75
     expert_num_layers: int | None = None
+    expert_architecture: ExpertArchitecture = "smolvla"
+    expert_num_attention_heads: int | None = None
+    expert_mlp_ratio: float = 4.0
+    expert_ffn_multiple_of: int = 256
+    expert_qk_norm: bool = True
+    expert_causal_attn: bool = False
+    expert_context_layer_norm: bool = True
+    # Stop-gradient switch for the VLM conditioning path. False lets FM
+    # gradients update the VLM, matching MolmoAct2's default.
+    action_expert_detach_vlm: bool = False
     expert_self_attn_every_n_layers: int = 2
     expert_dropout: float = 0.0
     expert_time_min_period: float = 4e-3
@@ -109,10 +120,23 @@ class ActionExpertPolicyConfig:
         self.expert_width_multiplier = positive_float(
             self.expert_width_multiplier, "expert_width_multiplier"
         )
+        if self.expert_architecture not in {"smolvla", "molmoact2"}:
+            raise ValueError(
+                "expert_architecture must be one of {'smolvla', 'molmoact2'}, "
+                f"got {self.expert_architecture!r}."
+            )
         if self.expert_num_layers is not None:
             self.expert_num_layers = positive_int(
                 self.expert_num_layers, "expert_num_layers"
             )
+        if self.expert_num_attention_heads is not None:
+            self.expert_num_attention_heads = positive_int(
+                self.expert_num_attention_heads, "expert_num_attention_heads"
+            )
+        self.expert_mlp_ratio = positive_float(self.expert_mlp_ratio, "expert_mlp_ratio")
+        self.expert_ffn_multiple_of = positive_int(
+            self.expert_ffn_multiple_of, "expert_ffn_multiple_of"
+        )
         self.expert_self_attn_every_n_layers = int(self.expert_self_attn_every_n_layers)
         if (
             self.expert_self_attn_every_n_layers == 0

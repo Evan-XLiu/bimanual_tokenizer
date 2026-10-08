@@ -32,6 +32,8 @@ from praxis.training.core.logging import Logger
 from praxis.training.core.lr_schedulers import (
     get_constant_warmup_scheduler,
     get_cosine_warmup_scheduler,
+    get_group_cosine_warmup_scheduler,
+    get_group_cosine_warmup_scheduler_with_floor,
 )
 from praxis.training.core.metrics import MetricsTracker
 from praxis.training.core.optim import (
@@ -492,6 +494,20 @@ class DefaultTrainer:
                 warmup_steps=self.tc.warmup_steps,
             )
         elif self.tc.lr_scheduler == "cosine":
+            by_family = getattr(self.tc, "warmup_steps_by_family", None)
+            if by_family:
+                family_warmups = {str(k): int(v) for k, v in dict(by_family).items()}
+                optim_params = self._get_optim_params()
+                group_warmups = [
+                    int(family_warmups.get(str(group.get("family", "")), self.tc.warmup_steps))
+                    for group in optim_params
+                ]
+                return get_group_cosine_warmup_scheduler_with_floor(
+                    optimizer,
+                    warmup_steps=group_warmups,
+                    total_steps=self.tc.max_steps,
+                    min_lr_by_group=[1.0e-5] * len(optim_params),
+                )
             return get_cosine_warmup_scheduler(
                 optimizer,
                 warmup_steps=self.tc.warmup_steps,

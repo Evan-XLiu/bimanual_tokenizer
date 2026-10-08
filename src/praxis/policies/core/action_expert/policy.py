@@ -124,6 +124,13 @@ class ActionExpertPolicyMixin(StatePrefixPolicyMixin):
             time_min_period=float(self.config.expert_time_min_period),
             time_max_period=float(self.config.expert_time_max_period),
             self_attn_every_n_layers=int(self.config.expert_self_attn_every_n_layers),
+            architecture=str(getattr(self.config, "expert_architecture", "smolvla")),
+            num_attention_heads=getattr(self.config, "expert_num_attention_heads", None),
+            mlp_ratio=float(getattr(self.config, "expert_mlp_ratio", 4.0)),
+            ffn_multiple_of=int(getattr(self.config, "expert_ffn_multiple_of", 256)),
+            qk_norm=bool(getattr(self.config, "expert_qk_norm", True)),
+            causal_attn=bool(getattr(self.config, "expert_causal_attn", False)),
+            context_layer_norm=bool(getattr(self.config, "expert_context_layer_norm", True)),
         )
         self.vlm_action_expert = VlmActionExpertModel(
             prefix_adapter=prefix_adapter,
@@ -201,8 +208,10 @@ class ActionExpertPolicyMixin(StatePrefixPolicyMixin):
         *,
         actions: Tensor,
         vlm_inputs: VlmInputBatch,
-        detach_prefix: bool,
+        detach_prefix: bool | None = None,
     ) -> Tensor:
+        if detach_prefix is None:
+            detach_prefix = bool(getattr(self.config, "action_expert_detach_vlm", False))
         sample = sample_flow_training_point(
             actions,
             sampling=self.config.flow_time_sampling,

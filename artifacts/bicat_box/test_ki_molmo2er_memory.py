@@ -46,10 +46,14 @@ def main():
         result["vision_gradient_checkpointing"] = True
         result["vision_dtype"] = str(next(vision.parameters()).dtype)
         trainer.model.train()
+        if "--smoke" in sys.argv[3:]:
+            trainer.tc.max_steps = 10
         batches = iter(trainer.dataloader)
         result["steps"] = []
-        # Cover lazy Adam state allocation for both CE-only and joint CE+flow.
-        for step in (0, 6000):
+        # Smoke mode runs ten optimizer steps and records the configured CE/FM
+        # losses without assuming a particular warmstart policy.
+        steps = tuple(range(10)) if "--smoke" in sys.argv[3:] else (0, 6000)
+        for step in steps:
             stage = f"train_step_{step}"
             trainer.global_step = step
             batch = next(batches)

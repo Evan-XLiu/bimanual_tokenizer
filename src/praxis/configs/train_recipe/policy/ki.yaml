@@ -3,10 +3,10 @@ trainer:
     vlm: 5.0e-5
     vision: 5.0e-5
     bridge: 5.0e-5
-    action_expert: 5.0e-5
-  lr_scheduler: constant
-  warmup_steps: 6000
+    action_expert: 1.0e-4
+  lr_scheduler: cosine
+  warmup_steps: 1000
   find_unused_parameters: true
 
 policy:
-  ce_warmstart_steps: 6000
+  ce_warmstart_steps: 0

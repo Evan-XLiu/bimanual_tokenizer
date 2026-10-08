@@ -33,10 +33,18 @@ policy:
   flow_beta_alpha: 1.5
   flow_beta_beta: 1.0
   flow_min_time: 0.001
-  expert_hidden_size: null
-  expert_width_multiplier: 0.75
-  expert_num_layers: null
-  expert_self_attn_every_n_layers: 2
+  expert_hidden_size: 768
+  expert_width_multiplier: 1.0
+  expert_num_layers: 36
+  expert_architecture: molmoact2
+  expert_num_attention_heads: 8
+  expert_mlp_ratio: 4.0
+  expert_ffn_multiple_of: 256
+  expert_qk_norm: true
+  expert_causal_attn: false
+  expert_context_layer_norm: true
+  action_expert_detach_vlm: false
+  expert_self_attn_every_n_layers: -1
   expert_dropout: 0.0
   expert_time_min_period: 0.004
   expert_time_max_period: 4.0
@@ -49,7 +57,7 @@ policy:
   block_ce_weighting: block_mean
   ce_vocab_scope: action
   name: ki_btt_molmo
-  ce_warmstart_steps: 6000
+  ce_warmstart_steps: 0
 dataset:
   name: bicat_box
   repo_id: local/bicat_box
@@ -67,8 +75,8 @@ dataset:
   video_backend: pyav
   bypass_force_cache_sync: true
 trainer:
-  max_steps: 30000
-  batch_size: 64
+  max_steps: 100000
+  batch_size: 48
   global_batch_size: null
   num_workers: 4
   prefetch_factor: 2
@@ -77,11 +85,16 @@ trainer:
   drop_n_last_frames: 0
   weight_decay: 1.0e-06
   betas:
+  - 0.9
   - 0.95
-  - 0.999
-  eps: 1.0e-08
-  lr_scheduler: constant
-  warmup_steps: 6000
+  eps: 1.0e-06
+  lr_scheduler: cosine
+  warmup_steps: 1000
+  warmup_steps_by_family:
+    vlm: 1000
+    bridge: 1000
+    action_expert: 1000
+    vision: 2000
   min_lr_ratio: 0.1
   use_ema: false
   ema_decay: 0.995
@@ -106,9 +119,9 @@ trainer:
     best:
       metric_key: val_reconst_loss
       mode: min
-      k: 3
-    recent:
       k: 2
+    recent:
+      k: 1
   use_wandb: true
   wandb_project: BiCAT_RealWorld
   wandb_entity: null
@@ -120,7 +133,7 @@ trainer:
     vlm: 5.0e-05
     vision: 5.0e-05
     bridge: 5.0e-05
-    action_expert: 5.0e-05
+    action_expert: 1.0e-04
   reconst_every: 1000
   max_reconst_batches: 100
   reconst_action_mode: policy
@@ -136,7 +149,7 @@ trainer:
 name: train_policy
 seed: 42
 device: cuda
-run_name: BiCAT_box_molmo2ER_test
+run_name: BiCAT_box_molmo2ER_full_100k
 output_dir: /scratch/xuanweiliu/bimanual_tokenizer/outputs/BiCAT_box_molmo2ER_train/manual/train
 run_mode: overwrite
 resume_checkpoint: null

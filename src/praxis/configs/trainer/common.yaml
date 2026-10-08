@@ -1,6 +1,6 @@
 # Shared trainer mechanics. Concrete optimization recipes live under train_recipe/.
-max_steps: 30000
-batch_size: 64               # per-rank DataLoader batch size unless global_batch_size is set
+max_steps: 100000
+batch_size: 48               # per-rank DataLoader batch size unless global_batch_size is set
 global_batch_size: null      # optimizer-step batch = per-rank batch * world_size * grad accumulation
 num_workers: 4
 prefetch_factor: 4  # DataLoader prefetch batches per worker (null = PyTorch default of 2)
@@ -11,12 +11,13 @@ drop_n_last_frames: 0   # final used value = max(this, action_horizon - 1)
 # Optimizer mechanics. LR ownership belongs to trainer.lr for codecs and
 # trainer.lrs for policies, supplied by train_recipe/.
 weight_decay: 1.0e-6
-betas: [0.95, 0.999]
-eps: 1.0e-8
+betas: [0.9, 0.95]
+eps: 1.0e-6
 
 # LR scheduler mechanics. Concrete values are recipe-owned.
 lr_scheduler: null
 warmup_steps: 0
+warmup_steps_by_family: null
 min_lr_ratio: 0.1
 
 # EMA

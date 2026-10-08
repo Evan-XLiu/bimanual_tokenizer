@@ -406,7 +406,7 @@ class PolicyBase(
                     norm_batch,
                     actions=norm_actions,
                     vlm_inputs=vlm_inputs,
-                    detach_prefix=True,
+                    detach_prefix=bool(self.config.action_expert_detach_vlm),
                 )
             total = flow_weight * flow_loss
             return total, {
@@ -447,7 +447,7 @@ class PolicyBase(
                     norm_batch,
                     actions=norm_actions,
                 ),
-                detach_expert_context=True,
+                detach_expert_context=bool(self.config.action_expert_detach_vlm),
                 gradient_checkpointing=bool(self.config.gradient_checkpointing),
             )
             ce_loss = compute_prepared_action_token_ce_loss_from_hidden(
@@ -485,10 +485,14 @@ class PolicyBase(
                 prefix_batch,
                 instructions=instructions,
             )
+        # The Molmo2 template emits an assistant generation marker for the
+        # no-action FM prompt.  Reuse the exact CE prefix and only remove the
+        # trailing action supervision span; this avoids tokenizer-dependent
+        # whitespace/EOS drift between separately rendered prompts.
         return _context_mask_matching_fm_prefix(
             prepared_vlm_inputs=prepared.vlm_inputs,
             prepared_prefix_mask=prepared.supervision.prefix_mask,
-            fm_vlm_inputs=fm_inputs,
+        fm_vlm_inputs=fm_inputs,
         )
 
 
@@ -512,6 +516,16 @@ def _context_mask_matching_fm_prefix(
     for row_idx in range(int(ki_ids.shape[0])):
         prefix_positions = prefix_mask[row_idx].nonzero(as_tuple=False).flatten()
         fm_tokens = fm_ids[row_idx][fm_valid_mask[row_idx]]
+        # Generation prompts may differ from the CE-rendered sequence by a
+        # final assistant boundary token.  Match the longest common prefix so
+        # the FM context remains exactly aligned with the KI stream.
+        if fm_tokens.numel() and prefix_positions.numel():
+            max_len = min(int(prefix_positions.numel()), int(fm_tokens.numel()))
+            matching = 0
+            while matching < max_len and int(ki_ids[row_idx, prefix_positions[matching]]) == int(fm_tokens[matching]):
+                matching += 1
+            if matching < int(fm_tokens.numel()) and matching >= int(prefix_positions.numel()) - 4:
+                fm_tokens = fm_tokens[:matching]
         keep_len = int(fm_tokens.numel())
         if int(prefix_positions.numel()) < keep_len:
             raise RuntimeError(
@@ -520,9 +534,15 @@ def _context_mask_matching_fm_prefix(
             )
         ki_tokens = ki_ids[row_idx][prefix_positions[:keep_len]]
         if not torch.equal(ki_tokens, fm_tokens):
+            mismatch = (ki_tokens != fm_tokens).nonzero(as_tuple=False).flatten()
+            mismatch_idx = int(mismatch[0]) if mismatch.numel() else -1
+            ki_token = int(ki_tokens[mismatch_idx]) if mismatch_idx >= 0 else -1
+            fm_token = int(fm_tokens[mismatch_idx]) if mismatch_idx >= 0 else -1
             raise RuntimeError(
                 "KI CE prefix does not start with the FM prompt prefix for row "
-                f"{row_idx}: ki={int(prefix_positions.numel())}, fm={keep_len}."
+                f"{row_idx}: ki={int(prefix_positions.numel())}, fm={keep_len}, "
+                f"first_mismatch={mismatch_idx}, ki_token={ki_token}, "
+                f"fm_token={fm_token}."
             )
         context_mask[row_idx, prefix_positions[:keep_len]] = True
     return context_mask

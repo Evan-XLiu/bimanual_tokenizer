@@ -23,6 +23,8 @@ cp "$CONFIG" "$OUT/submitted_config.yaml"
 nvidia-smi
 if [[ "$RUN_MODE" == "memory-test" ]]; then
   "$SOURCE_ROOT/.venv/bin/python" artifacts/bicat_box/test_ki_molmo2er_memory.py "$CONFIG" "$OUT"
+elif [[ "$RUN_MODE" == "smoke-test" ]]; then
+  "$SOURCE_ROOT/.venv/bin/python" artifacts/bicat_box/test_ki_molmo2er_memory.py "$CONFIG" "$OUT" --smoke
 elif [[ "$RUN_MODE" == "train" ]]; then
   "$SOURCE_ROOT/.venv/bin/python" -m praxis.scripts.train \
     --config-path "$SOURCE_ROOT/artifacts/bicat_box" --config-name ki_molmo2er_fft \
