@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-10-08T06:18:31.377441+00:00",
+  "status": "partial_live_virtual_follow_verified",
+  "hardware_motion_enabled": false,
+  "scope": "Quest physical controllers -> relative clutch -> official IK -> MeshCat virtual joints",
+  "snapshot": ".local/unitree_g1/experiments/virtual_live_20261008/snapshot-001",
+  "snapshot_sha256": {
+    "events.jsonl": "9611d32b6ffa6116b84a7d64f27d3917eea2bec986df78a94a74d6fd23021d1e",
+    "joints.jsonl": "18ce9284c6f80b69f71cac98b8db9af020c52ffb729e6c37829a6639dfadea94",
+    "status.json": "d99149f49d15779764c61bcfc51d6249d238adbcab11dabd00628667530a9aef",
+    "input_status.json": "8a08c211c7d7b10042fe4efcdbf250ecb7eb0b68d0e5245f4e522501ed63c933"
+  },
+  "accepted_ik_frames": 473,
+  "first_to_last_accepted_frame_s": 97.51151246500012,
+  "left_max_joint_range_rad": 1.618046819078911,
+  "right_max_joint_range_rad": 2.161875861524903,
+  "max_display_joint_step_rad": 0.07500000000000007,
+  "ik_rejections_at_snapshot": 5,
+  "input_status": {
+    "state": "receiving",
+    "connection_epoch": 2,
+    "counts": {
+      "CAMERA_MOVE": 9612,
+      "CONTROLLER_MOVE": 2591
+    },
+    "invalid_events": 0,
+    "receive_fresh": true,
+    "tracking_validity": "not_exposed_by_upstream",
+    "motion_enabled": false,
+    "queue_dropped": 0
+  },
+  "software_checks": {
+    "python_tests": 27,
+    "python_passed": 27,
+    "javascript_tests": 3,
+    "javascript_passed": 3,
+    "synthetic_cli_accepted_frames": 58,
+    "synthetic_cli_ik_failures": 0,
+    "continuous_ik_test_frames": 40,
+    "browser_mesh_render": "visually_inspected"
+  },
+  "observed_stop_reasons": [
+    "unreachable_target",
+    "relative_workspace",
+    "stale"
+  ],
+  "pending": [
+    "systematic per-axis and rotation validation",
+    "deliberate tracking loss / recenter / disconnect tests",
+    "10 minute stability",
+    "collision / dynamics validation"
+  ],
+  "session_still_running": true,
+  "operator_visual_confirmation": "User confirmed: 看到了，双臂可以跟随"
+}

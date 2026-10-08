@@ -55,10 +55,11 @@ class OfficialCallbackTests(unittest.TestCase):
         import asyncio
         import multiprocessing as mp
         import queue
+        import sys
         import tempfile
         from types import SimpleNamespace
         from unittest.mock import patch
-        with tempfile.TemporaryDirectory() as tmp, patch('multiprocessing.Process.start'):
+        with tempfile.TemporaryDirectory() as tmp, patch('multiprocessing.Process.start'), patch.object(sys, 'meta_path', sys.meta_path.copy()):
             args = SimpleNamespace(output=Path(tmp), cert=Path(tmp)/'cert', key=Path(tmp)/'key', timeout=1)
             events = queue.Queue()
             tv = m.create_tv(args, events, mp.Value('L', 0))

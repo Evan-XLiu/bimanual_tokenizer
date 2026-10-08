@@ -1,0 +1,165 @@
+{
+  "recorded_at_utc": "2026-10-08T06:23:20.945908+00:00",
+  "status": "stopped_by_operator",
+  "archive": ".local/unitree_g1/experiments/virtual_live_20261008",
+  "hardware_motion_enabled": false,
+  "operator_visual_confirmation": "用户确认：看到了，双臂可以跟随",
+  "virtual_summary": {
+    "end_reason": "operator_stop",
+    "solved_frames": 1172,
+    "ik_failures": 8,
+    "hardware_motion_enabled": false,
+    "physical_axis_acceptance": "pending_operator"
+  },
+  "input_summary": {
+    "state": "stale",
+    "connection_epoch": 3,
+    "counts": {
+      "CAMERA_MOVE": 11443,
+      "CONTROLLER_MOVE": 3632
+    },
+    "invalid_events": 0,
+    "receive_fresh": false,
+    "tracking_validity": "not_exposed_by_upstream",
+    "motion_enabled": false,
+    "end_reason": "operator_stop",
+    "duration_s": 743.0911008369999,
+    "queue_dropped": 0,
+    "field_acceptance": "pending_operator_review",
+    "controller_receive_gap_s": {
+      "max": 1.9856502340003317,
+      "p95": 0.038568790999761404
+    }
+  },
+  "raw_event_counts": {
+    "CAMERA_MOVE": 11443,
+    "CONTROLLER_MOVE": 3632
+  },
+  "connection_ids": 3,
+  "controller_first_to_last_s": 150.3739904429999,
+  "controller_receive_gap_same_connection_s": {
+    "min": 0.00031470600015381933,
+    "p50": 0.033003282499976194,
+    "p95": 0.0385763457999019,
+    "max": 1.9856502340003317
+  },
+  "controller_gaps_over_250ms": 3,
+  "controller_gaps_over_1s": 1,
+  "controller_segments_250ms": {
+    "split_gap_s": 0.25,
+    "segments": 5,
+    "summed_segment_duration_s": 118.91262178599891,
+    "longest": {
+      "events": 1834,
+      "duration_s": 60.62009326999987
+    }
+  },
+  "controller_segments_1s": {
+    "split_gap_s": 1,
+    "segments": 3,
+    "summed_segment_duration_s": 119.87907841699916,
+    "longest": {
+      "events": 1834,
+      "duration_s": 60.62009326999987
+    }
+  },
+  "accepted_ik_first_to_last_s": 129.6331873019999,
+  "accepted_ik_position_residual_m": {
+    "left": {
+      "min": 0.000251285024759377,
+      "p50": 0.0046345766237834395,
+      "p95": 0.04762288240833341,
+      "max": 0.07795030192209328
+    },
+    "right": {
+      "min": 0.0004376722513714492,
+      "p50": 0.004157965808881267,
+      "p95": 0.03116796052722039,
+      "max": 0.07848817949983176
+    }
+  },
+  "virtual_joints": {
+    "names_order": "left 7, right 7; pinned G1 reduced model order",
+    "min_rad": [
+      -1.053851286810669,
+      -0.6374162219294842,
+      -0.2983044551379728,
+      -0.3222531214204568,
+      -0.18402389840030614,
+      -0.5637199848729182,
+      -0.0036321027619758586,
+      -1.5061336998678445,
+      -1.1042889212981506,
+      -0.9450683098073156,
+      -1.0183131471628875,
+      -1.9712357303537333,
+      -0.25546270989549746,
+      -1.6144011886499192
+    ],
+    "max_rad": [
+      0.27250830244728635,
+      0.9043286499901452,
+      0.9374941145070692,
+      1.2995365545205353,
+      1.3806224843178692,
+      0.7544787045294827,
+      1.6144147163169351,
+      0.20435480616480556,
+      1.012990174781899,
+      0.7049134557726253,
+      1.143562714362016,
+      0.1452071939140256,
+      1.6067532927457835,
+      -0.0290737764825852
+    ],
+    "range_rad": [
+      1.3263595892579554,
+      1.5417448719196294,
+      1.235798569645042,
+      1.6217896759409922,
+      1.5646463827181754,
+      1.318198689402401,
+      1.618046819078911,
+      1.71048850603265,
+      2.1172790960800496,
+      1.649981765579941,
+      2.161875861524903,
+      2.116442924267759,
+      1.862216002641281,
+      1.585327412167334
+    ],
+    "max_step_rad": 0.07500000000000007,
+    "all_finite": true
+  },
+  "log_integrity": {
+    "all_jsonl_lines_parse": true,
+    "summary_counts_match_logs": true,
+    "accepted_timestamps_strictly_increasing": true
+  },
+  "observed_stop_reasons": [
+    "unreachable_target",
+    "relative_workspace",
+    "stale"
+  ],
+  "limitations": [
+    "Service wall duration includes waiting and pauses; it is not continuous tracking duration.",
+    "Receive intervals use host clock, not device sample timestamps or end-to-end latency.",
+    "IK residuals are for accepted candidates before display velocity limiting.",
+    "Eight IK rejections are counted; exact per-cause totals and other stop counts were not persisted by this version.",
+    "No dynamics, collision, real-robot action or physical axis calibration acceptance."
+  ],
+  "remaining": [
+    "10 minute continuous input stability",
+    "systematic physical axis/scale and rotation validation",
+    "deliberate recenter, tracking-loss and disconnect tests"
+  ],
+  "evidence_sha256": {
+    "session.json": "eb9e4f54e7521b3d691d1fd9b446d8186a0da0c9cef62e79dd85f94a450fe495",
+    "summary.json": "56f5a4a538e035bd473ba087174a5ebb3bd2871244089b8b9a95b780875e47ad",
+    "joints.jsonl": "ccad136b28efa6a7f511cbfe9114c3f17860004857a7f424716d3fc22c830eed",
+    "input/session.json": "681fb2e748137f901db5cd2c31300a61c7874f11fce062e1357e5a8cb76d8764",
+    "input/events.jsonl": "f4c55d584c1c13b6c0bf221c4dc7f5b491b8ca5e3d2c553b93e94a61521cbe2d",
+    "input/summary.json": "0cbc8048946b51489adea951c538f671fbfe299133750cf5c3705efae68049d8",
+    "input.log": "c7c6533d099fbfc37efe16d02c0896526309fa08d9a26849561bd3a9e318bf71"
+  }
+}

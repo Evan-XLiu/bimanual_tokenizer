@@ -1,6 +1,6 @@
 # G1 电脑网线直连接入
 
-电脑直连 G1 的只读状态接收已经验证，上肢控制尚未验证。2026-10-07 起按[更新计划](../plans/unitree_g1_vr_to_real_plan.md)，先固定官方 `xr_teleoperate` 基线，完成 Quest 输入、显示与 IK/仿真验证，再封装官方控制器接入真机。[Quest 原始输入工具](quest_input.md)保留为诊断入口。只读通过不等于运动控制通过。
+电脑直连 G1 的只读状态接收已经验证，上肢控制尚未验证。2026-10-07 起按[更新计划](../plans/unitree_g1_vr_to_real_plan.md)，先固定官方 `xr_teleoperate` 基线，完成 Quest 输入、显示与 IK/仿真验证，再封装官方控制器接入真机。Quest 采集与诊断统一使用[官方 TeleVuer 输入工具](televuer_input.md)。只读通过不等于运动控制通过。
 
 官方 XR 独立环境与源码锁定已完成，版本及离线检查见[软件基线](unitree_g1_baseline.md)。这不改变下述真机控制与夹爪待核验状态。
 
