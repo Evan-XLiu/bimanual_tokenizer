@@ -27,8 +27,88 @@ Install only the extras needed for your workflow. For the quickstart:
 uv sync --group dev --extra libero --extra pali --extra serving --extra logging
 ```
 
-Common extras include `pali`, `qwen`, `smol`, `serving`, `logging`, `libero`,
+Common extras include `pali`, `qwen`, `smol`, `molmo`, `serving`, `logging`, `libero`,
 `metaworld`, `mshab`, `robocasa`, `robomimic`, `simpler`, and `slurm`.
+
+### Hopper / BiCAT Molmo2-ER Environment
+
+The current training environment uses Python 3.10.21, PyTorch 2.7.1,
+torchvision 0.22.1, Transformers 4.57.6, LeRobot 0.4.4, datasets 4.1.1,
+NumPy 2.2.5, PEFT 0.18.1, PyAV 15.1.0, and wandb 0.24.2. The commands below
+create a matching Python environment in a fresh checkout:
+
+```bash
+git clone https://github.com/Evan-XLiu/bimanual_tokenizer.git
+cd bimanual_tokenizer
+git switch real_world
+uv python install 3.10.21
+uv sync --python 3.10.21 --group dev --extra molmo --extra pali --extra logging
+uv pip install --python .venv/bin/python \
+  'torch==2.7.1' 'torchvision==0.22.1' 'transformers==4.57.6' \
+  'lerobot==0.4.4' 'datasets==4.1.1' 'numpy==2.2.5' \
+  'peft==0.18.1' 'av==15.1.0' 'wandb==0.24.2'
+```
+
+These pins record the installed core versions, rather than a complete lock of
+every transitive dependency. A later `uv sync` can replace these overrides;
+the cluster scripts invoke `.venv/bin/python` directly.
+
+Hopper jobs use the cluster-provided Singularity image for the CUDA runtime,
+together with the repository's `.venv`. Run the following check inside a GPU
+compute allocation:
+
+```bash
+module load singularity/1.3.1
+singularity exec --nv --bind /scratch:/scratch \
+  /app1/common/singularity-img/hopper/pytorch/pytorch_2.7.0_cuda_12.8.sif \
+  .venv/bin/python -c "import torch, transformers, praxis; print(torch.__version__, torch.version.cuda, transformers.__version__); print('CUDA available:', torch.cuda.is_available())"
+```
+
+The image name contains PyTorch 2.7.0; the Python environment currently supplies
+PyTorch 2.7.1. The image path and PBS project are specific to this cluster.
+
+Prepare the model cache from a machine with network access before launching
+offline jobs:
+
+```bash
+export HF_HOME="$PWD/.cache/huggingface"
+export HF_MODULES_CACHE="$HF_HOME/modules"
+.venv/bin/hf download allenai/Molmo2-ER --local-dir .cache/models/Molmo2-ER
+```
+
+For PaliGemma, authenticate with `.venv/bin/hf auth login` using an account with
+access to the model, then cache it with
+`.venv/bin/hf download google/paligemma2-3b-mix-224`. Molmo loads its native
+processor/model code with `trust_remote_code=True`.
+
+Edit [the BiCAT training config](artifacts/bicat_box/ki_molmo2er_fft.yaml) for
+your filesystem:
+
+- `policy.vlm_model_name`: local Molmo2-ER model directory.
+- `dataset.root`: LeRobot dataset directory containing `meta/info.json`, data,
+  and videos. Its default is `${BICAT_DATA_ROOT}/box`, with a local fallback.
+- `policy.action_tokenizer.pretrained_path`: trained BTT codec's
+  `pretrained_model` directory, including its weights and normalization state.
+- `trainer.wandb_project`: logging destination; authenticate with
+  `.venv/bin/wandb login`, or set `trainer.use_wandb: false`.
+
+The launcher sets `HF_HUB_OFFLINE=1`, `HF_DATASETS_OFFLINE=1`,
+`OMP_NUM_THREADS=4`, `MKL_NUM_THREADS=4`, and
+`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`. It also creates a per-job
+temporary directory under `.t/`. Model and dataset files must already be local.
+
+Submit from the repository root:
+
+```bash
+qsub artifacts/bicat_box/test_ki_molmo2er_memory.pbs
+qsub artifacts/bicat_box/train_ki_molmo2er_fft.pbs
+```
+
+The training PBS script requests one H200, 12 CPUs, and 225 GB host memory.
+It runs [run_ki_molmo2er.sh](artifacts/bicat_box/run_ki_molmo2er.sh) inside the
+container and writes training outputs under
+`outputs/BiCAT_box_molmo2ER_train/<PBS_JOBID>/`. The commands above submit jobs;
+use the memory test to check the chosen batch size before a full training run.
 
 ## Quickstart
 
