@@ -107,6 +107,7 @@ class MolmoPolicyBase(PolicyBase):
             obs,
             image_features=self.io.image_features,
             as_uint8=True,
+            channels_last=True,
         )
         bsz = int(image_batch.shape[0])
         num_images = int(image_batch.shape[1])
@@ -135,6 +136,7 @@ class MolmoPolicyBase(PolicyBase):
             processor=self.processor,
             text=texts,
             image_batch=image_batch,
+            channels_last=True,
             padding=True,
             return_tensors="pt",
         )

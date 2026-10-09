@@ -135,7 +135,9 @@ class TrainLoopEngine:
                 train_info_weights.clear()
 
             checkpoint_due = bool(
-                checkpoint_every and trainer.global_step % checkpoint_every == 0
+                checkpoint_every
+                and trainer.global_step >= int(getattr(trainer.tc, "checkpoint_start_step", 0))
+                and trainer.global_step % checkpoint_every == 0
             )
             if checkpoint_due:
                 trainer.save_latest_checkpoint()

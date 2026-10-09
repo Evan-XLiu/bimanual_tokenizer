@@ -2057,7 +2057,10 @@ def test_train_loop_engine_skips_replay_for_completed_resume_checkpoint_phase(
     assert events == ["latest:1", "recent:1"]
 
 
-def test_train_loop_engine_respects_zero_checkpoint_every(tmp_path: Path) -> None:
+@pytest.mark.parametrize("checkpoint_every,checkpoint_start_step", [(0, 0), (1, 2)])
+def test_train_loop_engine_respects_zero_or_delayed_checkpoint(
+    tmp_path: Path, checkpoint_every: int, checkpoint_start_step: int
+) -> None:
     trainer = DefaultTrainer.__new__(DefaultTrainer)
     stub = cast(Any, trainer)
     runtime = _StubRuntime(None)
@@ -2071,7 +2074,8 @@ def test_train_loop_engine_respects_zero_checkpoint_every(tmp_path: Path) -> Non
         {
             "max_steps": 1,
             "log_every": 999,
-            "checkpoint_every": 0,
+            "checkpoint_every": checkpoint_every,
+            "checkpoint_start_step": checkpoint_start_step,
             "val_every": 1,
             "checkpoint_dir": str(tmp_path / "run" / "checkpoints"),
             "distributed_strategy": "ddp",

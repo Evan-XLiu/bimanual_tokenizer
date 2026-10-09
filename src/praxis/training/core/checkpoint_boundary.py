@@ -74,6 +74,10 @@ class CheckpointBoundary:
             return False
         if self.trainer.global_step <= 0:
             return False
+        if self.trainer.global_step < int(
+            getattr(getattr(self.trainer, "tc", None), "checkpoint_start_step", 0)
+        ):
+            return False
         if (
             not self.checkpoint_every
             or self.trainer.global_step % self.checkpoint_every != 0

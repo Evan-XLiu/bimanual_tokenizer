@@ -21,10 +21,18 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 CONFIG="${CONFIG_OVERRIDE:-$SOURCE_ROOT/artifacts/bicat_box/ki_molmo2er_fft.yaml}"
 cp "$CONFIG" "$OUT/submitted_config.yaml"
 nvidia-smi
+if [[ "$RUN_MODE" != train ]]; then
+  nvidia-smi --query-gpu=timestamp,index,uuid,name,memory.used,memory.total,utilization.gpu \
+    --format=csv --loop-ms=1000 > "$OUT/gpu_memory.csv" 2> "$OUT/gpu_monitor.err" &
+  GPU_MONITOR_PID=$!
+  trap 'kill "$GPU_MONITOR_PID" 2>/dev/null || true; wait "$GPU_MONITOR_PID" 2>/dev/null || true' EXIT
+fi
 if [[ "$RUN_MODE" == "memory-test" ]]; then
   "$SOURCE_ROOT/.venv/bin/python" artifacts/bicat_box/test_ki_molmo2er_memory.py "$CONFIG" "$OUT"
 elif [[ "$RUN_MODE" == "smoke-test" ]]; then
   "$SOURCE_ROOT/.venv/bin/python" artifacts/bicat_box/test_ki_molmo2er_memory.py "$CONFIG" "$OUT" --smoke
+elif [[ "$RUN_MODE" == "single-resize-test" ]]; then
+  "$SOURCE_ROOT/.venv/bin/python" artifacts/bicat_box/test_ki_molmo2er_memory.py "$CONFIG" "$OUT" --smoke --single-resize
 elif [[ "$RUN_MODE" == "train" ]]; then
   "$SOURCE_ROOT/.venv/bin/python" -m praxis.scripts.train \
     --config-path "$SOURCE_ROOT/artifacts/bicat_box" --config-name ki_molmo2er_fft \

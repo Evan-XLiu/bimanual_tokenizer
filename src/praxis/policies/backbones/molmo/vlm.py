@@ -6,14 +6,16 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+import logging
 from types import MethodType
+from typing import Any, cast
 
 import torch
 from torch import Tensor
 from torch.utils.checkpoint import checkpoint
 from transformers import AutoModelForImageTextToText, AutoProcessor
 
+from praxis.policies.backbones.molmo.single_resize import configure_single_resize
 from praxis.policies.core.vlm.dtypes import parse_vlm_dtype
 
 MOLMO2_ER_MODEL_NAME = "allenai/Molmo2-ER"
@@ -85,6 +87,11 @@ def load_molmo_vlm(model_name: str, dtype_str: str) -> tuple[Any, Any]:
     )
     if getattr(processor, "tokenizer", None) is not None:
         processor.tokenizer.padding_side = "left"
+    configure_single_resize(processor, vlm)
+    logging.getLogger(__name__).info(
+        "Molmo images: single resize to %s, one crop per camera; existing ViT weights retained.",
+        processor.image_processor.size,
+    )
     return vlm, processor
 
 
@@ -108,6 +115,7 @@ def run_molmo_processor(
     processor: Any,
     text: list[str] | str | None,
     image_batch: Tensor,
+    channels_last: bool = False,
     padding: bool = True,
     return_tensors: str = "pt",
 ) -> Any:
@@ -123,7 +131,8 @@ def run_molmo_processor(
     nested_images = [
         [
             image_batch[i, j].permute(1, 2, 0).contiguous()
-            if image_batch[i, j].ndim == 3
+            if not channels_last
+            and image_batch[i, j].ndim == 3
             and int(image_batch[i, j].shape[0]) in (1, 3, 4)
             else image_batch[i, j]
             for j in range(int(image_batch.shape[1]))

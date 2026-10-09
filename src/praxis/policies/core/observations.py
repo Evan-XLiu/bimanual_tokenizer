@@ -33,8 +33,9 @@ def stack_observation_images(
     *,
     image_features: Sequence[Any],
     as_uint8: bool,
+    channels_last: bool = False,
 ) -> Tensor:
-    """Convert observation image tensors to a ``(B, N, C, H, W)`` batch."""
+    """Stack images as BNCHW, or BNHWC when ``channels_last=True``."""
     camera_keys = [feat.key for feat in image_features]
     if not camera_keys:
         first_tensor = next(
@@ -46,7 +47,9 @@ def stack_observation_images(
             )
         dtype = torch.uint8 if as_uint8 else torch.float32
         return torch.empty(
-            (int(first_tensor.shape[0]), 0, 3, 1, 1),
+            (int(first_tensor.shape[0]), 0, 1, 1, 3)
+            if channels_last
+            else (int(first_tensor.shape[0]), 0, 3, 1, 1),
             dtype=dtype,
             device=first_tensor.device,
         )
@@ -58,8 +61,12 @@ def stack_observation_images(
             imgs = imgs[:, -1]
         # LeRobot video decoding yields channels-last images (B, H, W, C),
         # while tensor/image sources may already be channels-first (B, C, H, W).
-        if imgs.dim() == 4 and int(imgs.shape[-1]) in (1, 3, 4):
-            imgs = imgs.permute(0, 3, 1, 2).contiguous()
+        if imgs.dim() == 4:
+            input_channels_last = int(imgs.shape[-1]) in (1, 3, 4)
+            if channels_last and not input_channels_last:
+                imgs = imgs.permute(0, 2, 3, 1).contiguous()
+            elif not channels_last and input_channels_last:
+                imgs = imgs.permute(0, 3, 1, 2).contiguous()
         if as_uint8:
             imgs = (
                 (imgs * 255.0).round().clamp(0, 255)
@@ -70,13 +77,15 @@ def stack_observation_images(
         camera_batches.append(imgs)
     # Different cameras may record different resolutions (e.g. BiCAT YAM).
     # Center-pad to a common canvas without stretching either camera view.
-    height = max(int(imgs.shape[-2]) for imgs in camera_batches)
-    width = max(int(imgs.shape[-1]) for imgs in camera_batches)
+    height_axis, width_axis = (-3, -2) if channels_last else (-2, -1)
+    height = max(int(imgs.shape[height_axis]) for imgs in camera_batches)
+    width = max(int(imgs.shape[width_axis]) for imgs in camera_batches)
     padded_batches: list[Tensor] = []
     for imgs in camera_batches:
-        dh, dw = height - imgs.shape[-2], width - imgs.shape[-1]
+        dh, dw = height - imgs.shape[height_axis], width - imgs.shape[width_axis]
         if dh or dw:
-            imgs = F.pad(imgs, (dw // 2, dw - dw // 2, dh // 2, dh - dh // 2))
+            padding = (dw // 2, dw - dw // 2, dh // 2, dh - dh // 2)
+            imgs = F.pad(imgs, (0, 0, *padding) if channels_last else padding)
         padded_batches.append(imgs)
     return torch.stack(padded_batches, dim=1)
 

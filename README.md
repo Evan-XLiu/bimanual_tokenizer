@@ -93,9 +93,9 @@ export TRAIN_OUTPUT="$PWD/outputs/local_molmo_4gpu_$(date +%Y%m%d-%H%M%S)"
   "output_dir=$TRAIN_OUTPUT" \
   run_name=BiCAT_box_molmo2ER_local_4gpu \
   trainer.distributed_strategy=ddp \
-  trainer.batch_size=1 \
-  trainer.global_batch_size=48 \
-  trainer.gradient_accumulation_steps=12 \
+  trainer.batch_size=32 \
+  trainer.global_batch_size=128 \
+  trainer.gradient_accumulation_steps=1 \
   trainer.num_workers=2 \
   trainer.val_batch_size=1 \
   trainer.use_wandb=false \
@@ -104,10 +104,10 @@ export TRAIN_OUTPUT="$PWD/outputs/local_molmo_4gpu_$(date +%Y%m%d-%H%M%S)"
 
 This reuses the BiCAT MolmoAct2-expert configuration while overriding its
 machine-specific model, dataset, checkpoint, and output paths. Each GPU uses a
-microbatch of one; the effective batch is `4 GPUs * 1 * 12 = 48`. This is a
-starting point, not a memory guarantee for all GPU models. If memory allows,
-try batch 2 / accumulation 6 or batch 4 / accumulation 3 for the same effective
-batch. `trainer.global_batch_size` determines the per-GPU batch from GPU count
+batch of 32 with no gradient accumulation; the effective batch is
+`4 GPUs * 32 * 1 = 128`. If GPU memory is insufficient, use batch 16 /
+accumulation 2 or batch 8 / accumulation 4 to retain the same effective batch.
+`trainer.global_batch_size` determines the per-GPU batch from GPU count
 and accumulation. `trainer.num_workers=2` means two workers per GPU process,
 eight workers in total.
 

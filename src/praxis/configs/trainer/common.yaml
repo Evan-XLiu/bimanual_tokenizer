@@ -40,6 +40,7 @@ fsdp_cpu_offload: false
 log_every: 200            # log train metrics every N steps
 val_every: 1000           # run validation every N steps
 checkpoint_every: 5000    # refresh checkpoints/latest every N steps
+checkpoint_start_step: 0 # earliest periodic checkpoint; final save is unconditional
 checkpoint_dir: ${output_dir}/checkpoints
 local_log_path: ${output_dir}/train_metrics.jsonl
 
