@@ -30,7 +30,7 @@ uv sync --group dev --extra libero --extra pali --extra serving --extra logging
 Common extras include `pali`, `qwen`, `smol`, `molmo`, `serving`, `logging`, `libero`,
 `metaworld`, `mshab`, `robocasa`, `robomimic`, `simpler`, and `slurm`.
 
-### Hopper / BiCAT Molmo2-ER Environment
+### Python Environment for BiCAT / Molmo2-ER
 
 The current training environment uses Python 3.10.21, PyTorch 2.7.1,
 torchvision 0.22.1, Transformers 4.57.6, LeRobot 0.4.4, datasets 4.1.1,
@@ -52,6 +52,80 @@ uv pip install --python .venv/bin/python \
 These pins record the installed core versions, rather than a complete lock of
 every transitive dependency. A later `uv sync` can replace these overrides;
 the cluster scripts invoke `.venv/bin/python` directly.
+
+### Train on Your Own Linux Machine (Four NVIDIA GPUs)
+
+Use the Python environment above directly; PBS, cluster modules, and
+Singularity are only needed for Hopper. Check the driver and Python CUDA
+runtime before training:
+
+```bash
+nvidia-smi
+.venv/bin/python -c "import torch; print(torch.__version__, torch.version.cuda); print('GPUs:', torch.cuda.device_count()); print('BF16:', torch.cuda.is_bf16_supported())"
+```
+
+The example uses BF16-capable GPUs and a driver compatible with the installed
+PyTorch CUDA build. GPU memory is separate on each card: DDP keeps a model
+replica on every GPU. Four cards do not combine their memory into one pool.
+
+Download Molmo2-ER as described below and copy your LeRobot dataset and trained
+BTT checkpoint onto this machine. From the repository root, replace these
+example paths with absolute paths on your machine:
+
+```bash
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+export HF_HOME="$PWD/.cache/huggingface"
+export HF_MODULES_CACHE="$HF_HOME/modules"
+export OMP_NUM_THREADS=4
+export MKL_NUM_THREADS=4
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export BICAT_BOX_ROOT=/data/BiCAT-BimanualYAM-Dataset/box
+export BTT_CHECKPOINT=/data/checkpoints/btt/pretrained_model
+export MOLMO_MODEL="$PWD/.cache/models/Molmo2-ER"
+export TRAIN_OUTPUT="$PWD/outputs/local_molmo_4gpu_$(date +%Y%m%d-%H%M%S)"
+
+.venv/bin/torchrun --standalone --nnodes=1 --nproc_per_node=4 \
+  -m praxis.scripts.train \
+  --config-path "$PWD/artifacts/bicat_box" --config-name ki_molmo2er_fft \
+  "policy.vlm_model_name=$MOLMO_MODEL" \
+  "policy.action_tokenizer.pretrained_path=$BTT_CHECKPOINT" \
+  "dataset.root=$BICAT_BOX_ROOT" \
+  "output_dir=$TRAIN_OUTPUT" \
+  run_name=BiCAT_box_molmo2ER_local_4gpu \
+  trainer.distributed_strategy=ddp \
+  trainer.batch_size=1 \
+  trainer.global_batch_size=48 \
+  trainer.gradient_accumulation_steps=12 \
+  trainer.num_workers=2 \
+  trainer.val_batch_size=1 \
+  trainer.use_wandb=false \
+  trainer.max_steps=5000
+```
+
+This reuses the BiCAT MolmoAct2-expert configuration while overriding its
+machine-specific model, dataset, checkpoint, and output paths. Each GPU uses a
+microbatch of one; the effective batch is `4 GPUs * 1 * 12 = 48`. This is a
+starting point, not a memory guarantee for all GPU models. If memory allows,
+try batch 2 / accumulation 6 or batch 4 / accumulation 3 for the same effective
+batch. `trainer.global_batch_size` determines the per-GPU batch from GPU count
+and accumulation. `trainer.num_workers=2` means two workers per GPU process,
+eight workers in total.
+
+For an initial five-update smoke run, use the same command with
+`trainer.max_steps=5 trainer.val_every=0 trainer.reconst_every=0` and a fresh
+output directory. The full command retains validation and reconstruction.
+To resume, pass `run_mode=resume` and
+`resume_checkpoint=/absolute/path/to/checkpoints/latest`, using a complete
+trainer checkpoint rather than its inference-only `pretrained_model` folder.
+
+If the model replica still does not fit, reduce memory requirements with
+`policy.freeze_vision_encoder=true`, or investigate the supported FSDP strategy;
+freezing changes which parameters are trained. Keep gradient checkpointing
+enabled initially. Enable wandb with `trainer.use_wandb=true` after login.
+Set `HF_HUB_OFFLINE=1` only after the model cache is complete. Output directories
+must be unique for new runs because the default run mode is `overwrite`.
+
+### Hopper Runtime and Model Cache
 
 Hopper jobs use the cluster-provided Singularity image for the CUDA runtime,
 together with the repository's `.venv`. Run the following check inside a GPU
