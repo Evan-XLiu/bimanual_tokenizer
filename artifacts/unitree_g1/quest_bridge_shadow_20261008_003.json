@@ -1,0 +1,86 @@
+{
+  "scope": "Quest live input to real-feedback shadow executor; no motor publisher",
+  "summary": {
+    "unload_submitted": false,
+    "physical_unload_verified": false,
+    "error": "quest_input: Stale or future Quest target",
+    "command_frames": 836,
+    "phase": "FAULT",
+    "elapsed_s": 8.711377302000074,
+    "release_reason": "quest_input: Stale or future Quest target",
+    "first_fault": {
+      "reason": "quest_input: Stale or future Quest target",
+      "phase": "ACTIVE",
+      "last_step_time": 6945.20568198,
+      "gain_scale": 1.0,
+      "feedback_received": 6945.216355275,
+      "tracking_error_rad": [
+        0.03986369902854396,
+        0.022772421462608668,
+        0.012835730706067125,
+        0.04769289872635585,
+        0.0064642857964170575,
+        0.0038446610018797733,
+        0.021878504359237258,
+        0.007163878053324229,
+        0.003519927357625581,
+        0.005647858659513255,
+        0.033005575286180866,
+        0.0010548842633498479,
+        0.02160558822385316,
+        0.002181890137042619
+      ],
+      "tracking_exceeded_arm_indices": []
+    },
+    "hardware_motion_enabled": false
+  },
+  "worker_error": {
+    "error": "ValueError: IK exceeds initial-pose joint envelope"
+  },
+  "input_summary": {
+    "state": "receiving",
+    "connection_epoch": 3,
+    "counts": {
+      "CAMERA_MOVE": 1717,
+      "CONTROLLER_MOVE": 693
+    },
+    "invalid_events": 0,
+    "receive_fresh": true,
+    "tracking_validity": "not_exposed_by_upstream",
+    "motion_enabled": false,
+    "end_reason": "operator_stop",
+    "duration_s": 117.76625000099921,
+    "queue_dropped": 0,
+    "field_acceptance": "pending_operator_review",
+    "controller_receive_gap_s": {
+      "max": 0.06011527700047736,
+      "p95": 0.038112925999485014
+    }
+  },
+  "ik_solved_proposals": 129,
+  "max_ik_receive_to_result_s": 0.014568848000635626,
+  "max_ik_position_error_m": 0.012720444153402361,
+  "max_command_excursion_rad": 0.04769289872635585,
+  "interpretation": "Dynamic proposals reached the bounded executor; worker stopped on an out-of-envelope candidate, parent subsequently latched stale target. New code preserves worker rejection reason directly. Limits unchanged.",
+  "archive": ".local/unitree_g1/experiments/quest_bridge_shadow_20261008_003",
+  "sha256": {
+    "worker_error.json": "83144808b7d66766f1e2c66e379eb3584e10471e6f8f2e12aeb583deb0f17163",
+    "ik_ready.json": "041f8d9a15af1d12223df562731f7fe753cec3b9e3e2a5c9f0b2787f3f9e8bbb",
+    "proposals.jsonl": "21fe66f07b3a012f3e18c1e3c2cddb1c0a96c641ce70ae8118189ddca23f9ba0",
+    "summary.json": "365abe3ae1208e3923593e778b87f6b27bddf1d136798f4ad73d2e698c481acb",
+    "feedback.json": "b2370378d45ccebbab297fff49c8fb7e20d1a620faab06305778211bff2b8348",
+    "target.json": "6d669b2150791c4494570aaf96daf4d3bccfca9f03febbb8858c0a6345d07cb2",
+    "input.log": "73ba8a0956d282cb73687b89aba4180eb3be984fe8558cf33fa9c6301df9a7b7",
+    "commands.jsonl": "7ac37dee1b5de47427b84ee5bbe1edf434602d945e11c2087042d5880beb0ea7",
+    "session.json": "5cd1e6abbb900eff19d88053eee45fe4e5bbf2252d0cdbf05ccc7d549e8079af",
+    "input/status.json": "a386b992b7deca7f3e508900c8a64359bb033f611dd73d76b0e2871ffd465063",
+    "input/summary.json": "d97de1435c8eb94fc544608aa24b112d2daf26912f7d9be195f7382d1ab80d3a",
+    "input/events.jsonl": "9fcf758ec09d4898ccb8a575525a711640fae3aa50ecfde90226dce5bed7b315",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76"
+  },
+  "limitations": [
+    "No hardware motion.",
+    "No completed physical-axis acceptance.",
+    "No collision or continuous-stability acceptance."
+  ]
+}

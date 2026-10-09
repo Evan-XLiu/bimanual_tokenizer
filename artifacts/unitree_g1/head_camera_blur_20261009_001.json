@@ -1,0 +1,119 @@
+{
+  "original": {
+    "sharpness": 0,
+    "auto_exposure": 3,
+    "exposure": 156
+  },
+  "restored": {
+    "sharpness": 0,
+    "auto_exposure": 3,
+    "exposure": 156
+  },
+  "captures": [
+    {
+      "name": "baseline",
+      "shape": [
+        1200,
+        3840,
+        3
+      ],
+      "controls": {
+        "sharpness": 0,
+        "auto_exposure": 3,
+        "exposure": 156
+      },
+      "mean": 117.15307703993055,
+      "laplacian_variance": 7.923190103922523
+    },
+    {
+      "name": "sharpness7",
+      "shape": [
+        1200,
+        3840,
+        3
+      ],
+      "controls": {
+        "sharpness": 7,
+        "auto_exposure": 3,
+        "exposure": 156
+      },
+      "mean": 109.3483381076389,
+      "laplacian_variance": 9.684387493971084
+    },
+    {
+      "name": "short_exposure",
+      "shape": [
+        1200,
+        3840,
+        3
+      ],
+      "controls": {
+        "sharpness": 0,
+        "auto_exposure": 1,
+        "exposure": 50
+      },
+      "mean": 6.288053602430556,
+      "laplacian_variance": 1.177866530589869
+    }
+  ],
+  "operator_external_optics": "User reports clean, no protective film",
+  "focus_controls_exposed": false,
+  "uncompressed_check": {
+    "format": "YUYV",
+    "shape": [
+      1200,
+      3840,
+      3
+    ],
+    "fps_setting": 2,
+    "observation": "still broadly blurred; highlights overexposed"
+  },
+  "assessment": "Optical defocus or internal optical issue suspected, not proven. High resolution and maximum sharpness did not restore details; uncompressed sample also blurred. Short exposure too dark for a conclusive motion-blur comparison.",
+  "resolved": false,
+  "next_step": "Operator place high contrast target about 50cm from head for focal-plane check; no lens disassembly or adjustment performed.",
+  "checkerboard_followup": {
+    "directory": ".local/unitree_g1/experiments/g1_head_checker_20261009_001",
+    "samples": [
+      "frame_15.jpg",
+      "frame_30.jpg",
+      "frame_45.jpg"
+    ],
+    "resolution": [
+      3840,
+      1200
+    ],
+    "observation": "Desktop checkerboard visible in both views, edges remain blurred",
+    "focus_control_queries": {
+      "absolute": "EINVAL",
+      "relative": "EINVAL",
+      "auto": "EINVAL"
+    },
+    "focus_adjustment_performed": false,
+    "status": "Standard V4L2 focus unavailable; need camera-specific focus method or physical optical service; not resolved"
+  },
+  "web_review": {
+    "date": "2026-10-09",
+    "sources": [
+      {
+        "url": "https://github.com/unitreerobotics/teleimager/blob/main/README.md",
+        "finding": "Official example calls 1bcf:2d4f with serial 01.00.00 Cherry Dual Camera (DECXIN); matching identifiers are a lead, not unique model identification."
+      },
+      {
+        "url": "https://github.com/unitreerobotics/xr_teleoperate/blob/main/Device.md",
+        "finding": "Official optional stereo head camera hardware/mounting references; no verified focus procedure for this unit found."
+      },
+      {
+        "url": "https://www.okgoobuy.com/Stereo-ar0234-usb-camera.html",
+        "finding": "Vendor describes its dual AR0234 USB2 UVC 3840x1200 platform as fixed focus mechanically adjustable by lens rotation. This is a comparable product, not identified as installed hardware."
+      }
+    ],
+    "conclusion": "No verified installed-model software focus command or mechanical adjustment procedure found. Obtain model/label/supplier guidance before any lens adjustment; do not infer AR0234 solely from resolution or DECXIN solely from VID/PID."
+  },
+  "post_physical_focus": {
+    "operator_report": "Physical focus adjustment completed",
+    "capture_directory": ".local/unitree_g1/experiments/g1_camera_postfocus_20261009_001",
+    "head_sample": "head/frame_15.jpg",
+    "visual_result": "At 640x480, table checkerboard, grippers and background edges markedly clearer than previous samples; stereo high-resolution two-view focus not reverified in this run"
+  },
+  "resolved_at_tested_resolution": true
+}

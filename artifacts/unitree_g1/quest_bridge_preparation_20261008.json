@@ -1,0 +1,97 @@
+{
+  "scope": "G1/Quest bridge preparation and first operator shadow gesture; no motor publisher",
+  "preflight": {
+    "error": null,
+    "preflight_passed": true,
+    "observation": {
+      "q": [
+        -0.06013684347271919,
+        0.030595727264881134,
+        0.2760806083679199,
+        1.2754451036453247,
+        0.1797034591436386,
+        0.07444600760936737,
+        -0.009299758821725845,
+        -0.08418918401002884,
+        0.027791418135166168,
+        0.10239321738481522,
+        1.2930140495300293,
+        0.12208329886198044,
+        0.003870904678478837,
+        -0.12826716899871826
+      ],
+      "received": 6114.129675509,
+      "tick": 4207224,
+      "mode_machine": 5
+    },
+    "unload_submitted": false,
+    "command_frames": 0,
+    "hardware_motion_enabled": false,
+    "candidate_trial": false,
+    "scope": "shadow: no motor publisher",
+    "physical_unload_verified": false
+  },
+  "shadow": {
+    "unload_submitted": false,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 236,
+    "phase": "DISARMED",
+    "elapsed_s": 2.458514703000219,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": false
+  },
+  "input_summary": {
+    "state": "receiving",
+    "connection_epoch": 2,
+    "counts": {
+      "CAMERA_MOVE": 754,
+      "CONTROLLER_MOVE": 222
+    },
+    "invalid_events": 0,
+    "receive_fresh": true,
+    "tracking_validity": "not_exposed_by_upstream",
+    "motion_enabled": false,
+    "end_reason": "operator_stop",
+    "duration_s": 163.20795381100015,
+    "queue_dropped": 0,
+    "field_acceptance": "pending_operator_review",
+    "controller_receive_gap_s": {
+      "max": 0.07541733800007933,
+      "p95": 0.03687209700001404
+    }
+  },
+  "command_phases": {
+    "ENGAGING": 103,
+    "RELEASED": 29,
+    "RELEASING": 104
+  },
+  "ik_solved_proposals": 0,
+  "operator_readiness": "Operator confirmed current hanger support, supported arms, accessible stop switch and unobstructed arm space in this conversation.",
+  "limitations": [
+    "Grip released during engagement; dynamic Quest IK not yet field verified.",
+    "No Quest hardware motion performed.",
+    "No collision, physical axis or emergency-stop acceptance."
+  ],
+  "archives": {
+    ".local/unitree_g1/experiments/quest_bridge_preflight_20261008_001": {
+      "summary.json": "6b746568a700bd3e6fdb5e6da0fc9ae6da56907eee7abdd52fbd5ce6a04f87a2",
+      "profile.json": "3b9891896e3c70145a31933af0e60051f4624796791ed3e923760708f25ae6e8"
+    },
+    ".local/unitree_g1/experiments/quest_bridge_shadow_20261008_002": {
+      "ik_ready.json": "1509aea3c534518072ffa2b2bba04c9f15efc7f9bea0acbde2119a208a26522f",
+      "proposals.jsonl": "de57c90c210428f9436aa4f06b9653f1b37a6eae1e8fab9372f98fc57a766c39",
+      "summary.json": "8c383135f930cb96d0ad8e35767b809585d90d9c3033021d37dd0811d6692aaa",
+      "feedback.json": "0d90d5494b3cf245793a0e8e59d7ad25ff4edc9fe4abd495f29916e876f9922f",
+      "target.json": "99abf2b67ccfe990fccc028d6e8384e045c4dff8f1f2d03422efc6e136e3da49",
+      "input.log": "446b5aa34abe8b62c1ef401a32b63a56d0a42b008da51c57e8a3dfc22c641c76",
+      "commands.jsonl": "ea1cb83955187fbe7f3469ece89695d2cea0ef2332b584462fae3bda21a737a9",
+      "session.json": "cc7857e62045dd5acd78253269f11a25b412558c07d0f515da3caa291c55537b",
+      "input/status.json": "d950cbf5ce7233b3497bdec767083e6aa746734df5e9a9e5774119f641745b35",
+      "input/summary.json": "fe94b46c19dba1101ed6ce229abdbb01172b0aae27bf3a0d14215ca6a478fe41",
+      "input/events.jsonl": "146d91cafdd2103ec6e89f89d3fb37d7b7d0ea2260827fd3860b0e3198d2e1a7",
+      "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "recorded_at_utc": "2026-10-08T10:01:58.751676+00:00",
+  "scope": "shadow with real G1 feedback; no motor publisher",
+  "hardware_motion_tested": false,
+  "summary": {
+    "unload_submitted": false,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 615,
+    "phase": "DISARMED",
+    "elapsed_s": 6.317674865999834,
+    "hardware_motion_enabled": false,
+    "scope": "shadow: no motor publisher"
+  },
+  "target_max_change_rad": 0.0,
+  "last_kp": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "last_kd": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "feedback_frames": 615,
+  "automated_tests": {
+    "passed": 37
+  },
+  "dds_loopback": {
+    "passed": true,
+    "interface": "lo",
+    "domain": 213,
+    "topic": "rt/codex_hold_transport_test",
+    "covers": "Own/foreign writer handles including signed/unsigned conversion; KeepAll retains both samples"
+  },
+  "archive": ".local/unitree_g1/experiments/hold_shadow_20261008_final",
+  "sha256": {
+    "commands.jsonl": "6656f500a057dabc3635c12319298c1e8fef245a124730aff1cce632e2acb527",
+    "profile.json": "3b9891896e3c70145a31933af0e60051f4624796791ed3e923760708f25ae6e8",
+    "summary.json": "4a10e47977f21161abc069f98b206277bf0edf8bc9e96da6d804d8b10e89d459"
+  },
+  "remaining": [
+    "Hardware-validated gains, limits and mapping",
+    "Validated body-passive support and arm unload/independent-stop procedures",
+    "Real force-enabled current-pose hold and unloading acceptance"
+  ]
+}

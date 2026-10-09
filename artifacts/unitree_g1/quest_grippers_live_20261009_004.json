@@ -1,0 +1,62 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": "tracking_error",
+  "command_frames": 1872,
+  "phase": "FAULT",
+  "elapsed_s": 21.087076202999015,
+  "release_reason": "operator_release",
+  "first_fault": {
+    "reason": "tracking_error",
+    "phase": "RELEASING",
+    "last_step_time": 16630.681696898,
+    "gain_scale": 0.41798911949990725,
+    "feedback_received": 16630.681361203,
+    "tracking_error_rad": [
+      0.011696284732028772,
+      0.0011915306890744395,
+      0.0006719036220707679,
+      0.00043391467292656916,
+      1.2327964591083568e-05,
+      0.0005041169766548115,
+      0.0006090031216865466,
+      0.10065872260878447,
+      0.04322135620201242,
+      0.009037316141535134,
+      0.09161998825960418,
+      0.001235114261624426,
+      0.04595102958360806,
+      0.013472631413831721
+    ],
+    "tracking_exceeded_arm_indices": [
+      22
+    ]
+  },
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.282753944396973,
+      -5.328949928283691
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.282753944396973,
+      -5.328949928283691
+    ],
+    "picked_up": [
+      false,
+      false
+    ],
+    "phase": "RELEASED",
+    "input_time": 16629.474445657
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_grippers_live_20261009_004"
+}

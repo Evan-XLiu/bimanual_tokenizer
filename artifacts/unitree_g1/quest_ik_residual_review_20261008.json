@@ -1,0 +1,57 @@
+{
+  "scope": "Offline approximate reconstruction, not exact IK replay or a hardware trial",
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261008_003",
+  "reference_input_time": 7723.14170372,
+  "first_unlogged_controller_time": 7725.649332136,
+  "translation_m": [
+    [
+      -0.00022727847099304201,
+      -0.00014296919107437134,
+      0.0002837657928466797
+    ],
+    [
+      -0.0029934763908386233,
+      0.0029236465692520142,
+      0.0185823917388916
+    ]
+  ],
+  "solutions": [
+    {
+      "weight": 50,
+      "success": true,
+      "position_error_m": [
+        0.0003056009264685463,
+        0.015535616944905396
+      ],
+      "max_joint_excursion_rad": 0.1540785828316813
+    },
+    {
+      "weight": 500,
+      "success": true,
+      "position_error_m": [
+        0.00020635764077100763,
+        0.002684860759890407
+      ],
+      "max_joint_excursion_rad": 0.48089388357812635
+    },
+    {
+      "weight": 1000,
+      "success": true,
+      "position_error_m": [
+        0.00014915139422404795,
+        0.001364075740893457
+      ],
+      "max_joint_excursion_rad": 0.5057576620639332
+    },
+    {
+      "weight": 5000,
+      "success": true,
+      "position_error_m": [
+        4.5063109044774545e-05,
+        0.000276081194068937
+      ],
+      "max_joint_excursion_rad": 0.5255912311342226
+    }
+  ],
+  "limitation": "IK worker feedback snapshot not archived per proposal; nearest command feedback used. Rejected candidate unavailable in original log."
+}

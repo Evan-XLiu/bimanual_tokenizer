@@ -1,0 +1,138 @@
+{
+  "scope": "First live Quest to G1 bounded translation trial; stopped on IK envelope rejection",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "quest_input: IK worker: ValueError: IK exceeds initial-pose joint envelope",
+    "command_frames": 570,
+    "phase": "FAULT",
+    "elapsed_s": 6.234540166000443,
+    "release_reason": "quest_input: IK worker: ValueError: IK exceeds initial-pose joint envelope",
+    "first_fault": {
+      "reason": "quest_input: IK worker: ValueError: IK exceeds initial-pose joint envelope",
+      "phase": "ACTIVE",
+      "last_step_time": 7279.802673268,
+      "gain_scale": 1.0,
+      "feedback_received": 7279.813476768,
+      "tracking_error_rad": [
+        0.008624069336053013,
+        0.002706079019698675,
+        0.005801014716519184,
+        0.006637947319890092,
+        0.0027774593849907436,
+        0.00021878411083645077,
+        0.0030879481667229246,
+        0.008969897601248708,
+        0.003550431808921929,
+        0.005799728891062311,
+        0.004170217910602458,
+        0.003964356872520641,
+        0.001480664595719522,
+        0.0004660907496569777
+      ],
+      "tracking_exceeded_arm_indices": []
+    },
+    "hardware_motion_enabled": true
+  },
+  "phases": {
+    "ENGAGING": {
+      "frames": 182,
+      "max_tracking_error_rad": 0.027204185724258423
+    },
+    "ACTIVE": {
+      "frames": 172,
+      "max_tracking_error_rad": 0.012163981795310974
+    },
+    "RELEASING": {
+      "frames": 187,
+      "max_tracking_error_rad": 0.010024508658291784
+    },
+    "RELEASED": {
+      "frames": 29,
+      "max_tracking_error_rad": 0.010024508658291784
+    }
+  },
+  "input_summary": {
+    "state": "receiving",
+    "connection_epoch": 1,
+    "counts": {
+      "CAMERA_MOVE": 1617,
+      "CONTROLLER_MOVE": 741
+    },
+    "invalid_events": 0,
+    "receive_fresh": true,
+    "tracking_validity": "not_exposed_by_upstream",
+    "motion_enabled": false,
+    "end_reason": "operator_stop",
+    "duration_s": 33.81350439400012,
+    "queue_dropped": 0,
+    "field_acceptance": "pending_operator_review",
+    "controller_receive_gap_s": {
+      "max": 0.0833739150002657,
+      "p95": 0.038892692000445095
+    }
+  },
+  "ik_solved_proposals": 56,
+  "max_receive_to_ik_s": 0.0474122929999794,
+  "max_ik_position_error_m": 0.01439106528241032,
+  "max_command_excursion_rad_by_joint": [
+    0.010445672962065815,
+    0.0031015586317511157,
+    0.006352290625466175,
+    0.013325111626530717,
+    0.0028733334561119594,
+    0.0063547023108524725,
+    0.003195805565411718,
+    0.014422720495106664,
+    0.005695610424968835,
+    0.010928976794886164,
+    0.02064851800520695,
+    0.004731345716200069,
+    0.018257353917006308,
+    0.0015039288447132523
+  ],
+  "max_active_feedback_excursion_rad_by_joint": [
+    0.0046498775482177734,
+    0.0003595268353819847,
+    0.0014740601181983948,
+    0.006123900413513184,
+    0.00013183057308197021,
+    0.006111949682235718,
+    0.0005512749776244164,
+    0.006207823753356934,
+    0.0020732730627059937,
+    0.004721783101558685,
+    0.015938997268676758,
+    0.0006471462547779083,
+    0.019690081477165222,
+    0.0002157166600227356
+  ],
+  "nonarm_max_measured_position_change_rad": 0.001840712851844728,
+  "final_gains_zero": true,
+  "operator_observation": {
+    "verbatim": "看到手柄小幅度运动，由于运动幅度太小，暂时无法判断方向，可以增大候选IK范围",
+    "interpretation": "Operator reports small visible movement and requests increased candidate IK range; direction acceptance remains unresolved. No inferred axis acceptance."
+  },
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261008_002",
+  "sha256": {
+    "worker_error.json": "83144808b7d66766f1e2c66e379eb3584e10471e6f8f2e12aeb583deb0f17163",
+    "ik_ready.json": "56610656944df4d2c7b024a7c3982f5df1d1a5a5000dd42214aa702954da44b0",
+    "proposals.jsonl": "5b86be1cf3b7af4fb0252eaec68e55c869a4cb409a464442a05835176c0f7462",
+    "summary.json": "da43cb2a564c448cf8ad3f470582e5aff5f6074cd92dad86f2de51f6f8887dff",
+    "feedback.json": "4ea7aee4157e1adbccbf3e759fd80f88c831247c2293983d7d13b4f2f4307c96",
+    "target.json": "91d0c8a5edab39ec9df1367e377482feba3ba7cb8b3c2c91a711487cb8221af6",
+    "input.log": "2b80ad547ee1439a7b0631b4bce959d04850c00e16c4152e23ec3afa6f26b535",
+    "commands.jsonl": "b5a958eeae960a0a5a3fe629f80b532b9d80bb8bc1c088fb9c19ddadcdb2908f",
+    "session.json": "c82bb0048f79fd2c429da68e51db81043e66dd5cb52cf5e0a8e9968e04c89917",
+    "input/status.json": "f37bba551b39f80c82c69740a1536336be54701e009b6bf9fd83226d8a58f0a5",
+    "input/summary.json": "c3954f03671ee6763fcbf447ec6933b37da0b69c26d5b61472a7e3c89c3ab3e8",
+    "input/events.jsonl": "b6afc33bd01d8a6c8c04b1f8ca3a5b009038c6db3db53072ac36c2e985d1f608",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76"
+  },
+  "limitations": [
+    "Brief manually supported trial; not full teleoperation acceptance.",
+    "IK rejected an out-of-envelope candidate; rejected candidate was not sent.",
+    "Direction/physical behavior needs operator observation.",
+    "No collision, continuous stability or independent emergency-stop acceptance."
+  ]
+}

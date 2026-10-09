@@ -2,7 +2,9 @@
 
 本计划面向项目开发者与真机操作人员，在固定下肢和躯干的条件下，完成 Meta Quest 3S 遥操作、单任务数据采集、动作回放、BTT tokenizer 与 VLA 策略训练，以及低速真机闭环测试。优先打通一条可复现、可诊断的端到端流程，再扩大数据和任务规模。
 
-编写日期：2026 年 10 月 5 日；实施路线更新于 2026 年 10 月 7 日，现场实测进展截至 10 月 6 日；官方软件基线于 10 月 7 日完成离线验证。开发分支：`UnitreeG1`，起点为 `real_world` 的 `0427377`。现以宇树官方 `xr_teleoperate` 为遥操作和录制基准，阶段零/一的准备工作已开始，电脑网线直连的 30 秒只读状态订阅已通过，尚未验证真机动作控制或完成任何整阶段验收；仓库已有训练框架不代表 G1 适配已经完成。文中的采集数量、频率和成功率是建议的项目目标，不是已取得的结果，也不是机器人硬件允许值。
+编写日期：2026 年 10 月 5 日；当前进展更新至 **2026 年 10 月 8 日首次受限 Quest 真机试验之后**。开发分支 `UnitreeG1`，起点为 `real_world` 的 `0427377`。接手先读[交接入口](../workflows/unitree_g1_handoff.md)。
+
+已完成官方软件基线、Quest 基础输入和虚拟双臂跟随、有线状态及调试模式核验、两次原姿态保持、一次左肘小幅往返，以及首次受限 Quest 真机动态跟随。原保持试验和最新 Quest 试验的异常均独立保留，详见[连接流程](../workflows/quest_g1_bridge.md)。首次 Quest 真机跟随因候选超出初态关节范围提前结束；用户要求增大候选范围后，又完成两次试验；最后一次反馈「现场正常，对应正确」，但仍因 3 cm 工作范围保护提前结束。这些是阶段零/一/二的部分证据，**尚未完成任一整阶段的全部验收**。文中数据量、频率和成功率仍是目标，不是既得结果或硬件允许值。
 
 ## 目标和范围
 
@@ -26,18 +28,18 @@
 
 已有代码入口：
 
-- [BTT 参数](../../src/praxis/configs/codecs/tokens/btt.yaml)、[编码器](../../src/praxis/codecs/tokens/btt/encoder.py)、[解码器](../../src/praxis/codecs/tokens/btt/decoder.py)。
-- [tokenizer 训练器](../../src/praxis/training/codecs_trainer.py)、[策略训练器](../../src/praxis/training/policy_trainer.py)。
-- [策略服务](../../src/praxis/serving/server.py)、[RoboTwin 接入参考](../../scripts/robotwin/policy/praxis_ar/deploy_policy.py)。
-- [现有 BTT 策略训练脚本](../../artifacts/robotwin_hopper/train_bar_btt_pali_robotwin_new_30k.sh)。其集群路径、数据和检查点不能直接用于 G1。
+- [BTT 参数](../../src/praxis/configs/codecs/tokens/btt.yaml)、[编码器](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/src/praxis/codecs/tokens/btt/encoder.py)、[解码器](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/src/praxis/codecs/tokens/btt/decoder.py)。
+- [tokenizer 训练器](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/src/praxis/training/codecs_trainer.py)、[策略训练器](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/src/praxis/training/policy_trainer.py)。
+- [策略服务](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/src/praxis/serving/server.py)、[RoboTwin 接入参考](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/scripts/robotwin/policy/praxis_ar/deploy_policy.py)。
+- [现有 BTT 策略训练脚本](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/artifacts/robotwin_hopper/train_bar_btt_pali_robotwin_new_30k.sh)。其集群路径、数据和检查点不能直接用于 G1。
 
 ## 实施前需要确定的信息
 
-已确认（2026 年 10 月 6 日用户补充）：整机为 G1 EDU，末端为宇树官方夹爪；每侧 7 个机械臂关节加 1 个独立夹爪控制量，双侧学习动作共 16 维。具体整机自由度配置、夹爪产品型号、接口、单位与反馈仍待确认，不能据此推定为 Dex1-1。后续以夹爪方案为主，本文中灵巧手内容仅作为配置变化时的备选。
+已确认（2026 年 10 月 6 日用户补充）：整机后续确认为 G1 EDU+，App 软件 v1.5.4、硬件 v1.0，末端为宇树官方夹爪；每侧 7 个机械臂关节加 1 个独立夹爪控制量，双侧学习动作共 16 维。具体整机自由度配置、夹爪产品型号、接口、单位与反馈仍待确认，不能据此推定为 Dex1-1。后续以夹爪方案为主，本文中灵巧手内容仅作为配置变化时的备选。
 
-现场计划双脚着地，使用 Tolsen Engine Crane 67202 Industrial 辅助承重或防倒，仅双臂和夹爪参与任务。吊点、吊具、持续承重或防倒的具体方式、设备用途适配与腰腿保持控制尚待核验；此选择不代表固定方案已经验收。
+现场双脚着地，用户确认 Hanger 可靠承重、双臂由人员托持，物理开关用于现场停止。有限试验在关闭 ai_sport/8.7.6.996 后的调试模式进行，腰腿为零增益/零前馈；这不是软件站姿保持。吊具完整适配、独立急停性能、无人托持与动态动作仍未验收。
 
-首轮采用控制电脑通过网线直连 G1，只读通信已通过。2026-10-07 将主线调整为：固定官方 `xr_teleoperate` 版本与依赖 → Quest 双手柄输入验证 → 官方 IK/仿真验证 → 真机双臂与夹爪接入 → 官方录制与 LeRobot 转换 → BTT/BAR。Quest 和仿真工作可以先推进；硬件信息与控制权限未确认前不进入真机运动。
+首轮采用控制电脑通过网线直连 G1，只读通信已通过。2026-10-07 将主线调整为：固定官方 `xr_teleoperate` 版本与依赖 → Quest 双手柄输入验证 → 官方 IK/仿真验证 → 真机双臂与夹爪接入 → 官方录制与 LeRobot 转换 → BTT/BAR。Quest 和仿真工作可以先推进；本次已按用户授权完成候选参数有限保持，后续扩大到动态运动仍需相应核验，不能自动沿用原试验授权。
 
 Quest 输入统一使用[官方 TeleVuer 输入工具](../workflows/televuer_input.md)，监听 8012 端口；诊断与虚拟双臂跟随均复用该输入链路，不再维护另一套自建 WebXR 采集入口。基础头部/手柄输入及虚拟双臂跟随已现场验证，稳定性和故障项目仍待验收。接线、SDK 环境和只读证据见[现场接入流程](../workflows/unitree_g1.md)。
 
@@ -55,11 +57,11 @@ Quest 输入统一使用[官方 TeleVuer 输入工具](../workflows/televuer_inp
 
 建议先验证双手柄输入，将位置与姿态用于末端控制、扳机用于抓握。是否改用手追踪由实测决定。机器人相机作为策略视觉输入；Quest 显示画面可用于操作者观察，但不能默认其透视图像可被读取或替代机器人相机。
 
-上述未知项不妨碍开发模拟接口、数据 schema 和离线测试，但在确认前不得填入猜测的关节映射、力矩或速度限制并用于真机。
+上述未知项不妨碍模拟接口、数据 schema 和离线测试。已执行的候选参数试验依据锁定官方模型/控制器及用户明确授权，不把这些候选值标为本机全面验证通过，也不填造未知硬件字段。
 
 ## 技术基准与复用边界
 
-基准来源为宇树官方 [xr_teleoperate](https://github.com/unitreerobotics/xr_teleoperate)，采用独立 checkout 和环境，通过配置与小范围适配接入本项目。不要整份复制进训练仓库，也不依赖浮动的 `main` 执行实验。下表是复用计划，不代表本机已经安装或验证。
+基准来源为宇树官方 [xr_teleoperate](https://github.com/unitreerobotics/xr_teleoperate)，采用独立 checkout 和环境，通过配置与小范围适配接入本项目。不要整份复制进训练仓库，也不依赖浮动的 `main` 执行实验。下表描述最终目标及差距；当前安装和试验范围以交接入口为准。
 
 | 环节 | 优先复用 | 本项目需要完成 |
 | --- | --- | --- |
@@ -71,7 +73,7 @@ Quest 输入统一使用[官方 TeleVuer 输入工具](../workflows/televuer_inp
 | 转换与回放 | `unitree_lerobot` 中对应功能 | 固定版本，适配本仓库 LeRobot schema 和 16 维动作；回放接同一执行适配层 |
 | 模型训练与推理 | 本仓库 BTT、BAR/PaliGemma2、策略服务 | G1 数据配置、归一化、训练、影子模式与闭环客户端 |
 
-官方当前设备清单列出 Quest 3S；主 README 提供手柄模式、G1、Dex1-1 和录制支持。设备列表不等于本机整套配置已通过。安装前固定主仓库、子模块、SDK 和数据转换工具的实际提交 SHA，并逐项检查该版本功能。`817fb00...` 已固定为本机离线软件基线，三个子模块、SDK、转换器及其子模块均已锁定；尚未部署至真机。独立环境、依赖锁、包装补丁和离线验证见[基线流程](../workflows/unitree_g1_baseline.md)。SDK 现有只读环境固定版本见现场流程；若因官方栈兼容要求更换，保留原环境与证据并重新验证只读链路。
+官方当前设备清单列出 Quest 3S；主 README 提供手柄模式、G1、Dex1-1 和录制支持。设备列表不等于本机整套配置已通过。安装前固定主仓库、子模块、SDK 和数据转换工具的实际提交 SHA，并逐项检查该版本功能。`817fb00...` 已固定为本机离线软件基线，三个子模块、SDK、转换器及其子模块均已锁定；本地 SDK 现已用于有限真机保持，官方完整遥操作/录制/转换链路仍未部署验收。独立环境、依赖锁、包装补丁和离线验证见[基线流程](../workflows/unitree_g1_baseline.md)。SDK 现有只读环境固定版本见现场流程；若因官方栈兼容要求更换，保留原环境与证据并重新验证只读链路。
 
 ## 总体流程与系统边界
 
@@ -267,7 +269,7 @@ Quest 输入统一使用[官方 TeleVuer 输入工具](../workflows/televuer_inp
 
 ## 实施检查清单
 
-- [x] 确认整机为 G1 EDU，末端为宇树官方夹爪。
+- [x] 确认整机为 G1 EDU+，App 软件 v1.5.4、硬件 v1.0，末端为宇树官方夹爪（具体型号待确认）。
 - [x] 用户确认每侧 7 个关节加 1 个独立夹爪控制量，共 16 维学习动作。
 - [x] 首轮选择电脑网线直连 G1，先只读验证，再推进双臂控制。
 - [x] 完成独立 SDK 环境和首次 30 秒只读状态订阅；结果见现场接入流程，尚未读取夹爪反馈。
@@ -279,7 +281,9 @@ Quest 输入统一使用[官方 TeleVuer 输入工具](../workflows/televuer_inp
 - [ ] 通过官方 `televuer` 的 Quest 3S 双手柄、显示及 10 分钟稳定性实测。
 - [x] 新增[虚拟双臂跟随入口](../workflows/virtual_g1_arms.md)：官方输入独立子进程 → 相对离合 → 官方 IK → 电脑 MeshCat 模型；2026-10-08 连续 IK、离合/异常测试和合成输入回放通过，并完成 Quest 实时跟随，用户确认双臂可以跟随。按用户要求正常停止；最终 3,632 条手柄事件、1,172 帧有效虚拟更新、8 次 IK 目标拒绝，无格式无效事件或接收队列丢包。最长连续手柄片段 60.62 秒，尚未通过 10 分钟稳定性；不创建硬件控制器。
 - [ ] 完成官方 G1 IK/仿真、离合、重定位和断流的现场验证；当前运动学可视化不代替碰撞/动力学验证。
-- [ ] 完成官方控制器统一适配、假机器人与故障注入测试。
+- [x] 实现 arm_execution.py 与 hold_arms.py：反馈首目标、增益接管/卸载、模式/发布者监视、有限保持和故障测试；当前完整离线测试 52 项通过。
+- [x] 只读核实关闭 ai_sport 后的调试模式；两次实际带力保持，另一次预检拦截。003 的卸载故障及用户正常反馈均已归档。
+- [ ] 完成通用遥操作/回放/策略执行适配、动态目标、碰撞约束及全面故障验收。
 - [ ] 完成坐标标定、离合使能与双臂遥操作。
 - [ ] 完成官方录制字段/最终指令审查、同步补充日志、LeRobot 转换和试采集审核。
 - [ ] 完成代表轨迹回放后扩充并冻结数据集。
@@ -289,10 +293,11 @@ Quest 输入统一使用[官方 TeleVuer 输入工具](../workflows/televuer_inp
 
 ## 下一次实施的具体任务
 
-1. 运行[已建立的软件基线校验](../workflows/unitree_g1_baseline.md)，确认提交、补丁、依赖和 G1 资产未漂移。
-2. 确认官方输入测试入口不会创建机器人发布者，配置 HTTPS 和可互通局域网，完成 Quest 3S 双手柄首次 30 秒实测，再完成异常与 10 分钟测试。
-3. 在上述工作不依赖真机动作的同时，记录夹爪型号/接口与反馈、腰腿保持和控制权结论；这些条件通过前不启动官方真机遥操作入口。
-4. 输入通过后接 `teleimager` 和官方 G1 IK/隔离仿真，按阶段一验收，再进入阶段二。
+1. 阅读[交接入口](../workflows/unitree_g1_handoff.md)、[执行流程](../workflows/g1_arm_execution.md)及 003 报告，保留工作区和原始证据。当前无需重做“首次 Quest 输入”或“首次只读接入”。
+2. 卸载阶段 tracking_error 已完成离线审查，新增首故障阶段/增益/误差和独立卸载原因，保留阈值及故障锁存；最新完整测试 52 项通过。后续影子运行核查新增证据字段，不能仅凭卸载阶段判定偏移正常。见[执行流程](../workflows/g1_arm_execution.md)。
+3. 受限动态目标、全电机反馈日志、假机器人测试及左肘/Quest 真机短时试验已完成。下一步审查 Quest 004 的 3 cm 工作范围退出和用户正常/对应正确反馈，明确后续工作空间与限幅交互；不自动扩展或重试。
+4. Quest 已通过独立受限入口接入执行层；继续补齐全轴向、重定位、断流、碰撞/工作空间和持续稳定性证据。hold CLI 仍为固定姿态，不能直接当作 Quest 执行器。
+5. 夹爪接口、机器人相机、录制/同步与 LeRobot 转换继续作为后续任务；已有训练框架不是 G1 数据与策略已适配的证据。
 
 ## 外部参考与使用边界
 

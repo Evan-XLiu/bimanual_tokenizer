@@ -1,0 +1,102 @@
+{
+  "session_path": ".local/unitree_g1/experiments/gripper_probe_live_20261009_003",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 1338,
+    "phase": "FAULT",
+    "elapsed_s": 6.513186590998885,
+    "release_reason": "tracking_error",
+    "first_fault": {
+      "reason": "tracking_error",
+      "phase": "ACTIVE",
+      "last_step_time": 8460.320407027,
+      "gain_scale": 1.0,
+      "feedback_received": 8460.320359763,
+      "tracking_exceeded_gripper_motor_indices": [
+        31
+      ],
+      "tracking_error_motor_units": [
+        0.15044455955479144,
+        0.1400520129010439
+      ]
+    },
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding"
+  },
+  "session": {
+    "hardware_approved": false,
+    "hardware_motion_enabled": true,
+    "scene_confirmation": "用户授权排查修复所需真机测试，现场支撑及停止就绪；最新确认夹爪接近闭合，无异响。已说明Kp由5到6，Kd .05及误差保护.15不变，单次+.5并返回，最多16.3秒。",
+    "interface": "enp130s0",
+    "motor_indices": [
+      31,
+      33
+    ],
+    "kp": 6.0,
+    "kd": 0.05,
+    "displacement_motor_units": 0.5,
+    "period_s": 0.004,
+    "velocity_motor_units_s": 0.2,
+    "acceleration_motor_units_s2": 0.4,
+    "tracking_error_motor_units": 0.15,
+    "phases_s": {
+      "engage": 2.0,
+      "open": 5.0,
+      "dwell": 1.0,
+      "return_to_start": 5.0,
+      "settle": 1.0,
+      "unload": 2.0,
+      "tail": 0.3
+    },
+    "source_sha256": {
+      "gripper_probe.py": "4cbe35313146ea21cd2638890dae59399a6d48cecb2dc87076aeda601e1bc95c",
+      "hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+      "arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+    },
+    "scope": "Candidate small opening and return; motor units are not jaw gap or calibrated force. All other motors passive."
+  },
+  "completed_open_return": false,
+  "last_frame_zero_gains": true,
+  "operator_observation": null,
+  "motors": [
+    {
+      "index": 31,
+      "modes": [
+        1
+      ],
+      "q_range": [
+        -0.006626725196838379,
+        0.0048857927322387695
+      ],
+      "tau_est_range": [
+        0.01953125,
+        0.908203125
+      ]
+    },
+    {
+      "index": 33,
+      "modes": [
+        1
+      ],
+      "q_range": [
+        -0.010868310928344727,
+        0.011044740676879883
+      ],
+      "tau_est_range": [
+        0.01953125,
+        0.849609375
+      ]
+    }
+  ],
+  "files_sha256": {
+    "summary.json": "c97aecbef6d2a7c35f0b8c50d8a1f713524d76b2b8d2c5bfbfaa820b5bc773ad",
+    "preflight.json": "a4d794850bdccb87fd788e910e88b770986f033f0bf0121262ae6829998a9548",
+    "commands.jsonl": "d2c583be933aca3e36da5276b7008040891f88730e775e9a25c231389583a345",
+    "session.json": "ca91d2c26e43abb793cf833349d1c46e218a7da573f590491f738a842a51dc0d",
+    "source/hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+    "source/gripper_probe.py": "4cbe35313146ea21cd2638890dae59399a6d48cecb2dc87076aeda601e1bc95c",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+  }
+}

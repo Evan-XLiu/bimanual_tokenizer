@@ -1,0 +1,37 @@
+{
+  "scope": "First finite live left-elbow dynamic probe, not Quest input driven",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 948,
+    "phase": "DISARMED",
+    "elapsed_s": 10.330190890000267,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true
+  },
+  "command_left_elbow_excursion_rad": 0.020059845714905933,
+  "command_other_arm_joints_max_change_rad": 0.0,
+  "command_final_left_elbow_offset_rad": -8.651776755019824e-07,
+  "active_max_tracking_error_rad": 0.010267110042358585,
+  "active_measured_left_elbow_excursion_rad": 0.010522127151489258,
+  "active_final_left_elbow_error_rad": 0.0006951093673706055,
+  "nonarm_max_measured_position_change_rad": 0.014751791954040527,
+  "operator_observation": {
+    "verbatim": "正常，可以继续 Quest 试验",
+    "scope": "Operator observation of finite supported left-elbow probe; not general teleoperation or emergency-stop acceptance"
+  },
+  "archive": ".local/unitree_g1/experiments/left_elbow_probe_live_20261008_001",
+  "sha256": {
+    "summary.json": "d4791b9ea76d655dda8b6c83c92d81ad0316243130011438ae9035d02a36254d",
+    "commands.jsonl": "1c4f7de91e4acb4e5aac5f6bdc8db6ab5af0129c92b9bf78bfa3826f96e66e4d",
+    "session.json": "0353f63c6a5033c58a4dfadaf0b8a6f50f963077f806d15745d2da687398b7e9"
+  },
+  "limitations": [
+    "DDS submission is not actuator acknowledgement.",
+    "Manual support may affect tracking.",
+    "No collision or independent emergency-stop validation.",
+    "Nonarm measured motion does not identify its cause."
+  ]
+}

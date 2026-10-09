@@ -1,0 +1,46 @@
+{
+  "recorded_at_utc": "2026-10-08T09:50:09.900911+00:00",
+  "scope": "read-only post-debug inspection",
+  "hardware_motion_enabled": false,
+  "operator_cue": "调试模式",
+  "motion_service": {
+    "code": 0,
+    "value": {
+      "form": "0",
+      "name": ""
+    }
+  },
+  "loco_fsm": {
+    "code": 3102,
+    "value": null
+  },
+  "lowstate_summary": {
+    "type": "summary",
+    "result": "received_advancing_state",
+    "messages": 31229,
+    "tick_advances": 29974,
+    "duplicate_ticks": 1254,
+    "host_receive_hz": 1041.245101518605,
+    "max_host_receive_gap_s": 0.004471838999961619
+  },
+  "command_traffic": {
+    "duration_s": 8.007427832000303,
+    "samples": {
+      "rt/lowcmd": 0,
+      "rt/arm_sdk": 0,
+      "rt/user_lowcmd": 0
+    }
+  },
+  "discovered_command_publishers": [
+    "rt/lowcmd",
+    "rt/arm_sdk",
+    "rt/user_lowcmd"
+  ],
+  "archive": ".local/unitree_g1/experiments/debug_readonly_20261008/state.jsonl",
+  "sha256": "a702551360934cff3995f21ac2319e11f051d3d1455d1e9709e95326e60202d5",
+  "limitations": [
+    "No samples in this interval does not establish exclusive control.",
+    "mode_machine is not the locomotion FSM.",
+    "No hardware takeover, release, or service restart validated."
+  ]
+}

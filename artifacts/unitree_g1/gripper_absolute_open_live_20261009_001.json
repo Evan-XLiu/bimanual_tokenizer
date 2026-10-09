@@ -1,0 +1,37 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": null,
+  "command_frames": 23483,
+  "phase": "DISARMED",
+  "elapsed_s": 115.31122612599938,
+  "release_reason": "operator_release",
+  "first_fault": null,
+  "hardware_motion_enabled": true,
+  "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding",
+  "session": ".local/unitree_g1/experiments/gripper_absolute_open_live_20261009_001",
+  "absolute_target": [
+    -5.4,
+    -5.4
+  ],
+  "last_active_command": [
+    -5.4,
+    -5.4
+  ],
+  "last_active_feedback": [
+    -5.282807350158691,
+    -5.329517364501953
+  ],
+  "max_tracking_error": [
+    0.12093911085211939,
+    0.07053623205195425
+  ],
+  "operator_feedback": "两侧已完全打开，无异响",
+  "full_open_visually_confirmed": true,
+  "mechanical_stop_calibrated": false,
+  "hashes": {
+    "session.json": "32d027c3cc1cbfad4da1680aba38405297475f90e4893f88deb2b62983393b3e",
+    "summary.json": "33379d9ba234090d9db13169380fdf4778760c67fc5db36596b6a268c108ce9c",
+    "commands.jsonl": "7306c2d62d1f6be5d20e012aa195672db11a667f1a5a0216975cb8b01f0822c1"
+  }
+}

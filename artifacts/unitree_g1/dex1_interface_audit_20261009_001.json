@@ -1,0 +1,575 @@
+{
+  "date": "2026-10-09",
+  "read_only": true,
+  "motor_command_frames": 0,
+  "raw_directory": ".local/unitree_g1/experiments/dex1_interface_audit_20261009_001",
+  "operator_observation": "夹爪没有移动",
+  "upstream_commit": "817fb00c63cde15e5f24a0f8fa08e1e33ed89d3b",
+  "sources": [
+    "https://github.com/unitreerobotics/xr_teleoperate/blob/817fb00c63cde15e5f24a0f8fa08e1e33ed89d3b/teleop/robot_control/robot_arm.py",
+    "https://github.com/unitreerobotics/xr_teleoperate#34--unitree-dex1_1-service-optional",
+    "https://github.com/unitreerobotics/dex1_1_service",
+    "https://github.com/unitreerobotics/unitree_sdk2/blob/main/example/g1/low_level/g1_ankle_swing_example.cpp"
+  ],
+  "observations": {
+    "inspect": {
+      "read_only": true,
+      "endpoints": [
+        [
+          "publisher",
+          "rt/api/dex3_msg_controller/request",
+          "unitree_api::msg::dds_::Request_"
+        ],
+        [
+          "publisher",
+          "rt/api/dex3_msg_controller/response",
+          "unitree_api::msg::dds_::Response_"
+        ],
+        [
+          "publisher",
+          "rt/arm_sdk",
+          "unitree_hg::msg::dds_::LowCmd_"
+        ],
+        [
+          "publisher",
+          "rt/dex3/left/state",
+          "unitree_hg::msg::dds_::HandState_"
+        ],
+        [
+          "publisher",
+          "rt/dex3/right/state",
+          "unitree_hg::msg::dds_::HandState_"
+        ],
+        [
+          "publisher",
+          "rt/lf/dex3/left/state",
+          "unitree_hg::msg::dds_::HandState_"
+        ],
+        [
+          "publisher",
+          "rt/lf/dex3/right/state",
+          "unitree_hg::msg::dds_::HandState_"
+        ],
+        [
+          "publisher",
+          "rt/lowcmd",
+          "unitree_hg::msg::dds_::LowCmd_"
+        ],
+        [
+          "publisher",
+          "rt/user_lowcmd",
+          "unitree_hg::msg::dds_::LowCmd_"
+        ],
+        [
+          "subscriber",
+          "rt/api/dex3_msg_controller/request",
+          "unitree_api::msg::dds_::Request_"
+        ],
+        [
+          "subscriber",
+          "rt/api/dex3_msg_controller/response",
+          "unitree_api::msg::dds_::Response_"
+        ],
+        [
+          "subscriber",
+          "rt/dex3/left/cmd",
+          "unitree_hg::msg::dds_::HandCmd_"
+        ],
+        [
+          "subscriber",
+          "rt/dex3/right/cmd",
+          "unitree_hg::msg::dds_::HandCmd_"
+        ],
+        [
+          "subscriber",
+          "rt/lowcmd",
+          "unitree_hg::msg::dds_::LowCmd_"
+        ]
+      ],
+      "feedback": {
+        "rt/lowstate": {
+          "motor_count": 35,
+          "q": {
+            "31": -0.010791540145874023,
+            "33": -0.023746013641357422
+          },
+          "dq": {
+            "31": 0.003926991019397974,
+            "33": 0.009817477315664291
+          },
+          "tick": 551413,
+          "samples": 6278
+        }
+      }
+    },
+    "mode": {
+      "read_only": true,
+      "interface": "enp130s0",
+      "motion_service": {
+        "code": 0,
+        "value": {
+          "form": "0",
+          "name": ""
+        }
+      },
+      "loco_fsm": {
+        "code": 3102,
+        "value": null
+      }
+    },
+    "enable": {
+      "read_only": true,
+      "samples": 3114,
+      "first": {
+        "tick": 602466,
+        "mode_machine": 5,
+        "mode_pr": 0,
+        "motors": {
+          "15": {
+            "mode": 0,
+            "q": 0.09182313084602356,
+            "dq": -0.016873789951205254,
+            "ddq": 0.0,
+            "tau_est": 0.0625,
+            "temperature": [
+              39,
+              37
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "22": {
+            "mode": 0,
+            "q": 0.1395443230867386,
+            "dq": 0.0015339808305725455,
+            "ddq": 0.0,
+            "tau_est": 0.1875,
+            "temperature": [
+              39,
+              38
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "29": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "30": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "31": {
+            "mode": 0,
+            "q": -0.010791540145874023,
+            "dq": 0.0029452431481331587,
+            "ddq": 0.0,
+            "tau_est": 0.01953125,
+            "temperature": [
+              34,
+              28
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "32": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "33": {
+            "mode": 0,
+            "q": -0.023761272430419922,
+            "dq": -0.001963495509698987,
+            "ddq": 0.0,
+            "tau_est": 0.068359375,
+            "temperature": [
+              32,
+              27
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "34": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "last": {
+        "tick": 605461,
+        "mode_machine": 5,
+        "mode_pr": 0,
+        "motors": {
+          "15": {
+            "mode": 0,
+            "q": 0.09185908734798431,
+            "dq": -0.003067961661145091,
+            "ddq": 0.0,
+            "tau_est": 0.0625,
+            "temperature": [
+              39,
+              37
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "22": {
+            "mode": 0,
+            "q": 0.13962820172309875,
+            "dq": 0.015339808538556099,
+            "ddq": 0.0,
+            "tau_est": 0.1875,
+            "temperature": [
+              39,
+              38
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "29": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "30": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "31": {
+            "mode": 0,
+            "q": -0.010791540145874023,
+            "dq": 0.0029452431481331587,
+            "ddq": 0.0,
+            "tau_est": 0.01953125,
+            "temperature": [
+              34,
+              28
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "32": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "33": {
+            "mode": 0,
+            "q": -0.023753643035888672,
+            "dq": 0.001963495509698987,
+            "ddq": 0.0,
+            "tau_est": 0.048828125,
+            "temperature": [
+              32,
+              27
+            ],
+            "vol": 50.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              1125,
+              4,
+              0
+            ]
+          },
+          "34": {
+            "mode": 0,
+            "q": 0.0,
+            "dq": 0.0,
+            "ddq": 0.0,
+            "tau_est": 0.0,
+            "temperature": [
+              0,
+              0
+            ],
+            "vol": 0.0,
+            "sensor": [
+              0,
+              0
+            ],
+            "motorstate": 0,
+            "reserve": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "modes": {
+        "15": [
+          0
+        ],
+        "22": [
+          0
+        ],
+        "29": [
+          0
+        ],
+        "30": [
+          0
+        ],
+        "31": [
+          0
+        ],
+        "32": [
+          0
+        ],
+        "33": [
+          0
+        ],
+        "34": [
+          0
+        ]
+      }
+    },
+    "traffic": {
+      "read_only": true,
+      "duration_s": 8.00811364600031,
+      "topics": {
+        "rt/lowcmd": {
+          "samples": 0
+        },
+        "rt/arm_sdk": {
+          "samples": 0
+        },
+        "rt/user_lowcmd": {
+          "samples": 0
+        }
+      },
+      "limitation": "No observed samples is not proof of exclusive ownership."
+    }
+  },
+  "findings": [
+    "官方内走线 Dex1: rt/lowcmd LowCmd_, 左31右33, 反馈rt/lowstate; mode_pr=0, mode_machine跟随反馈, 夹爪cmd.mode=1, kp/kd=5/.05, dq/tau=0, CRC; 未见额外使能RPC或外置服务要求。不支持motion路径。",
+    "外置串口Dex1使用左右独立rt/dex1/*/cmd MotorCmds_和*/state MotorStates_，每侧数组索引0；串口ID右0左1，不等于LowCmd索引。需要外置串口服务。",
+    "当前6278帧LowState中31/33有反馈，无Dex1独立端点或状态样本；Dex3端点存在但未收到状态，不能据端点判断硬件型号。证据支持内走线路径但不是型号/左右物理标定。",
+    "CheckMode=0/name空；GetFsmId=3102/null；8秒三条命令话题均0样本，不证明永久独占。",
+    "3114帧只读反馈中夹爪和所采手臂mode均0；31/33电压50V、motorstate=0、有温度值；未用未公开reserve字段推断使能。当前读数不能回推上次ACTIVE状态。",
+    "原测试最后ACTIVE两侧tau_est=.76171875，接近kp*误差约.75，支持指令可能作用到驱动；不是校准力矩或确认机械动作。仅凭没有可见运动不能诊断未使能。",
+    "本地编码与官方夹爪槽位的mode/q/kp/kd/dq/tau一致；差异包括本地全部35槽mode=1，官方未用29/30/32/34为0；本地非夹爪零增益，官方保持全身；本地约100Hz而官方250Hz；官方反馈附近限幅.18，本地跟踪误差保护.15。不能将任一差异未经验证认定根因或照搬全身增益。",
+    "本次未改控制代码/参数、未启动服务、未标定或发布电机命令。SDK关闭订阅后输出一行Reader take sample error，原始stdout保留，成功采样事实不因此丢弃。"
+  ],
+  "unresolved": [
+    "该机具体内走线硬件/固件兼容性与ACTIVE时mode未确认",
+    "机械静摩擦/初始闭合约束与执行器实际使能状态尚不能区分",
+    "下一次获授权诊断前应补充运动期mode/vol/temperature日志，并验证未用槽位编码；不以提高增益/放宽保护代替核查"
+  ],
+  "files_sha256": {
+    "mode.stdout.txt": "93d85f9184fb18fe3c7bbf1395fcbd5ee1668a8365c2236bee7929c6eddac8fd",
+    "enable.json": "a4d846b6d01d9f90cef67d48a7cae85d97657bc248a17752b2197d4cc0cd279a",
+    "inspect.json": "ffbf64e48c91d99d31872b38831dd61ade60c51067f70c61901ac21a07d48901",
+    "enable.stdout.txt": "51d9257367a66e226cd3e338fe1af7417fb26c44f72da8377a67d3085e4b5d56",
+    "read_enable.py": "201b65b40dd66249f26a18887a237735963b0fd56a46d7cf15c40fc38d836079",
+    "mode.json": "4dda1a6737b748b05a2bd455b50c5f9154ad231be42253f38eebcac4aedf8590",
+    "inspect.stdout.txt": "ffbf64e48c91d99d31872b38831dd61ade60c51067f70c61901ac21a07d48901",
+    "traffic.json": "47abd9fc20bb3e05a5724d43e568f494d16fe14ceae0ba7a4cbf52da7052fe97",
+    "traffic.stdout.txt": "47abd9fc20bb3e05a5724d43e568f494d16fe14ceae0ba7a4cbf52da7052fe97"
+  }
+}

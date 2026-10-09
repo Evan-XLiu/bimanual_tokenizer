@@ -58,6 +58,7 @@ export default defineConfig({
           { text: "Serve", link: "/workflows/serve" },
           { text: "Slurm Launchers", link: "/workflows/slurm-launchers" },
           { text: "BAR OAT Pali Path", link: "/workflows/bar-oat-pali" },
+          { text: "G1 / Quest 3S Handoff", link: "/workflows/unitree_g1_handoff" },
         ],
       },
       {

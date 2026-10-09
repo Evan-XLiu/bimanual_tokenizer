@@ -4,16 +4,39 @@
   "motion_enabled": false,
   "confirmed": {
     "robot_family": "G1 EDU",
-    "end_effector_description": "Unitree official gripper; exact model unconfirmed",
+    "robot_model": "G1 EDU+",
+    "software_version": "v1.5.4",
+    "hardware_version": "v1.0",
+    "version_source": "Operator-provided App information, 2026-10-08; not an SDK compatibility certification",
+    "support_description": "Operator confirmed reliable hanger load support; feet on ground during short trials.",
+    "arm_unload_support_reported": "Both arms manually supported; after trial 003 operator reported normal behavior and momentary release of support.",
+    "hardware_parameter_availability": "Operator lacks device-specific gains/limits; pinned official candidate values used in two explicitly authorized finite holds, not globally hardware-validated.",
+    "operator_reported_mode": "debug (voice: 调试模式), after disabling ai_sport on 2026-10-08",
+    "last_readonly_mode_evidence": "artifacts/unitree_g1/debug_readonly_20261008.json",
+    "first_candidate_hold_trial": "artifacts/unitree_g1/hold_candidate_live_20261008_001.json",
+    "trial_scene_confirmation": "Operator confirmed hanger load support, both arms manually supported, physical switch for stop; independent-stop effectiveness not exercised in this trial",
+    "motion_service_app_name": "ai_sport",
+    "motion_service_app_version": "8.7.6.996",
+    "developer_mode_entry": {
+      "source": "Operator-provided procedure, 2026-10-08; subsequent CheckMode returned empty service name",
+      "app_path": "运维服务/服务状态",
+      "action": "Disable ai_sport/8.7.6.996",
+      "expected_operator_cue": "调试模式 (actual voice reported after service disable)"
+    },
+    "end_effector_description": "Operator-confirmed Dex1-1; internal lowcmd slots31/33, negative opens; see gripper/Quest reports",
     "arm_dof_per_side": 7,
     "gripper_action_dof_per_side": 1,
     "learning_action_dim": 16,
-    "readonly_subscription_seconds": 30
+    "readonly_subscription_seconds": 30,
+    "latest_candidate_hold_trial": "artifacts/unitree_g1/hold_candidate_live_20261008_003.json",
+    "latest_operator_trial_feedback": "一切正常，当时松手了一下",
+    "gripper_model": "Dex1-1",
+    "latest_quest_trial": "artifacts/unitree_g1/quest_grippers_live_20261009_005.json",
+    "camera_discovery": "artifacts/unitree_g1/camera_discovery_20261009_001.json"
   },
   "pending": {
     "robot_total_dof": null,
-    "firmware": null,
-    "gripper_model": null,
+    "firmware_sdk_compatibility": null,
     "gripper_interface": null,
     "gripper_command_units": null,
     "gripper_feedback_units": null,
@@ -24,11 +47,13 @@
     "support_acceptance": null,
     "stop_and_release_sequence": null,
     "camera_configuration": null,
-    "task_definition": null
+    "task_definition": null,
+    "gripper_model_variant": null
   },
   "notes": [
     "Full-body motor slots 31/33 were observed; this is not proof of gripper model or units.",
     "Existing publishers were discovered; do not start a competing publisher.",
-    "dex1_internal and motion are incompatible in this baseline."
+    "dex1_internal and motion are incompatible in this baseline.",
+    "Last recorded state is historical, not live readiness; motion_enabled=false denotes a non-executable inventory. See docs/workflows/unitree_g1_handoff.md."
   ]
 }

@@ -1,0 +1,44 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": null,
+  "command_frames": 3600,
+  "phase": "DISARMED",
+  "elapsed_s": 40.28210613600095,
+  "release_reason": "operator_release",
+  "first_fault": null,
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.4,
+      -2.150722354905771
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.4,
+      -0.033678531646728516
+    ],
+    "picked_up": [
+      true,
+      true
+    ],
+    "phase": "RELEASED",
+    "input_time": 16764.18240291
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_grippers_live_20261009_005",
+  "operator_feedback": "结束测试，更新远程仓库",
+  "physical_motion_acceptance": "Not separately reported for this run",
+  "sha256": {
+    "summary.json": "f820856cc99d7a8ecd159aac3a5cf762cf66f51899703bf8bb9e79572e7e6ed8",
+    "session.json": "a9b2600de85440c636eda401d5bcd237550d786618e144106b034e1d01b5c58d",
+    "commands.jsonl": "cee56bb35676d1f69ee2054d76bb37ab3c4087b8155c51a06173a5a7a7ac3463"
+  }
+}

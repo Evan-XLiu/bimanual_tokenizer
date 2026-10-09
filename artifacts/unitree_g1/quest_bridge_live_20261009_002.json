@@ -1,0 +1,55 @@
+{
+  "scope": "Single same-parameter Quest candidate trial; normal operator release after ACTIVE following.",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 5200,
+    "phase": "DISARMED",
+    "elapsed_s": 58.6026437380001,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true
+  },
+  "active_frames": 4803,
+  "active_duration_s": 54.280438070999935,
+  "ik_solved_proposals": 1644,
+  "active_max_tracking_error_rad": 0.051912682565057294,
+  "max_accepted_ik_error_m": 0.010959508901865523,
+  "max_receive_to_ik_s": 0.03589068799999495,
+  "final_gains_zero": true,
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261009_002",
+  "processes_exited": true,
+  "operator_observation": {
+    "verbatim": "左右移动、前后移动正常，向上抬升幅度很小",
+    "scope": "User observation; no external displacement measurement or physical unload confirmation."
+  },
+  "limitations": [
+    "Operator released before full 60-second ACTIVE duration.",
+    "No physical 10cm lift/lateral/return acceptance established.",
+    "Physical unload not verified.",
+    "No automatic retry or ai_sport restart."
+  ],
+  "sha256": {
+    "commands.jsonl": "144ba2449f438d7ff9c76de8409eddb5f3da858e339eabd4b4e47fde4ed658c9",
+    "feedback.json": "eac690f53c3c7d24a2c7e0e5440f6e8edac1285d6a669d2eebd1e7744dc99afb",
+    "ik_ready.json": "55b8e4c7847c74d2917c0eb1e87cdd2b1fe81e5cc1db9bf1006404832de65188",
+    "input/events.jsonl": "10ace4d1d52d3822819fbe4e8f5cfbc4736bc2a6d4c17564915ac5b59e93e247",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76",
+    "input/status.json": "1126303a4ec867d0e63d9b0e758af984444ca86ac32d89368de3a8656d1df447",
+    "input/summary.json": "2ce124da96cdec00762a7b25f111b2dee8b8b0e44f063f4e145ec5e44ef23af9",
+    "input.log": "d16e8bf635ffec4823828495e33f63d1c90ff205bf13831046e8f93fadf1015d",
+    "proposals.jsonl": "f99b53b7030eb2fc067a4bd8676383bb4af3d8174064005248cf83bee6ce85de",
+    "session.json": "2763727753da0498c147e7ac952c58c162915f7607b0770fc80e5521b27619d5",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/quest_bridge.py": "2f433c1cfd473f9a0e749084897b5d3cd0b276d84cd516190a7455eb1652d81e",
+    "source/televuer_input.py": "a36dacb9d030e257c3190758a6a64a7c19f8eb9500111f6758341afe17ae8c01",
+    "source/virtual_arms.py": "d169225acfadc0c0aa2b93f36062a42b43b003ba04bb747df7288e8127c2e6ee",
+    "summary.json": "004a6636afc2d2c0126c5a160b8102948382ee0097c05c2ae218646c5cfe49da",
+    "target.json": "4806bdd3ba2262becbd32c624afa65c06aa5325cbd2b70526f9d7645d485a7e8"
+  },
+  "workspace_limited_frames": 132,
+  "ik_limited_frames": 467,
+  "motion_analysis": "artifacts/unitree_g1/motion_analysis_20261009_002.json"
+}

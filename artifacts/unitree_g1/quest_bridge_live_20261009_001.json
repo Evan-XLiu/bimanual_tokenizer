@@ -1,0 +1,56 @@
+{
+  "scope": "Single same-parameter Quest candidate trial; operator release during engagement, no ACTIVE following.",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 89,
+    "phase": "DISARMED",
+    "elapsed_s": 0.9509601070000144,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true
+  },
+  "active_frames": 0,
+  "active_duration_s": 0.0,
+  "final_gains_zero": true,
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261009_001",
+  "preflight_archive": ".local/unitree_g1/experiments/quest_bridge_preflight_20261009_001",
+  "mode_query": {
+    "CheckMode": {
+      "code": 0,
+      "form": "0",
+      "name": ""
+    },
+    "GetFsmId": {
+      "code": 3102,
+      "value": null
+    }
+  },
+  "processes_exited": true,
+  "operator_observation": null,
+  "limitations": [
+    "No ACTIVE following or motion acceptance completed.",
+    "Physical unload not verified.",
+    "No automatic retry or ai_sport restart."
+  ],
+  "sha256": {
+    "commands.jsonl": "f77af4c07f0d2057d6674df6271e40d0dac5710de3739c340efe92774fe9bf76",
+    "feedback.json": "8e66427707b756578d4189701959795bec944a1b05265673f3eca7527e316b01",
+    "ik_ready.json": "a505f11172efcb4d5cfe2a910936ad42a36f7b685d8c71c714081b8fc38afa34",
+    "input/events.jsonl": "a6cc226d9ae785b94e4ff3aeed1dfafa6a30ab76cacae212ee116a3d930d91b2",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76",
+    "input/status.json": "46eb9d246a46a1aed0532e066a6782d8986ba3bf77a3dc5bc3c66aaf240dcd36",
+    "input/summary.json": "00185299cf220dbdd3b53cd01cf29adc8d7f0f031c116917fa4aada631b06cf4",
+    "input.log": "3aea1af565ad9c0c7050bbf9c52b0d40199379ec2247bab68c770f7648fd1311",
+    "proposals.jsonl": "94d32e2a9d02f78d2c7d9b7962a27c64343457fd4aeae4b965dec4628f015288",
+    "session.json": "5437b2d1d64213ac7af2cabeb410cad78247a4850fc340672251aad014ee2cbe",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/quest_bridge.py": "2f433c1cfd473f9a0e749084897b5d3cd0b276d84cd516190a7455eb1652d81e",
+    "source/televuer_input.py": "a36dacb9d030e257c3190758a6a64a7c19f8eb9500111f6758341afe17ae8c01",
+    "source/virtual_arms.py": "d169225acfadc0c0aa2b93f36062a42b43b003ba04bb747df7288e8127c2e6ee",
+    "summary.json": "7912188368c82ed9bbf1d6381c334e2216ec4a8fb44e78a7a03ee3b18b94df0d",
+    "target.json": "f6c44838b837e64b868027d01cf8c36d5b09864319463bf784cd3e3ba87aa1e0"
+  }
+}

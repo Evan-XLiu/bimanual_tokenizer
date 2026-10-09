@@ -1,6 +1,8 @@
 # G1 官方 XR 软件基线
 
-2026-10-07 已完成本机离线软件基线固定。对应[计划](../plans/unitree_g1_vr_to_real_plan.md)阶段零的软件部分；硬件 profile、Quest 现场测试、视频实测、仿真任务和真机运动尚未验收。本次未运行控制器构造器、未初始化 DDS、未发送机器人命令。
+2026-10-08 补充：实际构造 CRC 时发现 SDK 普通安装漏带原生库，已从锁定源码补齐两个本地环境。重建时须执行[CRC 安装步骤](g1_arm_execution.md#crc-安装问题与验证)，当前校验脚本会核对其哈希。输入/虚拟双臂最新进展见相应工作流，不以本页 10 月 7 日历史状态替代。
+
+2026-10-07 完成本机离线软件基线固定；基线校验本身不初始化 DDS 或发送命令。到 10 月 8 日，Quest 输入、虚拟双臂以及两次有限真机原姿态试验已有现场证据，见[交接入口](unitree_g1_handoff.md)。完整硬件 profile、视频、动力学仿真和动态遥操作仍未验收。
 
 ## 固定版本与目录
 
@@ -22,7 +24,7 @@
 
 - 固定 `opencv-python==4.11.0.86`，保持 NumPy 1.26.4；固定 `params-proto==2.13.2`，供 Vuer 0.0.60 使用。
 - 官方夹爪模块在导入时也加载 `dex_retargeting`，因此安装了它和 CPU Torch，即使首轮使用手柄而非手追踪。
-- [依赖补丁](../../artifacts/unitree_g1/dex-retargeting-conda-pinocchio.patch)只移除 `dex-retargeting` 的 PyPI `pin` 依赖声明，以免重复安装另一套 Pinocchio；实际依赖由 Conda 精确版本提供，并由校验脚本检查。没有修改重定向算法或控制代码，补丁是基线的一部分。
+- [依赖补丁](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/artifacts/unitree_g1/dex-retargeting-conda-pinocchio.patch)只移除 `dex-retargeting` 的 PyPI `pin` 依赖声明，以免重复安装另一套 Pinocchio；实际依赖由 Conda 精确版本提供，并由校验脚本检查。没有修改重定向算法或控制代码，补丁是基线的一部分。
 - `teleimager` 普通 wheel 未带上 `unitree_logo.svg`，视频服务导入失败；按上游安装方式改用 `pip install -e` 后保留源码资源。视频服务应在独立进程运行，上游日志配置不支持随意在已初始化日志的进程中重新配置。
 - 已装视频服务公共依赖，但按具体相机选择的 `pupil-labs-uvc` / `pyrealsense2` 驱动尚未安装或验证；相机型号与 PC2 环境确认后处理。
 - `unitree_lerobot` 要求 Matplotlib >=3.9，而遥操作基线要求 3.7.5。转换工具先固定源码，后续用单独环境验证；本仓库训练侧使用 `lerobot==0.4.4`，不能因上游转换器默认版本而直接升级训练依赖。
@@ -73,7 +75,7 @@ Conda 锁包含 linux-64 的精确 URL/MD5，pip 锁固定版本但不含 wheel 
 
 | 环节 | 本基线证据 | 下一阶段要求 |
 | --- | --- | --- |
-| 输入 | `televuer/example/test_televuer.py` 和 `test_tv_wrapper.py` 没有 SDK 控制器，但默认连接固定地址的图像服务 | 新建仅实例化 TeleVuer 的薄诊断入口，配置透视、关闭视频输入；再做 Quest 现场测试 |
+| 输入 | 上游测试默认连接图像服务；本项目 televuer_input.py 已隔离输入并完成 Quest 现场接收 | 继续异常/重定位和 10 分钟稳定性验收 |
 | 主入口 | `teleop/teleop_hand_and_arm.py` 初始化 DDS、模式管理及硬件控制器 | 不能用主入口或 `--headless` 做无机器人输入测试 |
 | 输入新鲜度 | `televuer.py` 的 `motion_data_ready` 在输入到达时置真 | 该标志不等于带时限的追踪有效性；需补逐帧时间、断流、重定位和离合测试 |
 | 参考系 | 主入口设置 `arm_reference_mode="head_yaw"` | 标定并确认转头对手臂参考的影响，不能混用原始 WebXR 坐标 |
@@ -85,6 +87,6 @@ Conda 锁包含 linux-64 的精确 URL/MD5，pip 锁固定版本但不含 wheel 
 | 时间与数据 | episode 录制器保存状态/动作/图像，使用录制流程时间 | 补相机和状态时间、质量事件与对齐报告，再适配 LeRobot 16 维 schema |
 | 转换器 | 源码及其子模块已锁定 | 阶段三单独安装并验证 loader/batch，当前不声称转换运行通过 |
 
-[硬件清单](../../artifacts/unitree_g1/hardware_inventory.json)是不可执行的盘点文件，`motion_enabled=false`，未知项为 null。当前 16 维表示来自用户确认；夹爪型号、单位、限位、固件、支撑和控制归属仍需现场核验。
+[硬件清单](../../artifacts/unitree_g1/hardware_inventory.json)是不可执行的盘点文件，`motion_enabled=false`，未知项为 null。当前 16 维表示来自用户确认；型号/软件/硬件版本和调试入口已记录，夹爪单位/接口、完整映射/限位、恢复和停止能力仍未验收。候选参数带力试验不等于 hardware_approved。
 
-阶段一已新增[官方 TeleVuer 独立输入诊断入口](televuer_input.md)，完成软件测试和本机 HTTPS 检查；下一步完成 Quest 3S 现场输入与异常/稳定性实测。
+[官方 TeleVuer 独立输入诊断入口](televuer_input.md)已完成软件、HTTPS 与 Quest 3S 基础输入现场测试；虚拟跟随也已实现。剩余工作是异常、轴向和持续稳定性验收，以及与真机执行接口连接。

@@ -1,12 +1,14 @@
 # Quest 3S 官方 TeleVuer 独立输入验证
 
+项目整体当前状态见[交接入口](unitree_g1_handoff.md)。本工具仅接收输入；虚拟跟随和真机保持分别已有证据，另已通过[受限连接入口](quest_g1_bridge.md)完成 Quest 真机短时跟随。
+
 虚拟双臂跟随入口已新增，见 [Quest 驱动虚拟 G1 双臂](virtual_g1_arms.md)。该入口复用本工具作为独立输入子进程，再接相对离合、官方 IK 和电脑模型显示，不连接真实机器人。
 
 2026-10-07：固定基线复查（含离线 IK）、4 项自动化测试和 HTTPS 本机检查通过。Quest 3S 官方头部/双手柄输入已实测，按用户要求结束采集。第二会话正常保存 `operator_stop`，收到 6,469 个头部事件、2,170 个手柄事件，无格式无效事件或队列丢包。按 1 秒间断切段，最长手柄连续片段 68.32 秒（2,071 个事件），最大接收间隔 209.1 ms；双侧扳机/侧握键均覆盖 0–1，摇杆正负方向、摇杆按下和面键均已收到。
 
 本轮仅确认基础输入接收与按键覆盖，未完成 10 分钟稳定性、追踪丢失、重定位、主动断网及物理轴向/尺度核验。第二会话初始有一次 26.90 秒手柄间断，原因待确认；首会话服务退出且没有正常 summary，也保留为异常证据。详见[部分现场报告](../../artifacts/unitree_g1/quest_field_partial.json)。原始日志已从 `/tmp` 复制到 Git 忽略的 `.local/unitree_g1/experiments/quest_20261007/`，报告记录了 SHA256。TLS 私钥未归档或提交。
 
-入口：[televuer_input.py](../../scripts/unitree_g1/televuer_input.py)。仅实例化锁定版本的官方 `TeleVuer`，使用 `pass-through`、双手柄、关闭 ZMQ/WebRTC 视频；不实例化 IK、相机或机器人控制器。额外 import guard 拒绝 SDK、DDS 和 `teleop` 控制模块。没有使能机器人或自动恢复运动的接口。
+入口：[televuer_input.py](https://github.com/Evan-XLiu/bimanual_tokenizer/blob/UnitreeG1/scripts/unitree_g1/televuer_input.py)。仅实例化锁定版本的官方 `TeleVuer`，使用 `pass-through`、双手柄、关闭 ZMQ/WebRTC 视频；不实例化 IK、相机或机器人控制器。额外 import guard 拒绝 SDK、DDS 和 `teleop` 控制模块。没有使能机器人或自动恢复运动的接口。
 
 ## 启动
 

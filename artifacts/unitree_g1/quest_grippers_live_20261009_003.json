@@ -1,0 +1,68 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": null,
+  "command_frames": 5058,
+  "phase": "DISARMED",
+  "elapsed_s": 56.52008567499979,
+  "release_reason": "operator_release",
+  "first_fault": null,
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.4,
+      -5.4
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.4,
+      -5.4
+    ],
+    "picked_up": [
+      true,
+      true
+    ],
+    "phase": "RELEASED",
+    "input_time": 11500.403323523
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_grippers_live_20261009_003",
+  "operator_feedback": "测试完成。quest现在可以正常控制手臂运动/夹爪开合",
+  "operator_confirmed_arm_and_gripper_control": true,
+  "gripper_settings": {
+    "indices": [
+      31,
+      33
+    ],
+    "closed": [
+      0.0008207559585571289,
+      -0.033678531646728516
+    ],
+    "opened": [
+      -5.4,
+      -5.4
+    ],
+    "kp": 5.0,
+    "kd": 0.05,
+    "velocity": 0.3,
+    "acceleration": 0.2,
+    "tracking_error": 0.15,
+    "timeout": 0.1,
+    "pickup_trigger": 0.95,
+    "mapping": "Squeeze trigger fully once after ACTIVE; then release=open, squeeze=close",
+    "reference": "artifacts/unitree_g1/gripper_negative_open_live_20261009_001.json",
+    "open_reference": "artifacts/unitree_g1/gripper_absolute_open_live_20261009_001.json"
+  },
+  "sha256": {
+    "summary.json": "825b7ce11470e127cdf99d05cf69a81cb9b508ecda32c008e214d021392a2494",
+    "session.json": "7a3b559c4a859039bff788ada406ab4d08a4e81fbc0af3965ea88daca790233e",
+    "commands.jsonl": "26633b59d962f6ff897f2b636d1fa8afdbc5cfd7b127f2ca2f1867ec9da5f0bc"
+  }
+}

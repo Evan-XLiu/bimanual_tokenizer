@@ -1,0 +1,84 @@
+{
+  "session_path": ".local/unitree_g1/experiments/gripper_negative_open_live_20261009_001",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 2121,
+    "phase": "DISARMED",
+    "elapsed_s": 10.308542513999782,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding"
+  },
+  "session": {
+    "hardware_approved": false,
+    "hardware_motion_enabled": true,
+    "scene_confirmation": "用户本次明确要求按负方向打开夹爪；本会话夹口清空、手指远离、机身双臂支撑和停止就绪，夹口近闭合无固定物。已说明沿用调试lowcmd双侧-.2、Kp5/Kd.05、5秒移动1秒停留再卸载约10.3秒，不闭合返回，不启动ai_sport。",
+    "interface": "enp130s0",
+    "motor_indices": [
+      31,
+      33
+    ],
+    "kp": 5.0,
+    "kd": 0.05,
+    "negative_open": true,
+    "displacement_motor_units": -0.2,
+    "period_s": 0.004,
+    "velocity_motor_units_s": 0.1,
+    "acceleration_motor_units_s2": 0.2,
+    "tracking_error_motor_units": 0.15,
+    "phases_s": {
+      "engage": 2.0,
+      "open": 5.0,
+      "dwell": 1.0,
+      "return_to_start": 0.0,
+      "settle": 0.0,
+      "unload": 2.0,
+      "tail": 0.3
+    },
+    "source_sha256": {
+      "gripper_probe.py": "7b49fbb183188369ead1dffba7a7dde4df58116656af988b9089524f2780e3f7",
+      "hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+      "arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+    },
+    "scope": "Candidate local direction probe; motor units are not jaw gap or calibrated force. All other motors passive."
+  },
+  "operator_observation": "两侧均已打开",
+  "completed_negative_open": true,
+  "full_stroke_calibrated": false,
+  "closing_test_completed": false,
+  "last_frame_zero_gains": true,
+  "process_exit_code": 0,
+  "motors": [
+    {
+      "index": 31,
+      "initial_q": 0.0008207559585571289,
+      "end_active_command": -0.19917924404144288,
+      "end_active_feedback": -0.16882991790771484,
+      "feedback_delta": -0.16965067386627197,
+      "max_active_tracking_error": 0.0668464140369536,
+      "last_feedback": -0.16863811016082764
+    },
+    {
+      "index": 33,
+      "initial_q": -0.033678531646728516,
+      "end_active_command": -0.23367853164672853,
+      "end_active_feedback": -0.21117544174194336,
+      "feedback_delta": -0.17749691009521484,
+      "max_active_tracking_error": 0.04457983908894804,
+      "last_feedback": -0.21089935302734375
+    }
+  ],
+  "files_sha256": {
+    "summary.json": "adc711b1c5802be0914c6c8eb905a380b18ccb8d6b0a46821ddb46d4373528d7",
+    "preflight.json": "98e87c2c8e0325ec92907a53463b54d5b240a10c7a173956e4e23dcecbf66e90",
+    "commands.jsonl": "6fc02bf9bebd69228c940f1fcbf108b069d2228bfb4340edc817f2958d74b26e",
+    "session.json": "75a89a9dc3c838357f696f7328e24c302e999a9da5f35c0948070e539e5486c6",
+    "source/hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+    "source/gripper_probe.py": "7b49fbb183188369ead1dffba7a7dde4df58116656af988b9089524f2780e3f7",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+  },
+  "conclusion": "Negative lowcmd position direction opened both Dex1-1 grippers at original Kp5/Kd.05. Prior positive direction was wrongly treated as opening; evidence strongly supports closing-stop loading as cause of failed positive probes. Positive closing is documented, but a controlled closing trial and full travel/force calibration remain undone. Physical unloading is not verified by opening observation."
+}

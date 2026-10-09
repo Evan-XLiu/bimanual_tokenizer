@@ -1,0 +1,105 @@
+{
+  "session_path": ".local/unitree_g1/experiments/gripper_probe_live_20261009_004",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 1280,
+    "phase": "FAULT",
+    "elapsed_s": 6.540157909999834,
+    "release_reason": "tracking_error",
+    "first_fault": {
+      "reason": "tracking_error",
+      "phase": "ACTIVE",
+      "last_step_time": 8592.369004015,
+      "gain_scale": 1.0,
+      "feedback_received": 8592.368904903,
+      "tracking_exceeded_gripper_motor_indices": [
+        31
+      ],
+      "tracking_error_motor_units": [
+        0.15022279968881722,
+        0.13129343739175908
+      ]
+    },
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding"
+  },
+  "session": {
+    "hardware_approved": false,
+    "hardware_motion_enabled": true,
+    "scene_confirmation": "本会话现场条件就绪，用户授权排查修复及必要真机测试，确认夹口近闭合、无外部固定、无异响；已说明最后一次受限增益诊断Kp8/Kd.05、+.5返回、误差保护.15、16.3秒上限，失败不再提高增益。",
+    "interface": "enp130s0",
+    "motor_indices": [
+      31,
+      33
+    ],
+    "kp": 8.0,
+    "kd": 0.05,
+    "displacement_motor_units": 0.5,
+    "period_s": 0.004,
+    "velocity_motor_units_s": 0.2,
+    "acceleration_motor_units_s2": 0.4,
+    "tracking_error_motor_units": 0.15,
+    "phases_s": {
+      "engage": 2.0,
+      "open": 5.0,
+      "dwell": 1.0,
+      "return_to_start": 5.0,
+      "settle": 1.0,
+      "unload": 2.0,
+      "tail": 0.3
+    },
+    "source_sha256": {
+      "gripper_probe.py": "ad7e9a22ecbc7b01db9ed988805c733616005f3d84e925fc4f9c155ad2fec9b1",
+      "hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+      "arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+    },
+    "scope": "Candidate small opening and return; motor units are not jaw gap or calibrated force. All other motors passive."
+  },
+  "completed_open_return": false,
+  "last_frame_zero_gains": true,
+  "operator_observation": "没有开合，夹爪是Dex1-1",
+  "motors": [
+    {
+      "index": 31,
+      "initial_q": 0.0005905628204345703,
+      "modes": [
+        1
+      ],
+      "q_range": [
+        0.0005599260330200195,
+        0.016965866088867188
+      ],
+      "tau_est_range": [
+        0.029296875,
+        1.201171875
+      ]
+    },
+    {
+      "index": 33,
+      "initial_q": -0.010553836822509766,
+      "modes": [
+        1
+      ],
+      "q_range": [
+        -0.010569095611572266,
+        0.024911880493164062
+      ],
+      "tau_est_range": [
+        0.01953125,
+        1.064453125
+      ]
+    }
+  ],
+  "files_sha256": {
+    "summary.json": "722a4bd6e6a589e645e324a142d5c0b8c5dfab43f0c088d65207aef4943f342a",
+    "preflight.json": "ba0823017ad508f286c431bf13c99619d1a5b067b0532cf052babef50fe50c7c",
+    "commands.jsonl": "7e98d71919757d4de6b8a74f595598a2032afd55932c1c4f964516394f670827",
+    "session.json": "6d57df9ce94895606199326a6535f0f094c0b5ab9cb45e9ffdb2ae101a5e709e",
+    "source/hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+    "source/gripper_probe.py": "ad7e9a22ecbc7b01db9ed988805c733616005f3d84e925fc4f9c155ad2fec9b1",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+  },
+  "diagnosis": "ACTIVE双侧反馈mode=1，左/右tau_est峰值1.20117/1.06445，仍无可见开合；根因未确定，不再增益试探。需核查本机夹爪固件/零位方向及机械传动。"
+}

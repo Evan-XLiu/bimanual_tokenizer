@@ -1,0 +1,65 @@
+{
+  "requested_url": "https://support.unitree.com/home/en/G1_developer/hand_sdk",
+  "requested_page_body_obtained": false,
+  "access_result": "Web tool inaccessible; direct request returned Tencent EdgeOne restricted-access page (567). No original document claims treated as verified.",
+  "official_code_url": "https://github.com/unitreerobotics/unitree_sdk2/blob/main/example/g1/high_level/g1_hand_sdk_example.cpp",
+  "verified_from_official_example": {
+    "topic": "rt/hand_sdk",
+    "message_type": "unitree_go::msg::dds_::MotorCmds_",
+    "command_count": 4,
+    "weight_encoding": "cmds[0].mode = uint8(clamp(weight,0,1)*100)",
+    "dispatch": "blend via ai_sport: Motor_real = weight * Hand_SDK + (1-weight) * G1_Cmd",
+    "direction_comment": "Positive tau closes the hand, negative tau opens it.",
+    "example_torque": 0.3,
+    "example_loop": "Alternating signs every second indefinitely; no explicit release/timeout procedure in example"
+  },
+  "implications": [
+    "Previously used rt/lowcmd with ai_sport disabled is a different interface; hand_sdk requires its ai_sport consumer to operate.",
+    "Positive opening assumption from xr_teleoperate is not universal; positive effort while physically closed could be closing against a stop IF signs carry over to this hardware. This is a hypothesis, not established root cause.",
+    "Feedback mode=1 and tau_est response alone do not validate physical opening direction or rule out interface/firmware mismatch.",
+    "Must verify original document hardware applicability, mapping of four hand_sdk entries to this Dex1-1 and lowstate slots, software/firmware version requirements, valid FSM modes and release semantics before a new motion test.",
+    "Do not replace lowcmd mode=1 with hand_sdk mode=100, switch services, reverse direction, or run the infinite official example based only on this review."
+  ],
+  "hardware_actions": null,
+  "user_provided_screenshot": {
+    "path": "docs/workflows/截图 2026-10-09 18-51-13.png",
+    "sha256": "c28fd88aae77a56bdaf7220c4b692af4e1667350924499876506d15af2765f70",
+    "coverage": "C++ Example, Before running, Notes; earlier document sections absent",
+    "verified_requirements": [
+      "ai_sport must be running",
+      "Robot must not be in damping state",
+      "Compatible hand/gripper must be installed",
+      "While damping, user commands are not forwarded to motors; explicitly reset weight after leaving damping",
+      "Ramp weight smoothly to avoid abrupt differences from ai_sport defaults",
+      "Positive tau closes; negative tau opens; this convention is unrelated to joint-angle sign conventions elsewhere on the arm",
+      "Publishing timeout falls back to ai_sport default hand behavior; no explicit cancel required"
+    ],
+    "not_specified_in_screenshot": [
+      "Exact compatible models/firmware",
+      "Four command entries to left/right Dex1-1 mapping",
+      "Timeout duration",
+      "Specific non-damping FSM selection",
+      "Default ai_sport hand behavior upon fallback"
+    ]
+  },
+  "interpretation_update": "Full supplied screenshots confirm applicability to internal Dex1-1 and positive motor direction closes. Prior positive-q opening tests produced positive estimated effort at a physically closed gripper: closing into a stop is now the leading direction hypothesis. Lowcmd sign correspondence has not been physically validated, so not yet a proven root cause. Do not reuse positive-opening or 0..5.4 range assumptions for new trials. Hand SDK requires ai_sport and non-damping FSM, distinct from prior lowcmd debug state; timeout fallback is not zero-torque unload. No new hardware action performed.",
+  "user_provided_upper_screenshot": {
+    "path": "docs/workflows/截图 2026-10-09 18-52-42.png",
+    "sha256": "718f89474875d6e51dd9a89d7dc2af2a05b5c9a9eaf4347883a8305f4fef4287",
+    "title": "Internal wiring dexterity hand control interface",
+    "document_updated": "2026-07-09 17:36:31",
+    "confirmed": [
+      "Dex2-5 and Dex1-1 explicitly follow positive motor direction=close, negative=open",
+      "rt/hand_sdk is provided by ai_sport for internal wiring hand/gripper",
+      "All five fields kp,kd,q,dq,tau participate in the linear blend",
+      "G1_Cmd comes from ai_sport for the current FSM",
+      "MotorCmds_ contains 4 entries; only cmds[0].mode encodes weight*100; other mode fields unused"
+    ],
+    "not_shown": [
+      "Four-entry left/right physical mapping",
+      "Minimum firmware version",
+      "Mapping between Hand SDK entries and lowcmd slots31/33",
+      "Numeric position limits for negative opening direction"
+    ]
+  }
+}

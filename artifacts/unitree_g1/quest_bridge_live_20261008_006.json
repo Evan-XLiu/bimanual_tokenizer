@@ -1,0 +1,92 @@
+{
+  "scope": "One authorized 60-second live verification after bounded braking fix; stopped early on tracking_error, no automatic retry",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 2369,
+    "phase": "FAULT",
+    "elapsed_s": 26.70850262100066,
+    "release_reason": "tracking_error",
+    "first_fault": {
+      "reason": "tracking_error",
+      "phase": "ACTIVE",
+      "last_step_time": 10668.123931756,
+      "gain_scale": 1.0,
+      "feedback_received": 10668.12293623,
+      "tracking_error_rad": [
+        0.04660677759550731,
+        0.0800014209472461,
+        0.0018954156973379765,
+        0.012843774979311995,
+        0.012561739973786401,
+        0.018355601826687953,
+        0.0019456416212331083,
+        0.02117700946674385,
+        0.06102615701308338,
+        0.001461890728352233,
+        0.002060340177134634,
+        0.010112400428204937,
+        0.004795918362620319,
+        0.005880651079183313
+      ],
+      "tracking_exceeded_arm_indices": [
+        16
+      ]
+    },
+    "hardware_motion_enabled": true
+  },
+  "active_frames": 1970,
+  "active_duration_s": 22.389413743998375,
+  "ik_solved_proposals": 680,
+  "workspace_limited_frames": 0,
+  "ik_limited_frames": 379,
+  "max_accepted_ik_error_m": 0.014993566953777609,
+  "max_receive_to_ik_s": 0.03150332800032629,
+  "active_max_tracking_error_rad": 0.0800014209472461,
+  "max_command_excursion_rad_by_arm": [
+    0.19998281453303235,
+    0.1999761817894432
+  ],
+  "max_active_feedback_excursion_rad_by_arm": [
+    0.18852385133504868,
+    0.1967570185661316
+  ],
+  "fault_joint": {
+    "name": "left_shoulder_roll_joint",
+    "motor_index": 16,
+    "command_q": -0.12823792886965707,
+    "feedback_q": -0.048236507922410965,
+    "initial_q": -0.039440084248781204
+  },
+  "final_gains_zero": true,
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261008_006",
+  "operator_observation": {
+    "verbatim": "动作正常",
+    "scope": "现场动作正常的用户观察；未明确托持阻力、松手或碰触情况，不消除tracking_error记录，也不确定物理原因。"
+  },
+  "limitations": [
+    "No trajectory_limit during this run; not full 60-second acceptance.",
+    "Cause of physical tracking discrepancy is not established."
+  ],
+  "sha256": {
+    "commands.jsonl": "67dd4bd5b1a67dd8b846f48212478664c8d8234e935cbf0bcfb830d166802aea",
+    "feedback.json": "75e9be1dad7bc45d2e949b21ebb0e2370fbff8d8a88590ba695727ed9b9fabe4",
+    "ik_ready.json": "12e499ae072e5b916f878553be8734739f4cddb2e4947375b7b59ee56e483f25",
+    "input/events.jsonl": "9824cdc77942879e3f80ce4d794e8351f9e91321e90c2a25bc070c32e7062317",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76",
+    "input/status.json": "c08b3986cd61842c68666f292722bc7cdfdaef3fc1f09b30ad7a951c89a65b92",
+    "input/summary.json": "3928320f8d51d123291392b5e4d4418fa2fda49e4449fc43b44f2c3dfe683f50",
+    "input.log": "28db6dce95c3bda744f38cd42d9a7d74813e4b82592739282adf8ca75d7c4b7c",
+    "proposals.jsonl": "55b001b54d8ff8935fcde2d888cdebd4a870aacd515f1ee771c97c1032c04ba2",
+    "session.json": "aa2a21868ce0ded0d3cef6fa757b8344aeed03fc3a4219fe73b9d5b9b66b26c1",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/quest_bridge.py": "bb78f451f694eeaa48393cf4b719325fde802f1147595a8ee8616ce3978d0148",
+    "source/televuer_input.py": "a36dacb9d030e257c3190758a6a64a7c19f8eb9500111f6758341afe17ae8c01",
+    "source/virtual_arms.py": "d169225acfadc0c0aa2b93f36062a42b43b003ba04bb747df7288e8127c2e6ee",
+    "summary.json": "c10dfc0f62a1e7229abea43df511f8cf84abe75c5aed0a1b69b8d93561f0659d",
+    "target.json": "f86e0ea173a798018a5133eff86ff6bee7ae68ba9b21280a369ae63fd5f59a65",
+    "worker_error.json": "ce9cad5dee093bcd5c22572eee40475337b29173a9a54c59fbc1124369f8b3fc"
+  }
+}

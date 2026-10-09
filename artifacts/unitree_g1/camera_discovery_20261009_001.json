@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-09",
+  "motion_commands_sent": false,
+  "local_video_devices": {
+    "video3": "ASUS FHD webcam: ASUS IR camera",
+    "video1": "ASUS FHD webcam: ASUS FHD webca",
+    "video2": "ASUS FHD webcam: ASUS IR camera",
+    "video0": "ASUS FHD webcam: ASUS FHD webca"
+  },
+  "robot_host": "192.168.123.164",
+  "ssh": "Key-authenticated SSH succeeded; hostname ubuntu",
+  "ports": {
+    "22": "open",
+    "5555": "connection refused",
+    "60000": "connection refused",
+    "60001": "connection refused",
+    "60002": "connection refused",
+    "60003": "connection refused"
+  },
+  "head_camera": "not yet enumerated on robot",
+  "left_wrist_camera": "not yet enumerated on robot",
+  "right_wrist_camera": "not yet enumerated on robot",
+  "next_step": "Confirm left/right camera serials; investigate head blur and wrist exposure/orientation; depth and simultaneous sustained streams untested.",
+  "operator_reported_topology": {
+    "head": "G1 built-in camera",
+    "arm_cameras": "Added USB cameras -> USB hub -> Type-C port on G1",
+    "host_mapping": "Which onboard computer owns the Type-C port is not yet verified"
+  },
+  "robot_enumeration_source": "Operator pasted /dev/v4l/by-id and sysfs on G1 SSH terminal, 2026-10-09",
+  "robot_video_devices": [
+    {
+      "model": "Intel RealSense D405",
+      "serial": "261523072307",
+      "nodes": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "usb_path": "2-2.2.3",
+      "usb_speed_mbps": 5000,
+      "physical_role": "wrist candidate, left/right unverified"
+    },
+    {
+      "model": "Intel RealSense D405",
+      "serial": "261523071841",
+      "nodes": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "usb_path": "2-2.2.4",
+      "usb_speed_mbps": 5000,
+      "physical_role": "wrist candidate, left/right unverified"
+    },
+    {
+      "model": "USB2.0 Camera RGB",
+      "serial_label": "01.00.00",
+      "nodes": [
+        0,
+        1
+      ],
+      "usb_path": "1-2.3",
+      "usb_speed_mbps": 480,
+      "physical_role": "head candidate, view unverified"
+    }
+  ],
+  "dependencies": {
+    "python": "/usr/bin/python3",
+    "cv2": true,
+    "pyrealsense2": false,
+    "ffmpeg": false,
+    "rs-enumerate-devices": false
+  },
+  "capture_checks": [
+    {
+      "label": "rgb_head_candidate",
+      "returncode": 0,
+      "stdout": "{\"device\": \"/dev/video0\", \"frames\": 15, \"elapsed_s\": 1.2271819750003488, \"shape\": [480, 640, 3], \"saved\": true, \"mean\": 135.5203396267361, \"std\": 49.5184520437584}\n",
+      "stderr": ""
+    },
+    {
+      "label": "d405_261523072307",
+      "returncode": 0,
+      "stdout": "{\"device\": \"/dev/video6\", \"frames\": 15, \"elapsed_s\": 1.6641033070000049, \"shape\": [480, 640, 3], \"saved\": true, \"mean\": 214.12652777777777, \"std\": 67.64445481804975}\n",
+      "stderr": ""
+    },
+    {
+      "label": "d405_261523071841",
+      "returncode": 0,
+      "stdout": "{\"device\": \"/dev/video12\", \"frames\": 15, \"elapsed_s\": 1.658208616999218, \"shape\": [480, 640, 3], \"saved\": true, \"mean\": 216.83096462673612, \"std\": 64.91938010952308}\n",
+      "stderr": ""
+    }
+  ],
+  "visual_review": {
+    "rgb_head_candidate": "Both arms/table visible; consistent with head view; visibly blurred, cause not established",
+    "261523072307": "Gripper visible, bright/saturated table, upside-down room view",
+    "261523071841": "Gripper visible, bright/saturated table, upright room view",
+    "left_right_mapping": "not confirmed"
+  },
+  "operator_confirmed_right_wrist_serial": "261523072307",
+  "right_wrist_rotation_degrees": 0,
+  "rotation_capture_script": "scripts/unitree_g1/capture_right_camera.py",
+  "rotated_capture_directory": ".local/unitree_g1/experiments/right_camera_rotated_20261009_001/g1_right_camera_rotated_20261009_001",
+  "operator_right_camera_hardware_orientation_corrected": true,
+  "latest_right_capture_directory": ".local/unitree_g1/experiments/g1_right_camera_unrotated_20261009_001",
+  "head_stereo_verification": {
+    "capture_shape": [
+      1200,
+      3840,
+      3
+    ],
+    "fps_setting": 5,
+    "layout": "side-by-side two views with visible parallax",
+    "per_view_resolution": [
+      1920,
+      1200
+    ],
+    "sample": ".local/unitree_g1/experiments/g1_head_3840x1200_20261009.jpg",
+    "quality": "both views remain blurred; cause not determined",
+    "physical_left_right_order": "not verified"
+  }
+}

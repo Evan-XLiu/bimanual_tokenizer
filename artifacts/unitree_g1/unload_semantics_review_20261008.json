@@ -1,0 +1,92 @@
+{
+  "scope": "Offline audit only; no DDS initialization or robot commands",
+  "source_integrity": "All original report and session files left unchanged",
+  "sessions": [
+    {
+      "session": "001",
+      "archive_hashes_match": {
+        "commands.jsonl": true,
+        "profile.json": true,
+        "summary.json": true
+      },
+      "phases": {
+        "ENGAGING": {
+          "frames": 186,
+          "max_error_rad": 0.009275790303945541,
+          "threshold_exceedance_frames": 0
+        },
+        "ACTIVE": {
+          "frames": 188,
+          "max_error_rad": 0.00884435698390007,
+          "threshold_exceedance_frames": 0
+        },
+        "RELEASING": {
+          "frames": 187,
+          "max_error_rad": 0.021212078630924225,
+          "threshold_exceedance_frames": 0
+        },
+        "RELEASED": {
+          "frames": 29,
+          "max_error_rad": 0.051424313336610794,
+          "threshold_exceedance_frames": 0
+        }
+      },
+      "first_logged_threshold_exceedance": null
+    },
+    {
+      "session": "002",
+      "archive_hashes_match": {
+        "profile.json": true,
+        "summary.json": true
+      }
+    },
+    {
+      "session": "003",
+      "archive_hashes_match": {
+        "commands.jsonl": true,
+        "profile.json": true,
+        "summary.json": true
+      },
+      "phases": {
+        "ENGAGING": {
+          "frames": 187,
+          "max_error_rad": 0.011025547981262207,
+          "threshold_exceedance_frames": 0
+        },
+        "ACTIVE": {
+          "frames": 187,
+          "max_error_rad": 0.023549001663923264,
+          "threshold_exceedance_frames": 0
+        },
+        "RELEASING": {
+          "frames": 186,
+          "max_error_rad": 0.12504351139068604,
+          "threshold_exceedance_frames": 39
+        },
+        "RELEASED": {
+          "frames": 28,
+          "max_error_rad": 0.18296325206756592,
+          "threshold_exceedance_frames": 28
+        }
+      },
+      "first_logged_threshold_exceedance": {
+        "elapsed_s": 5.602907604999928,
+        "phase": "RELEASING",
+        "logged_reason": "tracking_error",
+        "joints": [
+          {
+            "name": "left_wrist_pitch_joint",
+            "error_rad": 0.0823676586151123,
+            "threshold_rad": 0.08
+          }
+        ]
+      }
+    }
+  ],
+  "decision": "Retain tracking thresholds and latched unloading fault; record original phase, gain scale, release reason and first fault instead of suppressing unloading deviations.",
+  "limitations": [
+    "Historical feedback was sampled after command submission and may differ from the sample used by the executor. This is a log audit, not exact servo replay.",
+    "Manual support release is operator-reported; logs do not establish causality or physical unloading.",
+    "No dynamic target or Quest-to-hardware validation performed."
+  ]
+}

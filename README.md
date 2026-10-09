@@ -42,6 +42,7 @@ Start with:
 - [Quickstart](docs/quickstart.md)
 - [BAR OAT Pali Path](docs/workflows/bar-oat-pali.md)
 - [CLI Reference](docs/reference/cli.md)
+- [G1 / Quest 3S Handoff and Current Status](docs/workflows/unitree_g1_handoff.md)
 
 The compact smoke path uses `bar_oat_pali`:
 

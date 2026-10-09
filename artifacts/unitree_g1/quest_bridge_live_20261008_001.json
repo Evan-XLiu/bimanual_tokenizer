@@ -1,0 +1,18 @@
+{
+  "scope": "Requested Quest live trial aborted during read-only preflight",
+  "summary": {
+    "error": "RuntimeError: Arms not stationary",
+    "command_frames": 0,
+    "unload_submitted": false,
+    "hardware_motion_enabled": true,
+    "physical_unload_verified": false
+  },
+  "motor_publisher_created": false,
+  "motor_commands_submitted": 0,
+  "reason": "Arms not stationary; 0.1 rad/s threshold retained",
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261008_001",
+  "sha256": {
+    "summary.json": "2302f32c8c77ae9e5b89518e1b8cc6ac80b5da76881431e6c92ded592d339231",
+    "session.json": "4ec508373784197e4ee53d2dbd79a2be9627747430df5121152488cc348bc18e"
+  }
+}

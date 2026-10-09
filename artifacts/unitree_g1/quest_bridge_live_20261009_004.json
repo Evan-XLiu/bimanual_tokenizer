@@ -1,0 +1,60 @@
+{
+  "scope": "First live Quest position-only/free-orientation trial.",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 5751,
+    "phase": "DISARMED",
+    "elapsed_s": 64.3239357780003,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true
+  },
+  "orientation_mode": "free",
+  "active_frames": 5355,
+  "active_duration_s": 60.00079430999995,
+  "ik_solved_proposals": 1819,
+  "active_max_tracking_error_rad": 0.06434649290154341,
+  "max_accepted_ik_error_m": 0.014998553085568129,
+  "max_rotation_change_rad_by_arm": [
+    0.6654493546813627,
+    0.7359298927701934
+  ],
+  "final_gains_zero": true,
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261009_004",
+  "operator_observation": {
+    "verbatim": "这次明显抬起",
+    "scope": "用户对自由方向Quest004的现场反馈；非外部位移测量，未单独确认物理卸载。"
+  },
+  "workspace_limited_frames": 1186,
+  "ik_limited_frames": 515,
+  "last_input_state": "following",
+  "limitations": [
+    "Physical 10cm lift/lateral/return acceptance not established.",
+    "Physical unload not verified.",
+    "No automatic retry or ai_sport restart."
+  ],
+  "sha256": {
+    "commands.jsonl": "f4eaeb70534f976a11bfc7168e1f48f80495c09b12cb13821a9d1fa70a831d9a",
+    "feedback.json": "ef17ace76e65b7492cc7f3ac76c74b26141d1d94b5c898fda299610245efd9c0",
+    "ik_ready.json": "12a6dceda39f836d92bb36ac9e28577f33834f037a607822722643268e64d28f",
+    "input/events.jsonl": "1bd9c11351975a77a4f34b427cbfe2ac4e956d156cbb115924ff38c7a41bffa7",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76",
+    "input/status.json": "2bddfe258e7e4417ecef0257eacedc06fec7c115b9c5b820261d3b556950b57e",
+    "input/summary.json": "1bd8d0768fced90f8b65f558187e2c9fc4e1ae7c508084c8c58b37f271e4a042",
+    "input.log": "a7f9c083d5ad06d322af593c78a9f2962fae4d6995cd76865822631179b4f823",
+    "proposals.jsonl": "639aea13ec7787aef7e8fef27cecb42ce540433c4ff420f01661e805bda75b3f",
+    "session.json": "d598e5d9c586d9bd812b5dd5caa55f794a9535d6c9c055ff4c78615a333d30da",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/quest_bridge.py": "d57b594f2282d7ead4b4b89a0e875f94c251ab912aac61175538c73ac731882f",
+    "source/televuer_input.py": "a36dacb9d030e257c3190758a6a64a7c19f8eb9500111f6758341afe17ae8c01",
+    "source/virtual_arms.py": "d169225acfadc0c0aa2b93f36062a42b43b003ba04bb747df7288e8127c2e6ee",
+    "summary.json": "a4f0aaf174d60169600733382160df185fb0708b938f37d5ac0aadd189626d8a",
+    "target.json": "b45e37321ef01ac0f0bf009027264c03c36beac95e6b611f01ccbb4d515346f4",
+    "worker_error.json": "a1ce163ffeba60fee2f42153e1d34fe88c5cd4a6e20a020f89c397e1bfe9fac5"
+  },
+  "termination_interpretation": "Completed 60-second ACTIVE duration, then automatic release_control; operator_release is generic executor label, not a grip release event.",
+  "processes_exited": true
+}

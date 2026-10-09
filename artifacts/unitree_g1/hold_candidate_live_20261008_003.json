@@ -1,0 +1,112 @@
+{
+  "recorded_at_utc": "2026-10-08T10:18:48.549056+00:00",
+  "scope": "second force-enabled candidate trial; prior attempt 002 aborted before publication",
+  "authorization": "Operator requested repeat and confirmed 已静止 after preflight rejection",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 588,
+    "phase": "FAULT",
+    "elapsed_s": 6.315326977000041,
+    "hardware_motion_enabled": true,
+    "candidate_trial": true,
+    "scope": "hardware experiment"
+  },
+  "operator_observation": {
+    "verbatim": "一切正常，当时松手了一下",
+    "interpretation": "Operator reports normal behavior and momentary release of manual support; consistent with deviation during unloading, not a proven causal diagnosis."
+  },
+  "phases": {
+    "ENGAGING": {
+      "frames": 187,
+      "start_s": 0.0,
+      "end_s": 1.991097549999722,
+      "max_error_rad": 0.011025547981262207,
+      "max_error_deg": 0.6317173661453094
+    },
+    "ACTIVE": {
+      "frames": 187,
+      "start_s": 2.0016231190002145,
+      "end_s": 4.004080445999534,
+      "max_error_rad": 0.023549001663923264,
+      "max_error_deg": 1.349258407089356
+    },
+    "RELEASING": {
+      "frames": 186,
+      "start_s": 4.015175769000052,
+      "end_s": 6.012682092999967,
+      "max_error_rad": 0.12504351139068604,
+      "max_error_deg": 7.164465458182345
+    },
+    "RELEASED": {
+      "frames": 28,
+      "start_s": 6.023694825999883,
+      "end_s": 6.31423743599953,
+      "max_error_rad": 0.18296325206756592,
+      "max_error_deg": 10.48302214945976
+    }
+  },
+  "first_tracking_fault": {
+    "time_s": 5.602907604999928,
+    "phase": "RELEASING",
+    "joints_over_threshold": [
+      {
+        "joint": "left_wrist_pitch_joint",
+        "error_rad": 0.0823676586151123,
+        "error_deg": 4.719319207020311
+      }
+    ]
+  },
+  "target_max_change_rad": 0.0,
+  "final_kp": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "final_kd": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "max_command_gap_s": 0.01301619399964693,
+  "archive": ".local/unitree_g1/experiments/hold_candidate_live_20261008_003",
+  "sha256": {
+    "commands.jsonl": "d751348c815a23566e0cfb93e15e79d38917676a348dcafbbdc80afa3da06c7a",
+    "profile.json": "a2d228a87d131a438e1d027c37b350784cab91ad13881a127b02c1bf01192e33",
+    "summary.json": "1fede48c99d56297ca949ddf6c29a08eb6019baa3435f9e91342e11cbbf732dc"
+  },
+  "limitations": [
+    "The tracking threshold applies during unloading too; the fault was first recorded after normal hold completed.",
+    "Physical unloading, support adjustments and oscillations require operator observation.",
+    "Final zero-gain submission is not proof of actuator acknowledgement.",
+    "No automatic retry or threshold/gain changes were performed."
+  ],
+  "acceptance": {
+    "software_sequence": "engage and hold completed; tracking error latched during normal unloading; zero-gain tail submitted",
+    "operator_reported_outcome": "normal during this manually supported short trial",
+    "scope": "initial current-pose candidate trial only; not general teleoperation, full limits or emergency-stop validation"
+  }
+}

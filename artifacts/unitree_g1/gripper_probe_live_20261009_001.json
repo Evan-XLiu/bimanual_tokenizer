@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-09",
+  "session_path": ".local/unitree_g1/experiments/gripper_probe_live_20261009_001",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 601,
+    "phase": "FAULT",
+    "elapsed_s": 6.52930930399998,
+    "release_reason": "tracking_error",
+    "first_fault": {
+      "reason": "tracking_error",
+      "phase": "ACTIVE",
+      "last_step_time": 7753.739313855,
+      "gain_scale": 1.0,
+      "feedback_received": 7753.739032135,
+      "tracking_exceeded_gripper_motor_indices": [
+        31,
+        33
+      ],
+      "tracking_error_motor_units": [
+        0.15124174753205338,
+        0.15085050264374772
+      ]
+    },
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding"
+  },
+  "session": {
+    "hardware_approved": false,
+    "hardware_motion_enabled": true,
+    "scene_confirmation": "用户本次确认：Dex1 夹口无物体、手指离开，机身与双臂可靠支撑，现场人员可随时停止；授权单次双侧 +0.5 电机位置单位并返回的小幅测试。",
+    "interface": "enp130s0",
+    "motor_indices": [
+      31,
+      33
+    ],
+    "kp": 5.0,
+    "kd": 0.05,
+    "displacement_motor_units": 0.5,
+    "velocity_motor_units_s": 0.2,
+    "acceleration_motor_units_s2": 0.4,
+    "tracking_error_motor_units": 0.15,
+    "phases_s": {
+      "engage": 2.0,
+      "open": 5.0,
+      "dwell": 1.0,
+      "return_to_start": 5.0,
+      "settle": 1.0,
+      "unload": 2.0,
+      "tail": 0.3
+    },
+    "source_sha256": {
+      "gripper_probe.py": "d0699b2cdeebd10b5c6e072f147cade6c69aaf0df432f5e4290d1caa2a609281",
+      "hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+      "arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+    },
+    "scope": "Candidate small opening and return; motor units are not jaw gap or calibrated force. All other motors passive."
+  },
+  "completed_open_return": false,
+  "last_frame_zero_gains": true,
+  "process_exit_code": 1,
+  "automatic_retry": false,
+  "ai_sport_restarted": false,
+  "operator_observation": "夹爪没有移动",
+  "active_logged_span_s": 2.2045532049996837,
+  "motors": [
+    {
+      "index": 31,
+      "initial_q": -0.006619095802307129,
+      "maximum_command_delta": 0.16131230989472428,
+      "maximum_feedback_delta": 0.010316014289855957,
+      "last_feedback_q": -0.00030672550201416016
+    },
+    {
+      "index": 33,
+      "initial_q": -0.00019931793212890625,
+      "maximum_command_delta": 0.16131230989472428,
+      "maximum_feedback_delta": 0.010791540145874023,
+      "last_feedback_q": -0.00019931793212890625
+    }
+  ],
+  "files_sha256": {
+    "summary.json": "04e1b9b439156e77abed5beb638e0f6b1a5c4bb5db39c897ce070f04df5f57f3",
+    "preflight.json": "6eed23a3b77608d51f9f09c72b57baf1ebd7fde88a8a3a68716f6a3d8178cdd9",
+    "commands.jsonl": "1363e4fdf71b4c25614435e5579bc36e464bff1e586d9b89bad4c1fc9b6fccf0",
+    "session.json": "386fe4890a6a6790602e7bae6ba0d5287bec6c03a9b963bb4229b9682669178f",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/gripper_probe.py": "d0699b2cdeebd10b5c6e072f147cade6c69aaf0df432f5e4290d1caa2a609281",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+  }
+}

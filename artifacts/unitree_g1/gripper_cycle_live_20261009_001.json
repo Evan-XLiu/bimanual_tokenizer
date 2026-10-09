@@ -1,0 +1,92 @@
+{
+  "session_path": ".local/unitree_g1/experiments/gripper_cycle_live_20261009_001",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 6624,
+    "phase": "DISARMED",
+    "elapsed_s": 32.31136997000067,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding"
+  },
+  "session": {
+    "hardware_approved": false,
+    "hardware_motion_enabled": true,
+    "scene_confirmation": "用户明确要求再打开更多然后关闭；本会话夹口清空手指远离、机身双臂支撑和停止人员就绪。已说明双侧从当前再减小.5，10秒打开、1秒停留、16秒返回原近闭合参考、1秒停留及接管卸载，总32.3秒，Kp5/Kd.05，速度.1加速度.2误差保护.15。",
+    "interface": "enp130s0",
+    "motor_indices": [
+      31,
+      33
+    ],
+    "closed_reference": [
+      0.0008207559585571289,
+      -0.033678531646728516
+    ],
+    "reference_sha256": "a58558844a2152802d02798b228a52173854034c4e824dcb634afcf954a6d9ac",
+    "displacement_motor_units": -0.5,
+    "kp": 5.0,
+    "kd": 0.05,
+    "velocity_motor_units_s": 0.1,
+    "acceleration_motor_units_s2": 0.2,
+    "tracking_error_motor_units": 0.15,
+    "period_s": 0.004,
+    "phases_s": {
+      "engage": 2.0,
+      "open": 10.0,
+      "open_dwell": 1.0,
+      "close": 16.0,
+      "closed_dwell": 1.0,
+      "unload": 2.0,
+      "tail": 0.3
+    },
+    "source_sha256": {
+      "gripper_cycle.py": "cf5655033c7083bc1d8f9079a9e16dde03b08533c30f35e5a4850daab1c5d2ad",
+      "gripper_probe.py": "7b49fbb183188369ead1dffba7a7dde4df58116656af988b9089524f2780e3f7",
+      "hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+      "arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+    },
+    "scope": "Local open and close; closed reference is previously observed, not calibrated contact. Other motors passive."
+  },
+  "completed_command_cycle": true,
+  "operator_observation": "两侧都正常打开并关闭",
+  "last_frame_zero_gains": true,
+  "process_exit_code": 0,
+  "full_stroke_calibrated": false,
+  "motors": [
+    {
+      "index": 31,
+      "initial_q": -0.16864585876464844,
+      "most_open_feedback": -0.6268153190612793,
+      "max_additional_opening": 0.45816946029663086,
+      "closed_command": 0.0008207559585571289,
+      "end_active_feedback": -0.023746013641357422,
+      "final_feedback": -0.023899435997009277,
+      "max_active_tracking_error": 0.07224511525407945
+    },
+    {
+      "index": 33,
+      "initial_q": -0.21094536781311035,
+      "most_open_feedback": -0.6825294494628906,
+      "max_additional_opening": 0.4715840816497803,
+      "closed_command": -0.033678531646728516,
+      "end_active_feedback": -0.05992484092712402,
+      "final_feedback": -0.06096029281616211,
+      "max_active_tracking_error": 0.052349888623868246
+    }
+  ],
+  "files_sha256": {
+    "summary.json": "6ecdad4cf53ba99de505ff5b77d4956f65eec759538c47745a82b211d16210b7",
+    "preflight.json": "098957e3f826ce4336fe5f9fa54e062b8b2000c7e331108e3276d19d4806ca5c",
+    "closed_reference.json": "a58558844a2152802d02798b228a52173854034c4e824dcb634afcf954a6d9ac",
+    "commands.jsonl": "f091d5323bc74b8cb9862a27ea5328c8ac80793fbdd392747034dd0177b259b2",
+    "session.json": "8d63a2b2db52fadc0e62222c44073641b1882dfc7a38662a7c8bf62a87956d96",
+    "source/hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+    "source/gripper_probe.py": "7b49fbb183188369ead1dffba7a7dde4df58116656af988b9089524f2780e3f7",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1",
+    "source/gripper_cycle.py": "cf5655033c7083bc1d8f9079a9e16dde03b08533c30f35e5a4850daab1c5d2ad"
+  },
+  "physical_open_close_verified_by_operator": true
+}

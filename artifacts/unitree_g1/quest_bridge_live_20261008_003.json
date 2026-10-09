@@ -1,0 +1,73 @@
+{
+  "scope": "Second live Quest trial; operator-requested joint envelope +/-0.20 rad; stopped on IK position residual",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "quest_input: IK worker: ValueError: IK position residual exceeded",
+    "command_frames": 627,
+    "phase": "FAULT",
+    "elapsed_s": 6.856967085999713,
+    "release_reason": "quest_input: IK worker: ValueError: IK position residual exceeded",
+    "first_fault": {
+      "reason": "quest_input: IK worker: ValueError: IK position residual exceeded",
+      "phase": "ACTIVE",
+      "last_step_time": 7725.647796461,
+      "gain_scale": 1.0,
+      "feedback_received": 7725.658755976,
+      "tracking_error_rad": [
+        0.001003818924679413,
+        0.00033209178863625316,
+        0.000312185004032281,
+        0.0009168052107118019,
+        0.0001271833255930832,
+        0.0003528085516888886,
+        0.00014373762675727944,
+        0.010253866659648794,
+        0.0041979506127369295,
+        0.00392835952875123,
+        0.0023438598406082534,
+        0.0013809707527661572,
+        0.012285814906960159,
+        0.006408401072273043
+      ],
+      "tracking_exceeded_arm_indices": []
+    },
+    "hardware_motion_enabled": true
+  },
+  "ik_solved_proposals": 75,
+  "max_accepted_ik_error_m": 0.014973891069859854,
+  "max_command_excursion_rad_by_arm": [
+    0.0016130722236775696,
+    0.026702837373619705
+  ],
+  "max_active_feedback_excursion_rad_by_arm": [
+    0.0008029434829950333,
+    0.023668885231018066
+  ],
+  "active_max_tracking_error_rad": 0.012609388965671688,
+  "final_gains_zero": true,
+  "operator_observation": {
+    "verbatim": "现场正常，继续一次",
+    "scope": "Operator reports normal second force-enabled Quest trial; physical axes still not fully accepted."
+  },
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261008_003",
+  "sha256": {
+    "worker_error.json": "9b68b65d8ee414c4891d69c2e5869a99173b33be6d633b5359fc2c11079c8d0b",
+    "ik_ready.json": "d957279a6e33ade8009d6bd182db74994a9479d718bd37bc0933823df36baaa3",
+    "proposals.jsonl": "8a99a044e4d0ec16292131dceaa8be1e97948477cfad817353bce80a7e7bb3a6",
+    "summary.json": "b2af659fec61c6372707ff5373a728ed1954351737ace50ad5c821f3356da590",
+    "feedback.json": "1dc54b72a787c3bbbab8c344dcfbc23e06dffe1b81351134abe77f1bb8b6d82d",
+    "target.json": "cec72d52a01c09d3273836b754460b6cce4ecdca9aadedc14a47364c87e1a558",
+    "input.log": "8d828cef62ee99a107980dd6adecf2bd59313456ef211703bd545bda221dbbee",
+    "commands.jsonl": "4dfe891ae900f92663f55fb1033c407f746f60d06703082e0c49d9566c21132e",
+    "session.json": "bd16355beeb47e50d66162824045b3b394881792d690a7513fca215c20c6f0e3",
+    "input/status.json": "d583c63b2b3a67fece051f32422ec2665d0b3d60519353b06eae33de771de01f",
+    "input/summary.json": "0c4902db0fd7e4ba2d4066f469da5ada5ef933d7d61c05d263be6469f8c2858d",
+    "input/events.jsonl": "dfddf6a9541c829ed9814beb04f770cb3314672d990c20c9dfac9b52e6ac3816",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76"
+  },
+  "limitations": [
+    "Early protected exit; no continuous-follow or physical-axis acceptance.",
+    "No automatic retry or IK residual threshold increase."
+  ]
+}

@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -50,6 +51,13 @@ def main():
         path = Path(sys.prefix) / 'conda-meta' / f"{item['name']}-{item['version']}-{item['build_string']}.json"
         require(path.exists(), f"Conda build missing: {path.name}")
     report['checks'].append(run([sys.executable, '-m', 'pip', '--no-cache-dir', 'check']))
+    sdk_dir = Path(importlib.util.find_spec('unitree_sdk2py').origin).parent
+    crc_relative = Path('utils/lib/crc_amd64.so')
+    crc_source = ROOT / '.local/unitree_g1/unitree_sdk2_python/unitree_sdk2py' / crc_relative
+    require((sdk_dir / crc_relative).is_file(), 'SDK CRC library missing; see g1_arm_execution.md')
+    require(hashlib.sha256((sdk_dir / crc_relative).read_bytes()).digest() ==
+            hashlib.sha256(crc_source.read_bytes()).digest(), 'SDK CRC library differs from pinned source')
+    report['checks'].append('SDK native CRC library matches pinned source')
     xr = ROOT / '.local/unitree_g1/xr_teleoperate'
     # Import each component in a fresh process: upstream entrypoints configure
     # logging at import time. Reject socket bind/connect even if upstream changes.

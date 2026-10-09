@@ -1,0 +1,132 @@
+{
+  "scope": "Single direct bilateral +5cm/return, free orientation; model FK, no external measurement.",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 2970,
+    "phase": "DISARMED",
+    "elapsed_s": 32.32764227300004,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true
+  },
+  "archive": ".local/unitree_g1/experiments/vertical_probe_live_20261009_001",
+  "active_duration_s": 28.008375033999982,
+  "active_frames": 2571,
+  "final_gains_zero": true,
+  "active_max_tracking_error_rad": 0.05468932856522041,
+  "initial_q": [
+    0.07752595096826553,
+    0.0313027948141098,
+    -0.08586697280406952,
+    0.5315123796463013,
+    -0.20969997346401215,
+    -0.5852616429328918,
+    -0.008269115351140499,
+    -0.01732918992638588,
+    -0.038301583379507065,
+    0.0255743358284235,
+    0.6469923853874207,
+    0.17851701378822327,
+    -0.5977851152420044,
+    -0.0641036182641983
+  ],
+  "operator_observation": {
+    "verbatim": "当前测试可以正常升起手臂",
+    "scope": "现场升臂正常反馈；非外部5cm测量，未单独确认物理卸载。"
+  },
+  "arms": [
+    {
+      "side": "left",
+      "max_command_wrist_lift_cm": 4.997265304082867,
+      "max_feedback_wrist_lift_cm": 2.961632565130983,
+      "max_command_elbow_lift_cm": 0.015399109349280293,
+      "max_feedback_elbow_lift_cm": 0.040051273537737575,
+      "top_dwell_mean_command_delta_cm": [
+        0.005015169415481524,
+        0.00021940312744661572,
+        4.997265304082861
+      ],
+      "top_dwell_mean_feedback_delta_cm": [
+        -0.9234558741016291,
+        0.19190244297098466,
+        2.9601252608108664
+      ],
+      "top_dwell_mean_command_elbow_delta_cm": [
+        -0.7558861553895146,
+        0.03839648777708418,
+        0.014394445372596614
+      ],
+      "top_dwell_mean_feedback_elbow_delta_cm": [
+        -1.3571614770169262,
+        -0.03642882645835722,
+        0.03996997536906555
+      ],
+      "pre_unload_command_delta_cm": [
+        0.001683161749926887,
+        8.820123107711186e-05,
+        0.0013935194310825752
+      ],
+      "pre_unload_feedback_delta_cm": [
+        -0.22840827750743864,
+        0.03362093035124414,
+        0.04952285380556646
+      ]
+    },
+    {
+      "side": "right",
+      "max_command_wrist_lift_cm": 4.986136508647468,
+      "max_feedback_wrist_lift_cm": 2.9412071150597328,
+      "max_command_elbow_lift_cm": 8.126635417382566e-06,
+      "max_feedback_elbow_lift_cm": 0.003007945371108489,
+      "top_dwell_mean_command_delta_cm": [
+        0.011641867062747759,
+        -0.0015253387552621733,
+        4.9861365086474745
+      ],
+      "top_dwell_mean_feedback_delta_cm": [
+        -1.0329303667700043,
+        -0.08631119877041903,
+        2.927530963367846
+      ],
+      "top_dwell_mean_command_elbow_delta_cm": [
+        -0.7981792744389227,
+        -0.1168574386990392,
+        -0.05226410072243074
+      ],
+      "top_dwell_mean_feedback_elbow_delta_cm": [
+        -1.480960100874016,
+        0.01460712284584834,
+        -0.08830834278719718
+      ],
+      "pre_unload_command_delta_cm": [
+        -0.00042659171270165164,
+        -0.0003807630019087016,
+        -0.0004283403279341236
+      ],
+      "pre_unload_feedback_delta_cm": [
+        0.1076435945737142,
+        0.005934815934077742,
+        0.26207412171826566
+      ]
+    }
+  ],
+  "pre_unload_max_joint_return_error_rad": 0.011660650372505188,
+  "pre_unload_max_command_return_error_rad": 5.9917569160461426e-05,
+  "processes_exited": true,
+  "termination_interpretation": "Automatic finite-duration release after completed trajectory; executor uses operator_release label for release_control, not a Quest grip event.",
+  "sha256": {
+    "commands.jsonl": "8d8e341ecf2ed588e01b129265e1e61f2cce6ac984b84d41f673aea9850f90c8",
+    "plan.json": "951fad17290cfe85b4540227ddb853b9b65aa2c56b8d7f11f1dfcbabffa7fcbc",
+    "planning.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "session.json": "e235eacfc322bb2bd0f6bd7ba3c330940a2a3ba29fe939a1d67165a9f73ad96d",
+    "snapshot.json": "cae4433fb2b0291eca34d63faed263d12f0c295e8e317127cbfd9d172508b382",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/quest_bridge.py": "2f433c1cfd473f9a0e749084897b5d3cd0b276d84cd516190a7455eb1652d81e",
+    "source/vertical_probe.py": "e30d3f601e68e8b1422e1f32cf9717e231b1e241b5245a2f96a2e52146ab25ed",
+    "source/virtual_arms.py": "d169225acfadc0c0aa2b93f36062a42b43b003ba04bb747df7288e8127c2e6ee",
+    "summary.json": "df9beb7574fd8d4ef6eac89ebed8a8c9c7de9c7c679a0db0dda3dd0e38371f57"
+  }
+}

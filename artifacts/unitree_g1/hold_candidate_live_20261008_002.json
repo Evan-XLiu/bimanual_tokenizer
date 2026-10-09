@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-10-08T10:16:56.473574+00:00",
+  "scope": "operator-requested repeat; aborted in read-only preflight",
+  "summary": {
+    "error": "RuntimeError: Arms not stationary",
+    "unload_submitted": false,
+    "hardware_motion_enabled": true,
+    "candidate_trial": true,
+    "scope": "hardware experiment",
+    "physical_unload_verified": false
+  },
+  "motor_publisher_created": false,
+  "motor_commands_submitted": 0,
+  "hardware_motion_tested": false,
+  "reason": "Arms not stationary: feedback speed exceeded configured 0.1 rad/s preflight threshold",
+  "evidence_note": "preflight() raised before open_writer(); no commands.jsonl created. summary.hardware_motion_enabled is the requested CLI mode, not proof that any command was sent.",
+  "archive": ".local/unitree_g1/experiments/hold_candidate_live_20261008_002",
+  "sha256": {
+    "profile.json": "a2d228a87d131a438e1d027c37b350784cab91ad13881a127b02c1bf01192e33",
+    "summary.json": "39592248996f1df7a761a8abb33b98df21f89b9e57051a5cb0409381cbb10c3f"
+  }
+}

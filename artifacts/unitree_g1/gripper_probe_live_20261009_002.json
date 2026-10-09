@@ -1,0 +1,94 @@
+{
+  "session_path": ".local/unitree_g1/experiments/gripper_probe_live_20261009_002",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 1333,
+    "phase": "FAULT",
+    "elapsed_s": 6.525021414001458,
+    "release_reason": "tracking_error",
+    "first_fault": {
+      "reason": "tracking_error",
+      "phase": "ACTIVE",
+      "last_step_time": 8309.310515403,
+      "gain_scale": 1.0,
+      "feedback_received": 8309.310120306,
+      "tracking_exceeded_gripper_motor_indices": [
+        31
+      ],
+      "tracking_error_motor_units": [
+        0.15035897438340212,
+        0.13232690040879272
+      ]
+    },
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding"
+  },
+  "session": {
+    "hardware_approved": false,
+    "hardware_motion_enabled": true,
+    "scene_confirmation": "本会话用户已确认夹口清空、手指离开、机身双臂可靠支撑、停止人员就绪，并授权排查修复所需真机测试；本次对齐未用槽位mode与250Hz周期，保持原增益和0.15保护。",
+    "interface": "enp130s0",
+    "motor_indices": [
+      31,
+      33
+    ],
+    "kp": 5.0,
+    "kd": 0.05,
+    "displacement_motor_units": 0.5,
+    "period_s": 0.004,
+    "velocity_motor_units_s": 0.2,
+    "acceleration_motor_units_s2": 0.4,
+    "tracking_error_motor_units": 0.15,
+    "phases_s": {
+      "engage": 2.0,
+      "open": 5.0,
+      "dwell": 1.0,
+      "return_to_start": 5.0,
+      "settle": 1.0,
+      "unload": 2.0,
+      "tail": 0.3
+    },
+    "source_sha256": {
+      "gripper_probe.py": "7376901aab924e892c211fbcf42d34dfb78c808b2261c4d06035d286e75c0ab8",
+      "hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+      "arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+    },
+    "scope": "Candidate small opening and return; motor units are not jaw gap or calibrated force. All other motors passive."
+  },
+  "last_frame_zero_gains": true,
+  "completed_open_return": false,
+  "motors": [
+    {
+      "index": 31,
+      "active_modes": [
+        1
+      ],
+      "q_min": -0.010868191719055176,
+      "q_max": 0.003313422203063965,
+      "max_abs_tau_est": 0.76171875,
+      "initial_q": -0.010806918144226074
+    },
+    {
+      "index": 33,
+      "active_modes": [
+        1
+      ],
+      "q_min": -0.023792028427124023,
+      "q_max": 0.008322000503540039,
+      "max_abs_tau_est": 0.673828125,
+      "initial_q": -0.023746013641357422
+    }
+  ],
+  "operator_observation": "仍无可见移动，也无异常声音；夹爪完全闭合或接近闭合",
+  "source_and_log_sha256": {
+    "summary.json": "c06711fc543ce895bca0b81093e8e9fce82f52947f156254ee4ad23167353131",
+    "preflight.json": "5f62335320639d1e6d5d0e448a171c5ec065c5805a6f88610b598d5c8f0103c8",
+    "commands.jsonl": "f21f58f51508ffa86ba6455a336cb5307fc5c9533b0d2ca675992cdde0d1e05c",
+    "session.json": "29515bbe2be16ef129103e2bbfcffee08a1f260c64ae848dc6f16e16e062d2a6",
+    "source/hold_arms.py": "d692882bf86db1ba48145ab71c025d1965bcec85b219678c4096548233e293b4",
+    "source/gripper_probe.py": "7376901aab924e892c211fbcf42d34dfb78c808b2261c4d06035d286e75c0ab8",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1"
+  }
+}

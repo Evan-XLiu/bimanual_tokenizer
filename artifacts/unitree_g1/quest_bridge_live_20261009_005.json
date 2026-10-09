@@ -1,0 +1,87 @@
+{
+  "scope": "First translation-scale 0.5 Quest free-orientation trial; completed ACTIVE duration, tracking fault during unloading.",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 5753,
+    "phase": "FAULT",
+    "elapsed_s": 64.324875411,
+    "release_reason": "operator_release",
+    "first_fault": {
+      "reason": "tracking_error",
+      "phase": "RELEASING",
+      "last_step_time": 3249.292525702,
+      "gain_scale": 0.36508181249996596,
+      "feedback_received": 3249.291344861,
+      "tracking_error_rad": [
+        0.08029571975282232,
+        0.0377791598734431,
+        0.02076021080255573,
+        0.08171468459727904,
+        0.008492394723363328,
+        0.046130573628206606,
+        0.004779146063349338,
+        0.10075419882180314,
+        0.020865716048358796,
+        0.008121073482127046,
+        0.09325372414042238,
+        0.012168170775336384,
+        0.046388567338376374,
+        0.006494498047225766
+      ],
+      "tracking_exceeded_arm_indices": [
+        22
+      ]
+    },
+    "hardware_motion_enabled": true
+  },
+  "translation_scale": 0.5,
+  "orientation_mode": "free",
+  "active_frames": 5357,
+  "active_duration_s": 60.008019027000046,
+  "ik_solved_proposals": 1820,
+  "active_max_tracking_error_rad": 0.0744303425703963,
+  "max_accepted_ik_error_m": 0.014999000084139307,
+  "max_rotation_change_rad_by_arm": [
+    0.5636713343058704,
+    0.605565980786748
+  ],
+  "final_gains_zero": true,
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261009_005",
+  "operator_observation": {
+    "verbatim": "这次比例尚可，结束卸载时正常。",
+    "scope": "用户对005的现场反馈；保留RELEASING阶段tracking_error记录，不据此认定触发原因或改写程序物理卸载判定。"
+  },
+  "workspace_limited_frames": 939,
+  "ik_limited_frames": 535,
+  "last_input_state": "following",
+  "termination_interpretation": "Reached finite ACTIVE deadline; generic operator_release marks release_control call. First tracking fault occurred during RELEASING, not ACTIVE. Physical cause unconfirmed.",
+  "limitations": [
+    "Tracking fault during unload must not be discarded as normal without physical evidence.",
+    "Physical unload not verified.",
+    "No physical 10cm task acceptance established.",
+    "No automatic retry or ai_sport restart."
+  ],
+  "sha256": {
+    "commands.jsonl": "6b98a7f5810541e78688c6fedb154cb95fc7057b705c2e635cee66aeceaa40c5",
+    "feedback.json": "ecdde51275a6a341b2024319a858c8abd60da4f072a48601e7189f3ceb38dadb",
+    "ik_ready.json": "c5780fd957136990ac9e2964a236a9254ea993b20f19738504f94eba7fd1ac44",
+    "input/events.jsonl": "c9bfb08f4b46bc7e59d47dac269384bea5ebc24b59beaf8cb86581f9122aecd5",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76",
+    "input/status.json": "0a8bd2da103c24055e40f8acf711a380845fbd658edb904f4d368659188711e3",
+    "input/summary.json": "eb658d4b4826b7a8c25e2021d172d5720b98894c52abd087584c980aba527365",
+    "input.log": "5a342fa8ac2bd393dbf73d19349366b9240fb4487c3a739cbb6439bcc0c7a0f1",
+    "proposals.jsonl": "5178f2b213244da551d79f49590936d25c5ae62b1581b01429ccec2083d8c822",
+    "session.json": "5a5feee3314cd9905b5f4d36ff013999c37fd6e4a8d6c672493b42deb4055611",
+    "source/arm_execution.py": "bf022c05869be00e9ef940819a531513a4fbca75d1335246ac8d114a1e517db1",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/quest_bridge.py": "f9247182d3324ce32bb0781d522d498affa9befc9538ff226f74a1632ff59246",
+    "source/televuer_input.py": "a36dacb9d030e257c3190758a6a64a7c19f8eb9500111f6758341afe17ae8c01",
+    "source/virtual_arms.py": "d169225acfadc0c0aa2b93f36062a42b43b003ba04bb747df7288e8127c2e6ee",
+    "summary.json": "ca8051ae34c07795328e2bda1390f0b1b0d0902e579691d37d29b832575963c9",
+    "target.json": "a891e9fa51061ed9713231b3d244437f331a717f68b24670a36dd9866caaf9fe",
+    "worker_error.json": "dd3b6377dd45f36630e114fbab891ae53f8dd9066a1bfd3f605cee567d4ac15c"
+  },
+  "processes_exited": true
+}

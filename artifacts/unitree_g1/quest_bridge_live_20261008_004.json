@@ -1,0 +1,81 @@
+{
+  "scope": "Third live Quest trial; joint-constrained IK revision; stopped on 3cm workspace limit",
+  "summary": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": "quest_input: IK worker: ValueError: Translation workspace exceeded",
+    "command_frames": 639,
+    "phase": "FAULT",
+    "elapsed_s": 7.009258105999834,
+    "release_reason": "quest_input: IK worker: ValueError: Translation workspace exceeded",
+    "first_fault": {
+      "reason": "quest_input: IK worker: ValueError: Translation workspace exceeded",
+      "phase": "ACTIVE",
+      "last_step_time": 8274.577520645,
+      "gain_scale": 1.0,
+      "feedback_received": 8274.586930602,
+      "tracking_error_rad": [
+        0.026204466362552088,
+        0.0008390809863211765,
+        0.011839395249347011,
+        0.008941471507847298,
+        0.005137737932537523,
+        0.019153465171220733,
+        0.014323727030234629,
+        0.0014256882040336594,
+        0.000182627712906544,
+        0.0004895344371502047,
+        0.0031652915440059104,
+        0.00019720976006874086,
+        0.002019348397875766,
+        0.00013589676447699206
+      ],
+      "tracking_exceeded_arm_indices": []
+    },
+    "hardware_motion_enabled": true
+  },
+  "ik_solved_proposals": 80,
+  "active_frames": 242,
+  "active_duration_s": 2.683406306998222,
+  "max_accepted_ik_error_m": 0.003826499317049081,
+  "max_receive_to_ik_s": 0.017448381999201956,
+  "max_command_excursion_rad_by_arm": [
+    0.09969550378054381,
+    0.0100319994285758
+  ],
+  "max_active_feedback_excursion_rad_by_arm": [
+    0.10826551914215088,
+    0.008472919464111328
+  ],
+  "active_max_tracking_error_rad": 0.028195162636225776,
+  "final_gains_zero": true,
+  "operator_observation": {
+    "verbatim": "现场正常，对应正确",
+    "scope": "Operator confirms normal behavior and correct correspondence in this short trial; not complete six-axis calibration, collision or continuous-stability acceptance."
+  },
+  "archive": ".local/unitree_g1/experiments/quest_bridge_live_20261008_004",
+  "sha256": {
+    "worker_error.json": "fb19c09271864344a6b5bec794f237ecd8e483d112fd45062b7870839a6fc17b",
+    "ik_ready.json": "46c646a415cca1b8b145328356956806debf3ca27b6e97fd9bd76de8764ee949",
+    "proposals.jsonl": "b049e72373f0b7628ad1c88d143963d2bbfdc6f8459b6fd85210d7d6f417cc61",
+    "summary.json": "fa6ef2941a6df6c2c957e23c58e89bccc0c7231dfb671bb3f36ac26989915cbf",
+    "feedback.json": "71a2d3d41626e55a1065a71823407a5bda0e1a57907fabb888c5c4293665c75a",
+    "target.json": "633d3aa4001307c4151a45390ef6a00da70cfdd35fa456a4a134dd46e5a6edb9",
+    "input.log": "329f0a8329c84647d4e58a6997ab915171f83727af803d582c25156e9137144e",
+    "commands.jsonl": "538448ebbf1c5148d3c8b5b5ebad843bd5c41df287263ffd4dff578447166030",
+    "session.json": "ed68574f36ba6fbbc99b1b2c0f5c646ac3a4391d55ad33d5e5d9ccc372cf7802",
+    "input/status.json": "b859bf2432ebdcd100f6dfd2e743def9d27eca67f7a53aa9df0246aa86fac3c1",
+    "input/summary.json": "bb10da9732dd9bc42753bbdea82cc29c2f7291ab4c7e40b8d74b3a3f498bfee6",
+    "input/events.jsonl": "7550861d25fc14d6bd260b5dd7d1c47194840e81069f689c97828486bf0a887a",
+    "input/session.json": "ffde76ccc3e8ed7892542e331264b5a63136114e645d356d0ea0dbf01ba8ce76",
+    "source/quest_bridge.py": "854e81888a0a4d9d4a6d481d891647a42ddc0549e8236f036c422fdec1534fdb",
+    "source/televuer_input.py": "a36dacb9d030e257c3190758a6a64a7c19f8eb9500111f6758341afe17ae8c01",
+    "source/virtual_arms.py": "e27ae56426ded8bd4f02f62b64239fa09f2b88bd662e8281553ad0269f411c77",
+    "source/hold_arms.py": "0a09eb5f148df4602d06f3aaa2d3ff461b60c7dcb20c725587e22f83b267d4f5",
+    "source/arm_execution.py": "b5e390686bc0357cb90e5dd84b9435bf1f40ae37fd6e67e065f2462db6475c94"
+  },
+  "limitations": [
+    "Short trial; workspace-protected stop, not continuous-follow acceptance.",
+    "No collision or independent emergency-stop acceptance."
+  ]
+}

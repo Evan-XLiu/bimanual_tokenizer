@@ -20,6 +20,7 @@ dataset metadata
 | [Serve](/workflows/serve) | isolating policy runtime from simulator runtime |
 | [Slurm Launchers](/workflows/slurm-launchers) | submitting tokenizer, policy, eval, and monitor jobs on research clusters |
 | [BAR OAT Pali Path](/workflows/bar-oat-pali) | checking the full quickstart-style path |
+| [G1 / Quest 3S Handoff](/workflows/unitree_g1_handoff) | continuing G1 teleoperation work from the latest implementation and field evidence |
 
 ## Rules Of Thumb
 

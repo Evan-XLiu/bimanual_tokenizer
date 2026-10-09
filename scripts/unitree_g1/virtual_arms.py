@@ -43,8 +43,9 @@ def poses(raw):
 
 class RelativeClutch:
     """Both grips engage both arms; faults require a fresh release before rearming."""
-    def __init__(self, timeout=0.25, scale=1.0):
+    def __init__(self, timeout=0.25, scale=1.0, workspace_m=0.35):
         self.timeout, self.scale = timeout, scale
+        self.workspace_m = workspace_m
         self.session = None
         self.last_time = None
         self.previous = None
@@ -113,7 +114,7 @@ class RelativeClutch:
         for source, reference, robot in zip(current, self.reference, self.robot_reference):
             target = robot.copy()
             delta = self.scale * (source[:3, 3] - reference[:3, 3])
-            if np.linalg.norm(delta) > 0.35:
+            if self.workspace_m is not None and np.linalg.norm(delta) > self.workspace_m:
                 self.stop('relative_workspace')
                 return None
             target[:3, 3] += delta
