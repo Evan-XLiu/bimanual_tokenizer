@@ -46,11 +46,63 @@ class InputTests(unittest.TestCase):
                 guard.find_spec(name)
         self.assertIsNone(guard.find_spec('televuer'))
 
+    def test_gripper_hud_freshness_countdown_and_image_serialization(self):
+        import json
+        import tempfile
+        from vuer.schemas import ImageBackground
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'status.json'
+            self.assertIn('UNAVAILABLE',m.gripper_status_lines(path,1)[0])
+            status=dict(time=1.,states=['HOLDING','OPEN'],phase='ACTIVE',
+                        hardware_motion_enabled=False,remaining_s=8.,fault=None)
+            path.write_text(json.dumps(status))
+            lines=m.gripper_status_lines(path,1.1)
+            self.assertIn('SHADOW | L: HOLDING | R: OPEN',lines[0])
+            self.assertIn('PLACE OBJECT DOWN',lines[1])
+            self.assertIn('STALE',m.gripper_status_lines(path,2)[0])
+            self.assertIn('STALE',m.gripper_status_lines(path,0)[0])
+            canvas=m.gripper_hud_image(path,1.1)
+            self.assertEqual(canvas.getpixel((512,384))[3],0)
+            element=ImageBackground(canvas,format='png',key='gripper-status').serialize()
+            self.assertEqual(element['key'],'gripper-status')
+            status.update(phase='RELEASED',remaining_s=0)
+            path.write_text(json.dumps(status))
+            self.assertIn('no holding guarantee',m.gripper_status_lines(path,1.1)[1])
+            path.write_text('{broken')
+            self.assertIn('UNAVAILABLE',m.gripper_status_lines(path,1.1)[0])
+
 
 if __name__ == '__main__':
     unittest.main()
 
 class OfficialCallbackTests(unittest.TestCase):
+    def test_gripper_hud_runs_with_controller_stream_without_robot_imports(self):
+        import asyncio
+        import multiprocessing as mp
+        import queue
+        import sys
+        import tempfile
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp,patch('multiprocessing.Process.start'),patch.object(sys,'meta_path',sys.meta_path.copy()):
+            args=SimpleNamespace(output=Path(tmp),cert=Path(tmp)/'cert',key=Path(tmp)/'key',
+                                 timeout=1,gripper_status=Path(tmp)/'missing.json')
+            tv=m.create_tv(args,queue.Queue(),mp.Value('L',0))
+            keys=[]
+            async def run():
+                ready=asyncio.Event()
+                def upsert(element,**kwargs):
+                    keys.append(element.serialize()['key'])
+                    if 'gripper-status' in keys and 'motionControllers' in keys:ready.set()
+                task=asyncio.create_task(tv.main_pass_through(SimpleNamespace(upsert=upsert)))
+                try:await asyncio.wait_for(ready.wait(),2.)
+                finally:
+                    task.cancel()
+                    await asyncio.gather(task,return_exceptions=True)
+            asyncio.run(run())
+            self.assertIn('motionControllers',keys)
+            self.assertIn('gripper-status',keys)
+
     def test_official_callbacks_and_conversion_without_server(self):
         import asyncio
         import multiprocessing as mp

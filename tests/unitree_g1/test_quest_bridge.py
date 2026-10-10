@@ -75,6 +75,21 @@ class QuestTests(unittest.TestCase):
                         self.assertEqual(ex.phase, 'FAULT')
                         self.assertEqual(sent[-1].kp, (0.,)*14)
 
+    def test_recording_camera_failure_releases_instead_of_accepting_targets(self):
+        self.engage()
+        path=self.output/'camera_status.json'
+        self.source.camera_status=path
+        write_json(path,dict(time=self.t,ready=True,error=None,
+            latest={role:self.t for role in ('head','left_wrist','right_wrist')}))
+        self.step()
+        self.assertFalse(self.executor.fault)
+        write_json(path,dict(time=self.t,ready=False,error='disk full',latest={}))
+        self.step()
+        self.assertTrue(self.executor.fault)
+        self.assertIn('camera',self.executor.reason.lower())
+        for _ in range(20):self.step(state='operator_release')
+        self.assertEqual(self.sent[-1].kp,(0.,)*14)
+
     def test_measured_start_dynamic_bounds_and_rate_limits(self):
         self.assertEqual(self.sent[0].q, (.4,)*14)
         self.assertAlmostEqual(self.executor.c.lower[0], .4-LIMITS['joint_excursion_rad'])

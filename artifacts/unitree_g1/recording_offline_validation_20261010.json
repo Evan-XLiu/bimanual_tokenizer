@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-10",
+  "hardware_connected": false,
+  "motion_commands_sent": false,
+  "synthetic_only": true,
+  "format": "v3.0",
+  "lerobot_version": "0.4.4",
+  "episodes": 2,
+  "frames": 45,
+  "fps": 15,
+  "image_shape": [
+    480,
+    640,
+    3
+  ],
+  "state_dim": 16,
+  "action_dim": 16,
+  "full_body_slots": 35,
+  "dataset_path": ".local/unitree_g1/experiments/recording_offline_20261010_001/lerobot_demo",
+  "all_frames_read_back": true,
+  "controls_test": "109 tests, 108 passed and 1 LeRobot-only test skipped in XR environment",
+  "data_test": "7 tests passed with real LeRobot 0.4.4 writer and reader; 180-second/2700-frame sampling boundary checked",
+  "limitations": [
+    "Synthetic demonstration only; not robot training data",
+    "Three physical camera streams, device roles, timing and 180-second recording not validated",
+    "Exposure synchronization unverified; causal alignment uses host receipt timestamps"
+  ],
+  "files": {
+    "meta/stats.json": "f5a34e17bbdc4b0982591047d63b3670872c3f0a30a395ea8a2c36fce6ca3c1c",
+    "meta/g1_recording.json": "5bef52f2cfae246bbfb462e9e958de92da5043b662ba167375fe880e1a217482",
+    "meta/tasks.parquet": "e4be9641298eaf0579375e606a332899f18433d0878e14491f06f5b10479fc80",
+    "meta/info.json": "69bc85a85a329e457542f055c8f5df050981c2718e04f52450a777442c3cc792",
+    "meta/g1_sources/episode_000001/summary.json": "e0cbca2d18ae7151efedf9120c7a870e0d07f5ba02910f3b25a3d8a1cff14fe5",
+    "meta/g1_sources/episode_000001/cameras_summary.json": "c121cf1cfb63f888673f20791eb3f5711915974e8a329955b503fef948197377",
+    "meta/g1_sources/episode_000001/session.json": "6d5e3b10022be66cb84be1ffc462fa628543f87a77cb6f90305f494f9722798e",
+    "meta/g1_sources/episode_000001/cameras_metadata.json": "f1a8594e8976c89f1e5c028870c3d3764a7a5423473cd8635448d7f6d8cc6574",
+    "meta/g1_sources/episode_000000/summary.json": "e0cbca2d18ae7151efedf9120c7a870e0d07f5ba02910f3b25a3d8a1cff14fe5",
+    "meta/g1_sources/episode_000000/cameras_summary.json": "c121cf1cfb63f888673f20791eb3f5711915974e8a329955b503fef948197377",
+    "meta/g1_sources/episode_000000/session.json": "6d5e3b10022be66cb84be1ffc462fa628543f87a77cb6f90305f494f9722798e",
+    "meta/g1_sources/episode_000000/cameras_metadata.json": "f1a8594e8976c89f1e5c028870c3d3764a7a5423473cd8635448d7f6d8cc6574",
+    "meta/episodes/chunk-000/file-000.parquet": "ddc3e4783b1bdb55140dc259e19ac576d615229007fa2f7fb1a73aecfcc2cb03",
+    "videos/observation.images.left_wrist/chunk-000/file-000.mp4": "2fffd0ebaba3b8d3d61a89bf10ca6037daa7d55184855d42a90f665d8a290f0c",
+    "videos/observation.images.right_wrist/chunk-000/file-000.mp4": "9707c5d06edc973259437380688dc7718699f98053989c2f17eccabf975b9db8",
+    "videos/observation.images.head/chunk-000/file-000.mp4": "da5fff0c872c30f952c778ffff620643cbf4d3f73fa77ac0d7cbcd1013901412",
+    "data/chunk-000/file-000.parquet": "45760ddafa083a598ae18915dff69b3b4579f97482303e0e50e8cba2f1a584f7"
+  },
+  "dataset_available": false,
+  "cleanup": {
+    "date": "2026-10-10",
+    "reason": "User requested removal of unneeded test data after offline validation.",
+    "deleted": [
+      {
+        "path": ".local/unitree_g1/experiments/recording_offline_20261010_001",
+        "files": 164,
+        "bytes": 1190254
+      },
+      {
+        "path": ".local/unitree_g1/experiments/three_camera_record_smoke_20261010_001",
+        "files": 2,
+        "bytes": 225
+      }
+    ],
+    "historical_validation_retained": true
+  }
+}

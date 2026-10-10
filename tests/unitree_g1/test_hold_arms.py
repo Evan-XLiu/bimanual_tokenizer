@@ -55,6 +55,33 @@ class HoldTests(unittest.TestCase):
         self.assertEqual(self.io.commands[0][1].kp, (0.,)*14)
         self.assertGreaterEqual(sum(c.phase == 'RELEASED' for _,c in self.io.commands), 5)
 
+    def test_recording_snapshot_precedes_successful_action_submission(self):
+        class RecordingIO(FakeIO):
+            record_observation = True
+            serial = 0
+            def telemetry(self):
+                return dict(received=self.t, serial=self.serial)
+            def write(self, command):
+                ok = super().write(command)
+                self.serial += 1
+                self.t += .001
+                return ok
+        self.io = RecordingIO()
+        rows=[]
+        result=self.run_case(log=rows.append)
+        self.assertIsNone(result['error'])
+        for row in rows:
+            self.assertLessEqual(row['observation_before_command']['received'],row['command_send_started'])
+            self.assertLess(row['command_send_started'],row['command_send_finished'])
+            self.assertEqual(row['telemetry']['serial'],row['observation_before_command']['serial']+1)
+
+    def test_failed_write_is_never_a_training_action_row(self):
+        self.io.fail_at=.15
+        rows=[]
+        result=self.run_case(log=rows.append)
+        self.assertIsNotNone(result['error'])
+        self.assertTrue(all(row['command_send_started']<.15 for row in rows))
+
     def test_signal_during_engagement_or_hold(self):
         for when in (.03, .15):
             self.io = FakeIO()

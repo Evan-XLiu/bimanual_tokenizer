@@ -81,8 +81,13 @@ def run_hold(io, config, profile, stop_requested, log, clock=time.monotonic, sle
     def emit(command):
         nonlocal last_command, submitted, logging_failed
         io.check()
+        # Training observations must precede the actual submitted action, not be
+        # a fresh feedback sample obtained after writing it. Only recording uses this.
+        before = io.telemetry() if getattr(io, 'record_observation', False) else None
+        send_started = clock()
         if io.write(command) is not True:
             raise OSError('DDS write failed')
+        send_finished = clock()
         last_command = command
         submitted += 1
         if not logging_failed:
@@ -92,6 +97,8 @@ def run_hold(io, config, profile, stop_requested, log, clock=time.monotonic, sle
                 except Exception:
                     feedback = None
                 log({'type': 'command', 'time': clock(), 'feedback': feedback,
+                     'command_send_started': send_started, 'command_send_finished': send_finished,
+                     'observation_before_command': before,
                      'executor_feedback': (None if executor.observation is None else
                                            asdict(executor.observation)),
                      'release_reason': executor.release_reason,

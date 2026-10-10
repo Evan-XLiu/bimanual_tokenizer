@@ -23,9 +23,10 @@ import uuid
 from arm_execution import vector
 from hold_arms import DDSHoldIO, load_profile, run_hold
 from quest_grippers import QuestGripperIO, gripper_settings, raw_triggers, trigger_pair
+from record_cameras import check_camera_status
 
 ROOT = Path(__file__).resolve().parents[2]
-LIMITS = dict(active_s=60., input_timeout_s=.1, feedback_timeout_s=.1,
+LIMITS = dict(active_s=180., input_timeout_s=.1, feedback_timeout_s=.1,
               joint_excursion_rad=.20, velocity_rad_s=.05, acceleration_rad_s2=.1,
               translation_scale=1., workspace_m=.10, ik_position_error_m=.015,
               tracking_error_rad=.10, workspace_shape='box_above_start',
@@ -143,6 +144,7 @@ class QuestSource:
         self.last_input = None
         self.session = None
         self.gripper_io = gripper_io
+        self.camera_status = None
 
     def snapshot(self, io, phase, q=None):
         state = io.observation()
@@ -174,6 +176,8 @@ class QuestSource:
             time=state.received, q=list(state.q), command_q=list(executor.q),
             phase=executor.phase, initial_q=self.initial))
         try:
+            if self.camera_status is not None:
+                check_camera_status(self.camera_status, self.clock())
             if (self.output/'worker_error.json').exists():
                 failure = json.loads((self.output/'worker_error.json').read_text())
                 raise ValueError('IK worker: '+failure['error'])
@@ -309,7 +313,13 @@ def main():
     parser.add_argument('--grippers', action='store_true', help='Enable tested-range Dex1 trigger control in the single publisher')
     parser.add_argument('--scene-confirmation', help='Current operator statement, not historical profile readiness')
     parser.add_argument('--wait-seconds', type=float, default=300.)
+    parser.add_argument('--record', action='store_true', help='Record three RGB cameras and causal state/action logs')
+    parser.add_argument('--task', help='Task instruction recorded with this episode')
+    parser.add_argument('--camera-host', default='unitree@192.168.123.164')
+    parser.add_argument('--camera-ssh-key', type=Path, default=Path.home()/'.ssh/g1_camera_ed25519')
     args = parser.parse_args()
+    if args.record and (not args.grippers or not (args.task or '').strip()):
+        parser.error('--record requires --grippers and a nonempty --task')
     if not math.isfinite(args.wait_seconds) or not 0 < args.wait_seconds <= 600:
         parser.error('wait-seconds must be in (0, 600]')
     if args.execute and not (args.scene_confirmation or '').strip():
@@ -325,12 +335,14 @@ def main():
     nonce = uuid.uuid4().hex
     (output/'source').mkdir()
     source_hashes = {}
-    for name in ('quest_bridge.py', 'quest_grippers.py', 'arm_execution.py', 'hold_arms.py', 'virtual_arms.py', 'televuer_input.py'):
+    for name in ('quest_bridge.py', 'quest_grippers.py', 'arm_execution.py', 'hold_arms.py', 'virtual_arms.py', 'televuer_input.py', 'record_cameras.py'):
         data = (ROOT/'scripts/unitree_g1'/name).read_bytes()
         (output/'source'/name).write_bytes(data)
         source_hashes[name] = hashlib.sha256(data).hexdigest()
     write_json(output/'session.json', dict(nonce=nonce, limits=LIMITS, ik_cost=IK_COST, profile=profile,
         grippers=grip_settings,
+        recording=dict(enabled=args.record, task=args.task, fps=15, shape=[480,640,3],
+                       cameras=['head','left_wrist','right_wrist'], action_semantics='submitted_absolute_position'),
         hardware_motion_enabled=args.execute, scene_confirmation=args.scene_confirmation,
         interface=args.interface, host_address=args.host_address,
         source_sha256=source_hashes,
@@ -341,19 +353,38 @@ def main():
     context = multiprocessing.get_context('spawn')
     done = context.Event()
     io = input_proc = ik_proc = input_log = None
+    camera_proc = camera_log = None
     result = dict(error='initialization_failed', command_frames=0, unload_submitted=False)
     source = QuestSource(output, nonce)
     try:
         io = (QuestGripperIO(args.interface,args.execute,profile,grip_settings) if args.grippers
               else DDSHoldIO(args.interface, args.execute, profile))
         source.gripper_io=io if args.grippers else None
+        if args.grippers:io.status_path=output/'gripper_status.json'
+        io.record_observation=args.record
         io.preflight()
+        if args.record:
+            camera_log=(output/'cameras.log').open('x')
+            camera_proc=subprocess.Popen([sys.executable,str(ROOT/'scripts/unitree_g1/record_cameras.py'),
+                '--output',str(output/'cameras'),'--host',args.camera_host,
+                '--ssh-key',str(args.camera_ssh_key)],stdout=camera_log,stderr=subprocess.STDOUT)
+            source.camera_status=output/'cameras/status.json'
+            camera_deadline=time.monotonic()+30
+            while True:
+                if stop.is_set() or camera_proc.poll() is not None or time.monotonic()>camera_deadline:
+                    raise RuntimeError('Camera recording failed before engagement; inspect cameras.log')
+                try:
+                    check_camera_status(source.camera_status,time.monotonic())
+                    break
+                except (OSError,ValueError,KeyError,TypeError):time.sleep(.05)
         source.snapshot(io, 'WAITING')
         input_log = (output/'input.log').open('x')
         input_proc = subprocess.Popen([sys.executable, str(ROOT/'scripts/unitree_g1/televuer_input.py'),
             '--cert', str(args.cert.resolve()), '--key', str(args.key.resolve()),
             '--output', str(output/'input'), '--host-address', args.host_address,
-            '--timeout', str(LIMITS['input_timeout_s'])], stdout=input_log, stderr=subprocess.STDOUT)
+            '--timeout', str(LIMITS['input_timeout_s'])]+
+            (['--gripper-status',str(output/'gripper_status.json')] if args.grippers else []),
+            stdout=input_log, stderr=subprocess.STDOUT)
         ik_proc = context.Process(target=worker, args=(output, nonce, done, args.grippers))
         ik_proc.start()
         print(f'Quest: https://{args.host_address}:8012/?ws=wss://{args.host_address}:8012', flush=True)
@@ -364,7 +395,9 @@ def main():
               'Release either grip to end this run. No automatic rearm.', flush=True)
         if args.grippers:
             print('Dex1: after ramp, squeeze each INDEX trigger fully once to pick up control; '
-                  'then release trigger=open, squeeze=close. Side grips remain the stop/clutch. '
+                  'then squeeze=close, contact=bounded hold, release trigger <=0.15=open. '
+                  'Reclose threshold=0.25. Contact detection is UNCALIBRATED; HOLDING is not grasp verification. '
+                  'Side grips remain the stop/clutch. '
                   'Grippers unload with arms; no object holding on exit.',flush=True)
         deadline = time.monotonic()+args.wait_seconds
         while not stop.is_set():
@@ -372,6 +405,8 @@ def main():
             if now > deadline:
                 raise TimeoutError('No fresh Quest engagement before wait deadline')
             io.check()
+            if args.record:
+                check_camera_status(source.camera_status,now)
             if input_proc.poll() is not None or not ik_proc.is_alive():
                 raise RuntimeError('Input or IK process exited; inspect session logs')
             source.snapshot(io, 'WAITING')
@@ -403,6 +438,16 @@ def main():
         result['error'] = f'{type(exc).__name__}: {exc}'
     finally:
         done.set()
+        if camera_proc:
+            if camera_proc.poll() is None:
+                camera_proc.terminate()
+                try:camera_proc.wait(timeout=8)
+                except subprocess.TimeoutExpired:
+                    camera_proc.kill();camera_proc.wait()
+            result['camera_recorder_returncode']=camera_proc.returncode
+            if camera_proc.returncode!=0:
+                result['error']=result.get('error') or 'Camera recording did not finish cleanly'
+        if camera_log:camera_log.close()
         if ik_proc:
             ik_proc.join(timeout=3)
             if ik_proc.is_alive():

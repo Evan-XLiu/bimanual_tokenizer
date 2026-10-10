@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Input-only diagnostics for the pinned official TeleVuer; no robot or IK imports."""
 import argparse
+import asyncio
 import dataclasses
 import hashlib
 import importlib.abc
@@ -15,6 +16,40 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def gripper_status_lines(path,now):
+    """Display-only reader. Missing/stale data never implies a maintained grasp."""
+    try:
+        status=json.loads(path.read_text())
+        if not 0<=now-status['time']<=.5:
+            return ['GRIPPER STATUS STALE - holding unknown']
+        states=status['states']
+        if len(states)!=2 or not all(isinstance(s,str) for s in states):raise ValueError('states')
+        mode='LIVE' if status['hardware_motion_enabled'] else 'SHADOW'
+        lines=[mode+' | L: '+states[0]+' | R: '+states[1]]
+        remaining=status.get('remaining_s')
+        if status['phase']=='ACTIVE' and remaining is not None:
+            lines.append(f'Unload in {remaining:.1f}s'+(' - PLACE OBJECT DOWN' if remaining<=10 else ''))
+        else:lines.append('Phase: '+status['phase']+' - no holding guarantee')
+        lines.append('Release INDEX trigger: open | Side grip/timeout: unload all')
+        lines.append('Contact uncalibrated - HOLDING does not verify grasp')
+        if status.get('fault'):lines.append('FAULT: '+str(status['fault']['reason']))
+        return lines
+    except (OSError,ValueError,KeyError,TypeError):
+        return ['GRIPPER STATUS UNAVAILABLE - holding unknown']
+
+
+def gripper_hud_image(path,now):
+    from PIL import Image,ImageDraw,ImageFont
+    canvas=Image.new('RGBA',(1024,768),(0,0,0,0))
+    draw=ImageDraw.Draw(canvas)
+    draw.rectangle((12,584,1012,756),fill=(10,15,20,220))
+    try:font=ImageFont.truetype('DejaVuSans.ttf',20)
+    except OSError:font=ImageFont.load_default()
+    for i,line in enumerate(gripper_status_lines(path,now)):
+        draw.text((24,596+i*29),line,font=font,fill=(255,225,150,255))
+    return canvas
 
 
 class NoRobotImports(importlib.abc.MetaPathFinder):
@@ -101,6 +136,29 @@ def create_tv(args, events, dropped):
     from televuer import TeleVuer, TeleVuerWrapper
 
     class InputTeleVuer(TeleVuer):
+        async def main_pass_through(self,session):
+            path=getattr(args,'gripper_status',None)
+            if path is None:
+                return await super().main_pass_through(session)
+            from concurrent.futures import ThreadPoolExecutor
+            from vuer.schemas import ImageBackground
+            renderer=ThreadPoolExecutor(max_workers=1,thread_name_prefix='gripper-hud')
+            async def display():
+                while True:
+                    canvas=await asyncio.get_running_loop().run_in_executor(
+                        renderer,gripper_hud_image,path,time.monotonic())
+                    session.upsert(ImageBackground(canvas,aspect=4/3,height=1,distanceToCamera=1,
+                        format='png',key='gripper-status',interpolate=True),to='bgChildren')
+                    await asyncio.sleep(.2)
+            # Rendering and file reads are independent of controller event callbacks.
+            tasks=[asyncio.create_task(display()),
+                   asyncio.create_task(super().main_pass_through(session))]
+            try:await asyncio.gather(*tasks)
+            finally:
+                for task in tasks:task.cancel()
+                await asyncio.gather(*tasks,return_exceptions=True)
+                renderer.shutdown(wait=False,cancel_futures=True)
+
         def _vuer_run(self):
             # Vuer defaults to serving cwd through /static. Use an empty directory.
             self.vuer.static_root = str(args.output / 'empty-static')
@@ -160,6 +218,7 @@ def main():
     parser.add_argument('--timeout', type=float, default=1.0)
     parser.add_argument('--duration', type=float, default=0, help='Wall seconds from server startup; 0 until Ctrl-C')
     parser.add_argument('--device-note', default='Quest 3S; OS/browser versions pending operator')
+    parser.add_argument('--gripper-status',type=Path,help='Read-only status file for the Quest HUD')
     args = parser.parse_args()
     if not math.isfinite(args.timeout) or args.timeout <= 0 or not math.isfinite(args.duration) or args.duration < 0:
         parser.error('timeout must be positive and duration nonnegative, both finite')
