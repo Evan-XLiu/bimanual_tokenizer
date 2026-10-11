@@ -64,17 +64,19 @@ def make_plan(snapshot, output):
     import tempfile
     import numpy as np
     from virtual_arms import VirtualRobot
-    from quest_bridge import configure_measured_pose_ik, LIMITS
+    from quest_bridge import configure_measured_pose_ik
     from arm_execution import Observation
     from hold_arms import run_hold
     from quest_bridge import load_quest_profile
     initial = np.asarray(snapshot['q'])
-    LIMITS['joint_excursion_rad'] = RADIUS
     with tempfile.TemporaryDirectory() as tmp:
         robot = VirtualRobot(Path(tmp), False)
         configure_measured_pose_ik(robot)
         robot.ik.opti.minimize(500*robot.ik.translational_cost+.1*robot.ik.smooth_cost)
-        robot.ik.opti.set_value(robot.ik.trial_reference, initial)
+        # This independent diagnostic retains its small initial-pose envelope.
+        radius = RADIUS - 1e-6
+        robot.ik.opti.subject_to(robot.ik.opti.bounded(
+            initial-radius, robot.ik.var_q, initial+radius))
         robot.q = initial.copy()
         reference = robot.forward()
         seed = initial.copy()

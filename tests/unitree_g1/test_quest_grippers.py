@@ -31,15 +31,21 @@ class GripperQuestTests(unittest.TestCase):
             with self.assertRaises(ValueError):raw_triggers(dict(raw={'leftState':{'triggerValue':value},'rightState':{'triggerValue':0}}))
         with self.assertRaises(KeyError):raw_triggers(dict(raw={'leftState':{},'rightState':{}}))
 
-    def test_pickup_is_independent_and_initial_release_does_not_open(self):
-        self.f.update([0.,0.],.01,.01)
-        self.assertEqual(self.f.target,self.start)
-        self.f.update([1.,0.],.02,.02)
-        self.assertEqual(self.f.picked_up,[True,False])
-        self.assertEqual(self.f.target[1],self.start[1])
-        self.f.update([0.,1.],.03,.03)
-        self.assertEqual(self.f.target[0],self.f.c['opened'][0])
-        self.assertEqual(self.f.target[1],self.f.c['closed'][1])
+    def test_automatic_control_linear_mapping_and_ramp_hold(self):
+        packet=self.f.step(replace(self.cmd,phase='ENGAGING'),telemetry(self.start,.01),.01,80.)
+        self.assertEqual(packet['q'],self.start)
+        self.assertEqual(packet['picked_up'],[False,False])
+        # No full squeeze is needed, including inside the old release deadband.
+        for k,triggers in enumerate(([0.,.5],[.1,.2],[.15,.25],[1.,0.]),2):
+            t=k*.01
+            self.f.update(triggers,t,t)
+            self.assertEqual(self.f.picked_up,[True,True])
+            for i,trigger in enumerate(triggers):
+                expected=self.f.c['opened'][i]+trigger*(self.f.c['closed'][i]-self.f.c['opened'][i])
+                self.assertAlmostEqual(self.f.target[i],expected)
+        packet=self.f.step(self.cmd,telemetry(self.start,.05),.05,80.)
+        self.assertGreater(packet['q'][0],self.start[0])
+        self.assertLess(packet['q'][1],self.start[1])
 
     def test_sudden_trigger_changes_are_rate_limited_and_release_freezes(self):
         previous=self.f.q;previous_v=(0.,0.)
@@ -49,8 +55,8 @@ class GripperQuestTests(unittest.TestCase):
             self.f.update(triggers,t,t)
             packet=self.f.step(self.cmd,telemetry(previous,t),t,80.)
             q=packet['q'];v=tuple((b-a)/.01 for a,b in zip(previous,q))
-            self.assertLessEqual(max(map(abs,v)),1.2+1e-8)
-            self.assertLessEqual(max(abs(b-a)/.01 for a,b in zip(previous_v,v)),.6+1e-8)
+            self.assertLessEqual(max(map(abs,v)),2.4+1e-8)
+            self.assertLessEqual(max(abs(b-a)/.01 for a,b in zip(previous_v,v)),1.2+1e-8)
             self.assertTrue(all(lo-1e-9<=x<=hi+1e-9 for x,lo,hi in zip(q,self.f.lower,self.f.upper)))
             previous,previous_v=q,v
         packet=self.f.step(replace(self.cmd,phase='RELEASING',kp=(40.,)*14),telemetry(previous,18.01),18.01,80.)
@@ -84,8 +90,8 @@ class GripperQuestTests(unittest.TestCase):
             self.f.update([0.,0.] if k<=700 else [1.,1.],t,t)
             packet=self.f.step(self.cmd,telemetry(previous,t),t,80.)
             v=tuple((b-a)/.01 for a,b in zip(previous,packet['q']))
-            self.assertLessEqual(max(map(abs,v)),1.2+1e-8)
-            self.assertLessEqual(max(abs(b-a)/.01 for a,b in zip(previous_v,v)),.6+1e-8)
+            self.assertLessEqual(max(map(abs,v)),2.4+1e-8)
+            self.assertLessEqual(max(abs(b-a)/.01 for a,b in zip(previous_v,v)),1.2+1e-8)
             previous=packet['q']
             previous_v=v
             if k==700:
@@ -133,7 +139,7 @@ class GripperQuestTests(unittest.TestCase):
             if packet['states'][0]=='HOLDING':return now,actual,packet
         self.fail('Contact was not confirmed')
 
-    def test_contact_holds_independently_without_creep_and_release_hysteresis(self):
+    def test_contact_holds_independently_and_more_open_target_releases(self):
         now,actual,packet=self.blocked_closure()
         held=packet['q'][0]
         self.assertGreater(held,-2.5)
@@ -141,18 +147,18 @@ class GripperQuestTests(unittest.TestCase):
         self.assertEqual(packet['contact_stops'],[1,0])
         for k in range(1,401):
             t=now+k*.01
-            self.f.update([.3 if k%2 else 1.,1.],t,t)
+            self.f.update([.8 if k%2 else 1.,1.],t,t)
             packet=self.f.step(self.cmd,telemetry(actual,t),t,80.)
             self.assertEqual(packet['q'][0],held)
             actual=(-2.5,packet['q'][1])
         self.assertAlmostEqual(actual[1],self.f.c['closed'][1],places=6)
         self.assertEqual(packet['states'][1],'CLOSED_EMPTY')
         now+=4.
-        for k,trigger in enumerate((.15,.20,.24),1):
+        for k,trigger in enumerate((.4,.2,.1),1):
             t=now+k*.01
             self.f.update([trigger,1.],t,t)
             packet=self.f.step(self.cmd,telemetry(actual,t),t,80.)
-            self.assertEqual(self.f.target[0],-5.4)
+            self.assertAlmostEqual(self.f.target[0],-5.4+trigger*(self.f.c['closed'][0]+5.4))
             self.assertIsNone(packet['hold_q'][0])
             self.assertLess(packet['q'][0],held)
             actual=packet['q']
@@ -189,14 +195,14 @@ class GripperQuestTests(unittest.TestCase):
             for k in range(2,60):
                 t=k*.01
                 self.f.update([1.,0.],t,t)
-                measured=telemetry((-3.,-3.),t)
+                measured=telemetry((-3.,self.f.q[1]),t)
                 measured['motors'][0]['dq']=.1 if k%5==0 else 0.
                 packet=self.f.step(self.cmd,measured,t,80.)
                 self.assertEqual(packet['states'][0],'CONTACT_CANDIDATE')
 
     def test_contact_settings_cannot_override_hard_error_protection(self):
         for key,value in (('hold_offset',.15),('contact_error',.16),('contact_confirm_s',0.),
-                          ('contact_speed',float('nan')),('release_trigger',.3)):
+                          ('contact_speed',float('nan')),('contact_clear_error',.07)):
             settings=gripper_settings();settings[key]=value
             with self.subTest(key=key),self.assertRaises(ValueError):GripperFollower(settings)
 
@@ -276,6 +282,17 @@ class GripperQuestTests(unittest.TestCase):
         packet=self.f.step(self.cmd,telemetry((-3.,-3.),.01),.01,80.)
         self.assertEqual(packet['states'][0],'OPENING')
         self.assertIsNone(packet['hold_q'][0])
+
+    def test_partial_open_request_is_not_mistaken_for_contact(self):
+        self.f.initialize(telemetry((-3.,-3.),0.),0.)
+        self.f.q=(-2.90,-3.)
+        requested=-2.92  # Still ahead of feedback, but opens relative to command.
+        trigger=(requested+5.4)/(self.f.c['closed'][0]+5.4)
+        self.f.update([trigger,0.],.01,.01)
+        packet=self.f.step(self.cmd,telemetry((-3.,-3.),.01),.01,80.)
+        self.assertIsNone(packet['hold_q'][0])
+        self.assertEqual(packet['states'][0],'OPENING')
+        self.assertLess(packet['q'][0],-2.90)
 
     def test_sdk_single_message_contains_only_arm_and_gripper_gains(self):
         code='''

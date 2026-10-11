@@ -27,8 +27,8 @@ from record_cameras import check_camera_status
 
 ROOT = Path(__file__).resolve().parents[2]
 LIMITS = dict(active_s=180., input_timeout_s=.1, feedback_timeout_s=.1,
-              joint_excursion_rad=.20, velocity_rad_s=.05, acceleration_rad_s2=.1,
-              translation_scale=1., workspace_m=.10, ik_position_error_m=.015,
+              joint_limits='urdf', velocity_rad_s=.20, acceleration_rad_s2=.40,
+              translation_scale=1., workspace_m=.30, ik_position_error_m=.015,
               tracking_error_rad=.10, workspace_shape='box_above_start',
               orientation_mode='free')
 IK_COST = dict(translation=500., rotation=0., smooth=.1)
@@ -69,12 +69,7 @@ def configure_measured_pose_ik(robot):
     # so its derivatives cannot constrain motion or introduce rotation NaNs.
     ik.opti.minimize(IK_COST['translation'] * ik.translational_cost +
                      IK_COST['smooth'] * ik.smooth_cost)
-    ik.trial_reference = ik.opti.parameter(14)
-    # Numerical margin keeps the nonlinear solver inside the executor's exact
-    # envelope, without expanding either the hardware or acceptance bounds.
-    radius = LIMITS['joint_excursion_rad'] - 1e-6
-    ik.opti.subject_to(ik.opti.bounded(ik.trial_reference-radius,
-                                     ik.var_q, ik.trial_reference+radius))
+    # Keep the upstream URDF bounds; no engagement-relative joint envelope.
 
 
 def bounded_ik(robot, requested, references, previous, feedback, evidence):
@@ -101,8 +96,6 @@ def bounded_ik(robot, requested, references, previous, feedback, evidence):
                     workspace_target=[t.tolist() for t in targets],
                     workspace_limited=limited, orientation_mode='free', attempts=[])
     seed = np.asarray(vector(feedback['q']))
-    initial = np.asarray(vector(feedback['initial_q']))
-    robot.ik.opti.set_value(robot.ik.trial_reference, initial)
     for fraction in (1., .5, .25, .125, 0.):
         trial = [t.copy() for t in targets]
         for t, base in zip(trial, previous):
@@ -115,8 +108,7 @@ def bounded_ik(robot, requested, references, previous, feedback, evidence):
         if not robot.ik.opti.stats().get('success'):
             raise ValueError('IK failed')
         # A solver violating its constraints is a fault, not operator saturation.
-        if (np.any(np.abs(np.asarray(q)-initial) > LIMITS['joint_excursion_rad'])
-                or np.any(np.asarray(q) < robot.model.lowerPositionLimit)
+        if (np.any(np.asarray(q) < robot.model.lowerPositionLimit)
                 or np.any(np.asarray(q) > robot.model.upperPositionLimit)):
             raise ValueError('IK violates joint constraints')
         robot.q = np.asarray(q)
@@ -163,10 +155,7 @@ class QuestSource:
         self.initial = executor.observation.q
         self.last_input = packet['input_time']
         c = executor.c
-        radius = LIMITS['joint_excursion_rad']
         executor.c = replace(c,
-            lower=tuple(max(lo, q-radius) for lo, q in zip(c.lower, self.initial)),
-            upper=tuple(min(hi, q+radius) for hi, q in zip(c.upper, self.initial)),
             velocity=(LIMITS['velocity_rad_s'],)*14,
             acceleration=(LIMITS['acceleration_rad_s2'],)*14)
 
@@ -391,12 +380,13 @@ def main():
         print('MODE: '+('LIVE CANDIDATE' if args.execute else 'SHADOW: NO MOTOR PUBLISHER'), flush=True)
         print('Release both grips, then hold both. Keep still for 2s ramp; small translations only. '
               'Position control; end-effector orientation free (controller rotation is not a target). '
-              'Workspace: forward/lateral +/-10 cm, up 0..10 cm; initial joints +/-0.20 rad. '
+              'Workspace: forward/lateral +/-30 cm, up 0..30 cm; URDF joint limits. '
               'Release either grip to end this run. No automatic rearm.', flush=True)
         if args.grippers:
-            print('Dex1: after ramp, squeeze each INDEX trigger fully once to pick up control; '
-                  'then squeeze=close, contact=bounded hold, release trigger <=0.15=open. '
-                  'Reclose threshold=0.25. Contact detection is UNCALIBRATED; HOLDING is not grasp verification. '
+            print('Dex1: after ramp, control starts with fresh ACTIVE input; '
+                  'INDEX trigger 0..100% maps full open..near closed. '
+                  'Contact holds; a more-open trigger target releases hold. '
+                  'Contact detection is UNCALIBRATED; HOLDING is not grasp verification. '
                   'Side grips remain the stop/clutch. '
                   'Grippers unload with arms; no object holding on exit.',flush=True)
         deadline = time.monotonic()+args.wait_seconds

@@ -90,19 +90,20 @@ class QuestTests(unittest.TestCase):
         for _ in range(20):self.step(state='operator_release')
         self.assertEqual(self.sent[-1].kp,(0.,)*14)
 
-    def test_measured_start_dynamic_bounds_and_rate_limits(self):
+    def test_measured_start_model_bounds_and_rate_limits(self):
         self.assertEqual(self.sent[0].q, (.4,)*14)
-        self.assertAlmostEqual(self.executor.c.lower[0], .4-LIMITS['joint_excursion_rad'])
-        self.assertAlmostEqual(self.executor.c.upper[0], .4+LIMITS['joint_excursion_rad'])
+        self.assertEqual(self.executor.c.lower, config().lower)
+        self.assertEqual(self.executor.c.upper, config().upper)
         self.engage()
         q, v = self.executor.q, (0.,)*14
-        for _ in range(100):
-            cmd = self.step()
+        for _ in range(700):
+            cmd = self.step(q=[.8]*14)
             velocity = tuple((b-a)/.01 for a,b in zip(q,cmd.q))
             self.assertLessEqual(max(abs(x) for x in velocity), LIMITS['velocity_rad_s']+1e-9)
             self.assertLessEqual(max(abs(a-b)/.01 for a,b in zip(velocity,v)), LIMITS['acceleration_rad_s2']+1e-8)
             q, v = cmd.q, velocity
-        self.assertGreater(q[0], .41)
+        self.assertGreater(q[0], .6)
+        self.assertFalse(self.executor.fault)
 
     def test_release_during_ramp_or_active_unloads(self):
         for active in (False, True):
@@ -150,19 +151,19 @@ class QuestTests(unittest.TestCase):
         self.assertTrue(self.executor.fault)
         self.assertIn('trigger',self.executor.reason)
 
-    def test_joint_envelope_rejection(self):
+    def test_model_joint_limit_rejection(self):
         self.engage()
-        self.step(q=[.4+LIMITS['joint_excursion_rad']+.01]*14)
+        self.step(q=[hi+.01 for hi in self.executor.c.upper])
         self.assertTrue(self.executor.fault)
         self.assertEqual(self.executor.first_fault.reason, 'invalid_target')
         self.assertTrue(all(c.q == (.4,)*14 for c in self.sent))
 
     def test_ik_rejection_preserves_cause_instead_of_waiting_for_timeout(self):
         self.engage()
-        write_json(self.output/'worker_error.json', {'error':'IK exceeds initial-pose joint envelope'})
+        write_json(self.output/'worker_error.json', {'error':'IK violates joint constraints'})
         self.step()
         self.assertTrue(self.executor.fault)
-        self.assertIn('joint envelope', self.executor.first_fault.reason)
+        self.assertIn('joint constraints', self.executor.first_fault.reason)
 
     def test_packet_freshness_nonce_and_finite(self):
         for override in ({'nonce': 'old'}, {'input_time': -1.}, {'computed_time': 1.}):
@@ -191,7 +192,7 @@ class BoundaryTests(unittest.TestCase):
         rotated[:3, :3] = [[0., -1., 0.], [1., 0., 0.], [0., 0., 1.]]
         robot = SimpleNamespace(model=SimpleNamespace(
             lowerPositionLimit=np.full(14, -1.), upperPositionLimit=np.full(14, 1.)),
-            ik=SimpleNamespace(trial_reference=None,
+            ik=SimpleNamespace(
                 smooth_filter=SimpleNamespace(_data_queue=[]),
                 opti=SimpleNamespace(set_value=lambda *args: None, stats=lambda: {'success': True}),
                 solve_ik=lambda *args: (np.zeros(14), None)),
@@ -216,7 +217,7 @@ class BoundaryTests(unittest.TestCase):
         robot = SimpleNamespace(q=np.zeros(14))
         robot.model = SimpleNamespace(lowerPositionLimit=np.full(14, -1.),
                                       upperPositionLimit=np.full(14, 1.))
-        robot.ik = SimpleNamespace(trial_reference=None,
+        robot.ik = SimpleNamespace(
             smooth_filter=SimpleNamespace(_data_queue=[]),
             opti=SimpleNamespace(set_value=lambda *args: None, stats=lambda: {'success': True}))
         def solve(left, right, *args):
@@ -228,13 +229,13 @@ class BoundaryTests(unittest.TestCase):
         robot.ik.solve_ik = solve
         robot.forward = lambda: robot.achieved
         requested = [t.copy() for t in references]
-        requested[0][:3, 3] = [.6, .1, .1]
+        requested[0][:3, 3] = [.6, -.6, .6]
         evidence = {}
         q, errors, accepted = bounded_ik(robot, requested, references, references, feedback, evidence)
         self.assertEqual(evidence['workspace_limited'], [True, False])
-        self.assertAlmostEqual(evidence['workspace_target'][0][0][3], .1)
-        self.assertAlmostEqual(evidence['workspace_target'][0][1][3], .1)
-        self.assertAlmostEqual(evidence['workspace_target'][0][2][3], .1)
+        self.assertAlmostEqual(evidence['workspace_target'][0][0][3], .3)
+        self.assertAlmostEqual(evidence['workspace_target'][0][1][3], -.3)
+        self.assertAlmostEqual(evidence['workspace_target'][0][2][3], .3)
         self.assertTrue(evidence['ik_limited'])
         self.assertLessEqual(max(errors), .015)
         self.assertGreater(accepted[0][0, 3], 0.)
@@ -253,7 +254,7 @@ class BoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'IK failed'):
             bounded_ik(robot, requested, references, accepted, feedback, {})
         robot.ik.opti.stats = lambda: {'success': True}
-        robot.ik.solve_ik = lambda *args: (np.ones(14), None)
+        robot.ik.solve_ik = lambda *args: (np.full(14, 1.01), None)
         with self.assertRaisesRegex(ValueError, 'joint constraints'):
             bounded_ik(robot, requested, references, accepted, feedback, {})
 
@@ -264,7 +265,7 @@ class BoundaryTests(unittest.TestCase):
         robot = SimpleNamespace(q=np.zeros(14))
         robot.model = SimpleNamespace(lowerPositionLimit=np.full(14, -1.),
                                       upperPositionLimit=np.full(14, 1.))
-        robot.ik = SimpleNamespace(trial_reference=None,
+        robot.ik = SimpleNamespace(
             smooth_filter=SimpleNamespace(_data_queue=[]),
             opti=SimpleNamespace(set_value=lambda *args: None, stats=lambda: {'success': True}),
             solve_ik=lambda *args: (np.zeros(14), None))
@@ -305,7 +306,8 @@ with tempfile.TemporaryDirectory() as tmp:
         q,errors,accepted=bounded_ik(robot,targets,references,previous,feedback,evidence)
         assert evidence['accepted_fraction']==1., evidence
         assert max(errors)<.003, errors
-        assert np.max(np.abs(np.asarray(q)-initial))<=.2
+        assert np.all(np.asarray(q)>=robot.model.lowerPositionLimit)
+        assert np.all(np.asarray(q)<=robot.model.upperPositionLimit)
         rotated=[x.copy() for x in targets]
         for t in rotated:
             t[:3,:3]=np.array([[0.,-1.,0.],[1.,0.,0.],[0.,0.,1.]]) @ t[:3,:3]
@@ -317,27 +319,32 @@ with tempfile.TemporaryDirectory() as tmp:
         subprocess.run([sys.executable, '-c', code],
                        cwd=Path(__file__).resolve().parents[2]/'scripts/unitree_g1', check=True, timeout=30)
 
-    def test_ik_solver_respects_initial_pose_envelope(self):
+    def test_ik_solver_uses_model_limits_beyond_old_envelope(self):
         code = r'''
 import tempfile
 from pathlib import Path
 import numpy as np
 from virtual_arms import VirtualRobot
-from quest_bridge import configure_measured_pose_ik, LIMITS
+from quest_bridge import configure_measured_pose_ik, bounded_ik
 with tempfile.TemporaryDirectory() as tmp:
     robot=VirtualRobot(Path(tmp),False)
     configure_measured_pose_ik(robot)
     initial=np.array([.05,.04,.2,1.25,.1,.04,0.,-.05,.04,.1,1.25,.1,.04,-.1])
     robot.q=initial.copy()
     reference=robot.forward()
-    robot.ik.opti.set_value(robot.ik.trial_reference,initial)
-    for dz in (0.,.002,.025):
+    for dz in (0.,.002,.15):
         target=[m.copy() for m in reference]
         target[1][2,3]+=dz
         robot.ik.smooth_filter._data_queue=[]
         candidate,_=robot.ik.solve_ik(*target,initial.copy(),np.zeros(14))
         assert robot.ik.opti.stats()['success']
-        assert np.max(np.abs(candidate-initial)) <= LIMITS['joint_excursion_rad']
+        assert np.all(candidate >= robot.model.lowerPositionLimit)
+        assert np.all(candidate <= robot.model.upperPositionLimit)
+        if dz == .15:
+            assert np.max(np.abs(candidate-initial)) > .2
+            checked, _, _ = bounded_ik(robot, target, reference, reference,
+                                      dict(q=initial.tolist()), {})
+            assert np.max(np.abs(np.asarray(checked)-initial)) > .2
         if dz == 0:
             assert np.max(np.abs(candidate-initial)) < 1e-4
 '''

@@ -72,7 +72,7 @@ def plan_episode(session, *, max_age_s=.1, allow_shadow=False, include_failed=Fa
     pickup_index = next((i for i,row in enumerate(commands)
                          if all(row.get('gripper_command',{}).get('picked_up',[False,False]))),None)
     if pickup_index is None:
-        raise ValueError('Neither a complete dual-gripper pickup nor a training interval exists')
+        raise ValueError('No complete dual-gripper activation or training interval exists')
     commands = commands[pickup_index:]
     if len(commands) < 2:
         raise ValueError('No usable ACTIVE interval')
@@ -128,7 +128,7 @@ def plan_episode(session, *, max_age_s=.1, allow_shadow=False, include_failed=Fa
         grip = row['gripper_command']
         finite(grip['q'],2)
         if row.get('gripper_fault') or not all(grip['picked_up']):
-            raise ValueError('Gripper fault or missing independent trigger pickup in ACTIVE interval')
+            raise ValueError('Gripper fault or missing gripper activation in ACTIVE interval')
         images = []
         for role in ROLES:
             fi = bisect_right(camera_times[role],stamp)-1
