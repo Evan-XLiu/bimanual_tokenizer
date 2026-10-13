@@ -51,7 +51,7 @@ TRAIN_ARGS=(
   +trainer.checkpoint_start_step=1000
   trainer.checkpoint_candidates.recent.k=9
   policy.gradient_checkpointing=true
-  "trainer.max_steps=${MAX_STEPS:-5000}"
+  "trainer.max_steps=${MAX_STEPS:-30000}"
 )
 if [[ -n "${RESUME_CHECKPOINT:-}" ]]; then
   TRAIN_ARGS+=("resume_checkpoint=$RESUME_CHECKPOINT")

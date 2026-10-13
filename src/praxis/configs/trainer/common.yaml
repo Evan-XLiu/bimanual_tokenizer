@@ -19,6 +19,7 @@ lr_scheduler: null
 warmup_steps: 0
 warmup_steps_by_family: null
 min_lr_ratio: 0.1
+lr_decay_steps: null  # null = decay through max_steps; otherwise hold final LR after this step
 
 # EMA
 use_ema: true

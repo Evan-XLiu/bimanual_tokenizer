@@ -33,7 +33,6 @@ from praxis.training.core.lr_schedulers import (
     get_constant_warmup_scheduler,
     get_cosine_warmup_scheduler,
     get_group_cosine_warmup_scheduler,
-    get_group_cosine_warmup_scheduler_with_floor,
 )
 from praxis.training.core.metrics import MetricsTracker
 from praxis.training.core.optim import (
@@ -273,11 +272,15 @@ class DefaultTrainer:
                 self._resume_checkpoint
             )
             if resumed_info is not None:
-                wandb_resume_id = resumed_info["id"]
-                if resumed_info.get("project"):
-                    wandb_project = str(resumed_info["project"])
-                if resumed_info.get("entity"):
-                    wandb_entity = str(resumed_info["entity"])
+                checkpoint_entity = resumed_info.get("entity")
+                if wandb_entity is None or wandb_entity == checkpoint_entity:
+                    wandb_resume_id = resumed_info["id"]
+                    if resumed_info.get("project"):
+                        wandb_project = str(resumed_info["project"])
+                    if checkpoint_entity:
+                        wandb_entity = str(checkpoint_entity)
+                # An explicitly different entity starts a new W&B run while
+                # still restoring the model and optimizer from the checkpoint.
 
         self.logger = Logger(
             use_wandb=is_main and self.tc.use_wandb,
@@ -494,6 +497,14 @@ class DefaultTrainer:
                 warmup_steps=self.tc.warmup_steps,
             )
         elif self.tc.lr_scheduler == "cosine":
+            configured_decay_steps = getattr(self.tc, "lr_decay_steps", None)
+            decay_steps = (
+                int(self.tc.max_steps)
+                if configured_decay_steps is None
+                else int(configured_decay_steps)
+            )
+            if decay_steps <= 0:
+                raise ValueError("trainer.lr_decay_steps must be positive.")
             by_family = getattr(self.tc, "warmup_steps_by_family", None)
             if by_family:
                 family_warmups = {str(k): int(v) for k, v in dict(by_family).items()}
@@ -502,16 +513,16 @@ class DefaultTrainer:
                     int(family_warmups.get(str(group.get("family", "")), self.tc.warmup_steps))
                     for group in optim_params
                 ]
-                return get_group_cosine_warmup_scheduler_with_floor(
+                return get_group_cosine_warmup_scheduler(
                     optimizer,
                     warmup_steps=group_warmups,
-                    total_steps=self.tc.max_steps,
-                    min_lr_by_group=[1.0e-5] * len(optim_params),
+                    total_steps=decay_steps,
+                    min_lr_ratio=self.tc.min_lr_ratio,
                 )
             return get_cosine_warmup_scheduler(
                 optimizer,
                 warmup_steps=self.tc.warmup_steps,
-                total_steps=self.tc.max_steps,
+                total_steps=decay_steps,
                 min_lr_ratio=self.tc.min_lr_ratio,
             )
         else:

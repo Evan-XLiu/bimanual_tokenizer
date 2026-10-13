@@ -117,10 +117,10 @@ trainer:
   wandb_max_eval_videos: 16
   _trainer_type: policy
   lrs:
-    vlm: 5.0e-05
-    vision: 5.0e-05
-    bridge: 5.0e-05
-    action_expert: 5.0e-05
+    vlm: 1.0e-04
+    vision: 1.0e-04
+    bridge: 1.0e-04
+    action_expert: 3.0e-04
   reconst_every: 1000
   max_reconst_batches: 100
   reconst_action_mode: policy

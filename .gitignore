@@ -93,6 +93,7 @@ logs/
 *.parquet
 *.mp4
 .tmp/
+.t/
 .cache/
 /data/
 

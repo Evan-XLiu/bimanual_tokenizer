@@ -8,6 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from praxis.policies.fm.backbones.molmo.molmo_base import MolmoPolicyBase
+from praxis.policies.fm.backbones.molmo.molmo_config import (
+    MolmoPolicyConfig as BaseMolmoPolicyConfig,
+)
 from praxis.policies.fm.backbones.pali.pali_base import PaliPolicyBase
 from praxis.policies.fm.backbones.pali.pali_config import (
     PaliPolicyConfig as BasePaliPolicyConfig,
@@ -61,7 +65,22 @@ class SmolPolicy(SmolPolicyBase):
     CONFIG_CLASS = SmolPolicyConfig
 
 
+@dataclass
+class MolmoPolicyConfig(BaseMolmoPolicyConfig):
+    """Hyperparameters for Molmo2-ER FM training."""
+
+    name: str = "fm_molmo"
+
+
+class MolmoPolicy(MolmoPolicyBase):
+    """Molmo2-ER VLM plus end-to-end flow-matching action expert."""
+
+    CONFIG_CLASS = MolmoPolicyConfig
+
+
 __all__ = [
+    "MolmoPolicy",
+    "MolmoPolicyConfig",
     "PaliPolicy",
     "PaliPolicyConfig",
     "QwenPolicy",

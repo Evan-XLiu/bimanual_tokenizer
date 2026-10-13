@@ -44,4 +44,4 @@ def test_fm_hydra_policy_config_composes_without_tokenizer(policy_name: str) -> 
     assert cfg.policy.name == policy_name
     assert "action_tokenizer" not in cfg.policy
     assert "ce_loss_weight" not in cfg.policy
-    assert cfg.policy.gradient_checkpointing is False
+    assert cfg.policy.gradient_checkpointing is (policy_name == "fm_molmo")

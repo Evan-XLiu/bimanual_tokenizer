@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 import torch
 
@@ -13,6 +15,7 @@ from praxis.training.core.lr_schedulers import (
     get_constant_warmup_scheduler,
     get_cosine_warmup_scheduler,
 )
+from praxis.training.core.trainer import DefaultTrainer
 
 
 def _make_optimizer(lr: float = 1e-3) -> torch.optim.Optimizer:
@@ -105,3 +108,38 @@ class TestConstantWarmupScheduler:
         lr2 = opt.param_groups[0]["lr"]
         assert lr1 == pytest.approx(lr2)
         assert lr1 == pytest.approx(1.0)
+
+
+def test_trainer_group_warmup_reaches_floor_before_training_ends():
+    vlm = torch.nn.Parameter(torch.zeros(()))
+    action_expert = torch.nn.Parameter(torch.zeros(()))
+    optimizer = torch.optim.SGD(
+        [
+            {"params": [vlm], "lr": 1e-4},
+            {"params": [action_expert], "lr": 3e-4},
+        ]
+    )
+    trainer = SimpleNamespace(
+        tc=SimpleNamespace(
+            lr_scheduler="cosine",
+            warmup_steps_by_family={"vlm": 2, "action_expert": 3},
+            warmup_steps=2,
+            max_steps=20,
+            lr_decay_steps=10,
+            min_lr_ratio=0.1,
+        ),
+        _get_optim_params=lambda: [
+            {"family": "vlm"},
+            {"family": "action_expert"},
+        ],
+    )
+    scheduler = DefaultTrainer._build_scheduler(trainer, optimizer)
+    _step_optimizer_and_scheduler(optimizer, scheduler, n_steps=10)
+
+    assert [group["lr"] for group in optimizer.param_groups] == pytest.approx(
+        [1e-5, 3e-5]
+    )
+    _step_optimizer_and_scheduler(optimizer, scheduler, n_steps=10)
+    assert [group["lr"] for group in optimizer.param_groups] == pytest.approx(
+        [1e-5, 3e-5]
+    )

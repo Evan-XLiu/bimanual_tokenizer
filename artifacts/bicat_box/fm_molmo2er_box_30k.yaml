@@ -1,0 +1,140 @@
+policy:
+  name: fm_molmo
+  pretrained_path: null
+  vlm_model_name: /data/home/shailesh/checkpoints/Molmo2-ER
+  vlm_dtype: bfloat16
+  freeze_vision_encoder: false
+  use_lora: false
+  lora_r: 64
+  lora_alpha: 16
+  lora_target_modules: [att_proj, attn_out, ff_proj, ff_out]
+  lora_dropout: 0.05
+  lora_modules_to_save: []
+  gradient_checkpointing: true
+  action_dim: null
+  n_obs_steps: 1
+  action_horizon: 32
+  n_action_steps: 16
+  state_prefix_encoding: continuous_projection
+  state_prefix_num_bins: 256
+  flow_loss_weight: 1.0
+  flow_sampling_steps: 10
+  flow_time_sampling: beta
+  flow_beta_alpha: 1.5
+  flow_beta_beta: 1.0
+  flow_min_time: 0.001
+  expert_hidden_size: 768
+  expert_width_multiplier: 1.0
+  expert_num_layers: 36
+  expert_architecture: molmoact2
+  expert_num_attention_heads: 8
+  expert_mlp_ratio: 4.0
+  expert_ffn_multiple_of: 256
+  expert_qk_norm: true
+  expert_causal_attn: false
+  expert_context_layer_norm: true
+  expert_self_attn_every_n_layers: -1
+  expert_dropout: 0.0
+  expert_time_min_period: 0.004
+  expert_time_max_period: 4.0
+  default_instruction: Analyze the input image(s) and predict robot actions.
+dataset:
+  name: bicat_box
+  repo_id: local/bicat_box
+  root: /data/home/shailesh/Evan/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset/box
+  hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
+  episodes: null
+  action_key: action_joint_angles
+  exclude_episodes_file: null
+  action_stats_file: null
+  observation_keys:
+  - observation.state_joint_angles
+  - observation.images.top
+  - observation.images.left
+  - observation.images.right
+  video_backend: pyav
+  bypass_force_cache_sync: true
+trainer:
+  max_steps: 30000
+  batch_size: 32
+  global_batch_size: 192
+  num_workers: 4
+  prefetch_factor: 2
+  use_episode_aware_sampler: true
+  drop_n_first_frames: 0
+  drop_n_last_frames: 0
+  weight_decay: 1.0e-06
+  betas: [0.9, 0.95]
+  eps: 1.0e-06
+  lr_scheduler: cosine
+  lr_decay_steps: 17600
+  warmup_steps: 1000
+  warmup_steps_by_family:
+    vlm: 1000
+    bridge: 1000
+    action_expert: 1000
+    vision: 2000
+  min_lr_ratio: 0.1
+  use_ema: false
+  ema_decay: 0.995
+  mixed_precision: bf16
+  gradient_accumulation_steps: 1
+  find_unused_parameters: true
+  max_grad_norm: 1.0
+  distributed_strategy: fsdp
+  fsdp_min_num_params: 100000000
+  fsdp_reshard_after_forward: true
+  fsdp_cpu_offload: false
+  log_every: 50
+  val_every: 0
+  checkpoint_every: 500
+  checkpoint_start_step: 1500
+  checkpoint_dir: ${output_dir}/checkpoints
+  local_log_path: ${output_dir}/train_metrics.jsonl
+  val_ratio: 0.0
+  split_seed: ${seed}
+  val_batch_size: null
+  max_val_batches: 0
+  checkpoint_candidates:
+    best:
+      metric_key: val_reconst_loss
+      mode: min
+      k: 0
+    recent:
+      k: 9
+  use_wandb: true
+  wandb_project: BiCAT_RealWorld
+  wandb_entity: evan_lxw-harbin-institute-of-technology
+  wandb_init_timeout: 120
+  wandb_upload_eval_videos: false
+  wandb_max_eval_videos: 0
+  _trainer_type: policy
+  lrs:
+    vlm: 1.0e-04
+    vision: 1.0e-04
+    bridge: 1.0e-04
+    action_expert: 3.0e-04
+  reconst_every: 0
+  max_reconst_batches: 0
+  reconst_action_mode: policy
+  sim_eval_every: null
+  sim_eval_start_after_step: 0
+  sim_eval:
+    num_eval_per_task: 20
+    num_parallel_env: 1
+    record_episodes_per_task: 0
+    step_timeout_sec: null
+    rollout_failure_retries: 1
+    policy_kwargs: {}
+name: train_policy
+seed: 42
+device: cuda
+run_name: BiCAT_box_Molmo2ER_FM_30k
+output_dir: outputs/BiCAT_box_Molmo2ER_FM_30k/manual/train
+run_mode: overwrite
+resume_checkpoint: null
+env:
+  type: null
+  task: null
+  task_ids: null
+  python_bin: null

@@ -75,7 +75,7 @@ dataset:
   video_backend: pyav
   bypass_force_cache_sync: true
 trainer:
-  max_steps: 100000
+  max_steps: 30000
   batch_size: 48
   global_batch_size: null
   num_workers: 4
@@ -89,6 +89,7 @@ trainer:
   - 0.95
   eps: 1.0e-06
   lr_scheduler: cosine
+  lr_decay_steps: 17600
   warmup_steps: 1000
   warmup_steps_by_family:
     vlm: 1000
@@ -130,10 +131,10 @@ trainer:
   wandb_max_eval_videos: 16
   _trainer_type: policy
   lrs:
-    vlm: 5.0e-05
-    vision: 5.0e-05
-    bridge: 5.0e-05
-    action_expert: 1.0e-04
+    vlm: 1.0e-04
+    vision: 1.0e-04
+    bridge: 1.0e-04
+    action_expert: 3.0e-04
   reconst_every: 1000
   max_reconst_batches: 100
   reconst_action_mode: policy

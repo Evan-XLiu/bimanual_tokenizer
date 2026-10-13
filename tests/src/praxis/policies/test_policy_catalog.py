@@ -114,9 +114,12 @@ def test_method_axis_policy_yaml_groups_match_catalog() -> None:
     assert method_dirs == sorted(family.method for family in POLICY_FAMILIES)
     for family in POLICY_FAMILIES:
         method_root = policy_config_root / family.method
+        extra_backbones = {
+            spec.backbone for spec in EXTRA_POLICY_SPECS if spec.method == family.method
+        }
         assert sorted(
             path.stem for path in (method_root / "backbone").glob("*.yaml")
-        ) == sorted(family.backbones)
+        ) == sorted(set(family.backbones) | extra_backbones)
         codec_root = method_root / "codec"
         if family.codecs is None:
             assert not codec_root.exists()

@@ -25,9 +25,8 @@ POLICY_CODECS: tuple[str, ...] = (
     "btt",
     "btt_independent",
 )
-# Molmo2-ER is currently wired for the KI objective.  Keep the shared
-# default matrix for the existing BAR/FM cells and opt KI into the new
-# backbone explicitly below.
+# Keep the shared default matrix for the existing backbones and opt Molmo2-ER
+# into the KI and FM families explicitly below.
 POLICY_BACKBONES: tuple[str, ...] = ("pali", "qwen", "smol")
 
 DEFAULT_POLICY_METHOD = "bar"
@@ -113,7 +112,7 @@ POLICY_FAMILIES_BY_METHOD: dict[str, PolicyFamily] = {
 }
 EXTRA_POLICY_SPECS: tuple[PolicySpec, ...] = (
     PolicySpec(method="ki", codec="xtokenizer", backbone="qwen"),
-    # Molmo2-ER is intentionally limited to the requested KI tokenizers.
+    PolicySpec(method="fm", codec=None, backbone="molmo"),
     PolicySpec(method="ki", codec="oat", backbone="molmo"),
     PolicySpec(method="ki", codec="fast", backbone="molmo"),
     PolicySpec(method="ki", codec="btt", backbone="molmo"),
