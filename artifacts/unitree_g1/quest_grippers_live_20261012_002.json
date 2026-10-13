@@ -1,0 +1,81 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": "tracking_error",
+  "command_frames": 1447,
+  "phase": "FAULT",
+  "elapsed_s": 16.447647910999876,
+  "release_reason": "tracking_error",
+  "first_fault": {
+    "reason": "tracking_error",
+    "phase": "ACTIVE",
+    "last_step_time": 1303.451189601,
+    "gain_scale": 1.0,
+    "feedback_received": 1303.45117052,
+    "tracking_error_rad": [
+      0.007115966539096796,
+      0.00032210921135458065,
+      0.002267488669561557,
+      0.018287757645395558,
+      0.0005059848141415954,
+      0.008689671583500425,
+      0.0007075172973694081,
+      0.0020786530798204694,
+      0.011006217781277389,
+      0.0032123778232265865,
+      0.060831421013211706,
+      0.0057434873188246804,
+      0.10065106739051266,
+      0.005134478004344967
+    ],
+    "tracking_exceeded_arm_indices": [
+      27
+    ]
+  },
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.4,
+      -5.4
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.4,
+      -5.4
+    ],
+    "picked_up": [
+      true,
+      true
+    ],
+    "states": [
+      "RELEASED",
+      "RELEASED"
+    ],
+    "contact_q": [
+      null,
+      null
+    ],
+    "hold_q": [
+      null,
+      null
+    ],
+    "contact_stops": [
+      0,
+      0
+    ],
+    "phase": "RELEASED",
+    "input_time": 1303.420600785
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_grippers_live_20261012_002",
+  "active_span_s": 12.129774738999913,
+  "operator_request": "再进行一次测试",
+  "next_session": ".local/unitree_g1/experiments/quest_grippers_live_20261012_003"
+}

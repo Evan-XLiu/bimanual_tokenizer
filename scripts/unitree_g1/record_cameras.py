@@ -21,9 +21,9 @@ CAMERAS = {
 
 def check_camera_status(path, now):
     status = json.loads(path.read_text())
-    if (status.get('error') or not status.get('ready') or not 0 <= now-status['time'] <= .3
+    if (status.get('error') or not status.get('ready') or not 0 <= now-status['time'] <= .6
             or set(status['latest']) != set(CAMERAS)
-            or any(not 0 <= now-t <= .3 for t in status['latest'].values())):
+            or any(not 0 <= now-t <= .6 for t in status['latest'].values())):
         raise ValueError('Three-camera recording unavailable or stale')
     return status
 
@@ -79,10 +79,10 @@ def serve():
                 raise RuntimeError(f'{role}: open failed')
             for prop, value in ((cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*fourcc)),
                                 (cv2.CAP_PROP_FRAME_WIDTH, 640), (cv2.CAP_PROP_FRAME_HEIGHT, 480),
-                                (cv2.CAP_PROP_FPS, 15), (cv2.CAP_PROP_BUFFERSIZE, 1)):
+                                (cv2.CAP_PROP_FPS, 30), (cv2.CAP_PROP_BUFFERSIZE, 1)):
                 camera.set(prop, value)
             with lock:
-                devices[role] = dict(device=str(nodes[0]), requested_fps=15,
+                devices[role] = dict(device=str(nodes[0]), requested_fps=30,
                                      reported_fps=camera.get(cv2.CAP_PROP_FPS), rotation_degrees=0)
             seq = 0
             while not stop.is_set():
@@ -229,7 +229,7 @@ def record(args):
                 raise RuntimeError('Three-camera startup deadline')
             if times and any(now-t > 1 for t in times.values()):
                 raise RuntimeError('Camera stream stalled')
-            ready = len(times) == 3 and all(0 <= now-t <= .3 for t in times.values())
+            ready = len(times) == 3 and all(0 <= now-t <= .6 for t in times.values())
             atomic_json(args.output/'status.json', dict(time=now, ready=ready, latest=times, error=None))
             if args.duration and now-start >= args.duration:
                 break

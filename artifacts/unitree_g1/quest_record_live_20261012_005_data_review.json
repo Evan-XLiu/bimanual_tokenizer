@@ -1,0 +1,131 @@
+{
+  "session": ".local/unitree_g1/experiments/quest_record_live_20261012_005",
+  "export_preflight": {
+    "frames": 435,
+    "fps": 15,
+    "task": "左夹抓瓶子到中间",
+    "failed_session": false,
+    "excluded_active_commands_before_dual_pickup": 3,
+    "configured_max_age_s": 0.2,
+    "hardware_motion_enabled": true,
+    "active_duration_s": 28.949051870999938,
+    "max_camera_age_s": 0.10068791000048805,
+    "camera_age_p95_s": [
+      0.0965190813000845,
+      0.0236423639995337,
+      0.021766761999788286
+    ],
+    "max_intercamera_receipt_skew_s": 0.08666603100027714,
+    "max_command_grid_jitter_s": 0.013954048000414332,
+    "over_one_period_camera_samples": 149,
+    "duplicate_camera_samples": {
+      "head": 145,
+      "left_wrist": 0,
+      "right_wrist": 0
+    },
+    "alignment": "causal host receipt; remote OpenCV read-completion estimate is diagnostic only",
+    "exposure_synchronization_verified": false,
+    "source_session": "/home/conrad/bimanual_tokenizer/.local/unitree_g1/experiments/quest_record_live_20261012_005",
+    "source_nonce": "0c19518c9ca44614829da77a045cc5ad",
+    "source_hashes": {
+      "session.json": "71bb591b4cf66c66b24ece2f2421ad3d17bd62b9a7c0cf01f13140fd1addf8a2",
+      "summary.json": "a6f788bee605ae9d8fee8ebec83e9697a3b769e64a5314d9d080438c242b5090",
+      "commands.jsonl": "3c2bff8d3a4ea75420d0459a81117b040f37faff4f0132053cc1442ddb613ab0",
+      "cameras/frames.jsonl": "e33bc9025a074baafbe1d6b4477f77d066d729fed312f9877064343bfa961830",
+      "cameras/metadata.json": "f49720ef57d3f911e74e1a08fd81d8647a1cbde1c56dbbec6294908a2d8e1945"
+    }
+  },
+  "matches_previous_preflight": true,
+  "command_count": 2937,
+  "phase_counts": {
+    "ENGAGING": 181,
+    "ACTIVE": 2545,
+    "RELEASING": 183,
+    "RELEASED": 28
+  },
+  "active_span_s": 28.982441715999812,
+  "missing_active_precommand_state": 0,
+  "active_state_age_max_s": 0.004330106000452361,
+  "active_state_age_min_s": 9.07319999896572e-05,
+  "active_command_gap_max_s": 0.019581102000302053,
+  "active_arm_command_vs_precommand_state_error_max_rad": 0.08926219143963965,
+  "active_motor_error_rows": 0,
+  "gripper_states": {
+    "left": {
+      "WAITING_INPUT": 3,
+      "OPENING": 324,
+      "POSITIONED": 1423,
+      "CLOSING": 206,
+      "CLOSING_BLOCKED": 589
+    },
+    "right": {
+      "WAITING_INPUT": 3,
+      "OPENING": 29,
+      "POSITIONED": 2513
+    }
+  },
+  "last_arm_kp": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "last_arm_kd": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "last_gripper_kp": [
+    0.0,
+    0.0
+  ],
+  "last_gripper_kd": [
+    0.0,
+    0.0
+  ],
+  "cameras": {
+    "head": {
+      "count": 549,
+      "fps": 10.004063464189688,
+      "max_receipt_gap_s": 0.11090182099997037,
+      "sequence_gaps": 0
+    },
+    "left_wrist": {
+      "count": 823,
+      "fps": 15.001708825763432,
+      "max_receipt_gap_s": 0.0730453159994795,
+      "sequence_gaps": 0
+    },
+    "right_wrist": {
+      "count": 823,
+      "fps": 15.001196145011734,
+      "max_receipt_gap_s": 0.07335281099949498,
+      "sequence_gaps": 0
+    }
+  },
+  "decoded_images": 2195,
+  "image_errors": [],
+  "lerobot_export_performed": false,
+  "task_outcome": "not labeled"
+}

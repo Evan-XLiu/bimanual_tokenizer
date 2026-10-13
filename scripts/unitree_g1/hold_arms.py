@@ -104,7 +104,8 @@ def run_hold(io, config, profile, stop_requested, log, clock=time.monotonic, sle
                      'release_reason': executor.release_reason,
                      'telemetry': io.telemetry() if hasattr(io, 'telemetry') else None,
                      'first_fault': (None if executor.first_fault is None else
-                                     asdict(executor.first_fault)), **asdict(command)})
+                                     asdict(executor.first_fault)), **asdict(command),
+                     **(io.command_metadata() if hasattr(io, 'command_metadata') else {})})
             except Exception:
                 logging_failed = True
                 raise
@@ -181,6 +182,9 @@ def run_hold(io, config, profile, stop_requested, log, clock=time.monotonic, sle
 
 class DDSHoldIO:
     """Read-only until open_writer. Mode polling is off the servo thread."""
+    command_topic_name = 'rt/lowcmd'
+    monitored_topics = ('rt/lowcmd', 'rt/arm_sdk', 'rt/user_lowcmd')
+
     def __init__(self, interface, live, profile):
         from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelSubscriber
         from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowState_, LowCmd_
@@ -204,7 +208,7 @@ class DDSHoldIO:
         self.readers = []
         self.participant = DomainParticipant(0)
         self.command_type = LowCmd_
-        self.command_topic = Topic(self.participant, 'rt/lowcmd', LowCmd_)
+        self.command_topic = Topic(self.participant, self.command_topic_name, LowCmd_)
         self.own_handle = None
         self.matched = 0
         self.monitor_lost = False
@@ -212,14 +216,12 @@ class DDSHoldIO:
             self.monitor_lost = True
         self.monitor_listener = Listener(on_sample_lost=lost, on_sample_rejected=lost)
         try:
-            for name in ('rt/lowcmd', 'rt/arm_sdk', 'rt/user_lowcmd'):
-                topic = self.command_topic if name == 'rt/lowcmd' else Topic(self.participant, name, LowCmd_)
+            for name in self.monitored_topics:
+                topic = self.command_topic if name == self.command_topic_name else Topic(self.participant, name, LowCmd_)
                 self.readers.append(DataReader(self.participant, topic,
                     qos=Qos(Policy.History.KeepAll, Policy.ResourceLimits(max_samples=2048)),
                     listener=self.monitor_listener))
-            self.client = MotionSwitcherClient()
-            self.client.SetTimeout(.5)
-            self.client.Init()
+            self._init_mode_clients(MotionSwitcherClient)
             self.subscriber = ChannelSubscriber('rt/lowstate', LowState_)
             self.subscriber.Init(self._state, 10)
             self.mode_thread = threading.Thread(target=self._poll_mode, daemon=True)
@@ -249,6 +251,8 @@ class DDSHoldIO:
                 self.latest = (Observation(q, now, int(msg.tick), int(msg.mode_machine)), dq)
                 self.latest_telemetry = {
                     'received': now, 'tick': int(msg.tick),
+                    'imu_rpy': list(msg.imu_state.rpy),
+                    'imu_gyroscope': list(msg.imu_state.gyroscope),
                     'motors': [{'index': i, 'mode': int(m.mode),
                                 'vol': float(m.vol), 'temperature': list(m.temperature),
                                 'q': float(m.q), 'dq': float(m.dq),
@@ -256,6 +260,11 @@ class DDSHoldIO:
                                for i, m in enumerate(msg.motor_state)]}
             except Exception as exc:
                 self.feedback_error = str(exc)
+
+    def _init_mode_clients(self, client_type):
+        self.client = client_type()
+        self.client.SetTimeout(1.)
+        self.client.Init()
 
     def _poll_mode(self):
         while not self.done.is_set():
@@ -283,9 +292,7 @@ class DDSHoldIO:
     def check(self):
         if self.monitor_lost:
             raise OwnershipLost('Command monitor lost or rejected samples')
-        with self.lock:
-            if not self.mode_ok or time.monotonic()-self.mode_time > .8:
-                raise OwnershipLost('Debug mode not confirmed or mode query stale')
+        self._check_mode()
         for reader in self.readers:
             # Bound work; a saturated queue is itself a stop condition.
             samples = reader.take(256)
@@ -296,11 +303,20 @@ class DDSHoldIO:
             if len(samples) == 256:
                 raise OwnershipLost('Command monitor backlog')
 
+    def _check_mode(self):
+        with self.lock:
+            if not self.mode_ok or not 0 <= time.monotonic()-self.mode_time <= 1.6:
+                raise OwnershipLost('Debug mode not confirmed or mode query stale')
+
+    def check_readiness(self):
+        """Additional transport-specific gate, also checked immediately before opening."""
+
     def preflight(self):
         end = time.monotonic()+3
         time.sleep(.8)
         while time.monotonic() < end:
             self.check()
+            self.check_readiness()
             state = self.observation()
             if not 0 <= time.monotonic()-state.received <= self.profile['controller']['state_timeout']:
                 raise RuntimeError('Stale preflight state')
@@ -311,6 +327,7 @@ class DDSHoldIO:
 
     def open_writer(self):
         self.check()
+        self.check_readiness()
         if not self.live:
             return
         from cyclonedds.pub import DataWriter

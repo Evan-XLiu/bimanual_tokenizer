@@ -43,8 +43,9 @@ def poses(raw):
 
 class RelativeClutch:
     """Both grips engage both arms; faults require a fresh release before rearming."""
-    def __init__(self, timeout=0.25, scale=1.0, workspace_m=0.35):
+    def __init__(self, timeout=0.25, scale=1.0, workspace_m=0.35, grip_threshold=0.5):
         self.timeout, self.scale = timeout, scale
+        self.grip_threshold = grip_threshold
         self.workspace_m = workspace_m
         self.session = None
         self.last_time = None
@@ -92,7 +93,7 @@ class RelativeClutch:
             self.previous = current
             self.state = 'ready'
             return None
-        if min(grip) < 0.7:
+        if min(grip) < self.grip_threshold:
             self.reference = None
             self.state = 'hold'
             return None

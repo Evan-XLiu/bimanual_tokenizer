@@ -13,10 +13,10 @@ from hold_arms import load_profile, run_hold
 
 
 class CycleTests(unittest.TestCase):
-    def simulate(self,stop_at=float('inf'),open_target=None,stalled=False):
+    def simulate(self,stop_at=float('inf'),open_target=None,stalled=False,initial=None):
         profile,base=load_profile(cycle.ROOT/'artifacts/unitree_g1/hold_shadow_profile.json',False)
         profile.update(hold_s=cycle.ACTIVE_S if open_target is None else cycle.ABSOLUTE_OPEN_S+cycle.DWELL_S,period_s=.004)
-        initial=(-.17,-.21)+(0.,)*12
+        initial=initial if initial is not None else (-.17,-.21)+(0.,)*12
         closed=(0.,-.03)+(0.,)*12
         class IO:
             t=0.
@@ -39,15 +39,15 @@ class CycleTests(unittest.TestCase):
         io,r=self.simulate(open_target=-5.4)
         self.assertIsNone(r['error'])
         self.assertTrue(r['unload_submitted'])
-        self.assertLess(io.t,115.5)
+        self.assertLess(io.t,10.)
         for j in (0,1):
             q=[c.q[j] for c in io.commands]
             self.assertAlmostEqual(q[-1],-5.4,delta=1e-4)
             self.assertGreaterEqual(min(q),-5.4-1e-8)
             v=[(b-a)/.004 for a,b in zip(q,q[1:])]
             self.assertLessEqual(max(v),1e-8)
-            self.assertLessEqual(max(map(abs,v)),.1+1e-8)
-            self.assertLessEqual(max(abs(b-a)/.004 for a,b in zip(v,v[1:])),.2+1e-8)
+            self.assertLessEqual(max(map(abs,v)),2.4+1e-8)
+            self.assertLessEqual(max(abs(b-a)/.004 for a,b in zip(v,v[1:])),1.2+1e-8)
         self.assertEqual(io.commands[-1].kp,(0.,)*14)
 
     def test_absolute_open_stall_unloads_before_target(self):
@@ -56,6 +56,34 @@ class CycleTests(unittest.TestCase):
         self.assertTrue(r['unload_submitted'])
         self.assertGreater(io.commands[-1].q[0],-1.)
         self.assertEqual(io.commands[-1].kp,(0.,)*14)
+
+    def test_absolute_open_stop_does_not_continue_to_full_open(self):
+        io,r=self.simulate(stop_at=3.,open_target=-5.4)
+        self.assertTrue(r['unload_submitted'])
+        self.assertGreater(io.commands[-1].q[0],-5.)
+        self.assertTrue(all(c.q==io.commands[-1].q for c in io.commands if c.phase=='RELEASING'))
+
+    def test_absolute_open_uses_shared_quest_limits(self):
+        _,base=load_profile(cycle.ROOT/'artifacts/unitree_g1/hold_shadow_profile.json',False)
+        with patch.object(cycle,'gripper_settings',return_value={'velocity':1.7,'acceleration':.8,'tracking_error':.30,'timeout':.2,'servo_timeout':.1}):
+            config=cycle.cycle_config(base,(0.,)*14,(0.,)*14,-5.4)
+        self.assertEqual(config.velocity,(1.7,)*14)
+        self.assertEqual(config.acceleration,(.8,)*14)
+
+    def test_open_only_from_encoder_zero_and_already_open(self):
+        for initial in ((0.,0.)+(0.,)*12,(-5.4,-5.4)+(0.,)*12):
+            io,result=self.simulate(open_target=-5.4,initial=initial)
+            self.assertIsNone(result['error'])
+            for j in (0,1):
+                q=[c.q[j] for c in io.commands]
+                self.assertAlmostEqual(q[-1],-5.4,delta=1e-4)
+                self.assertLessEqual(max(b-a for a,b in zip(q,q[1:])),1e-8)
+                self.assertLessEqual(max(abs(b-a)/.004 for a,b in zip(q,q[1:])),2.4+1e-8)
+            self.assertLess(io.t,10. if initial[0]==0 else 4.5)
+        _,base=load_profile(cycle.ROOT/'artifacts/unitree_g1/hold_shadow_profile.json',False)
+        for q in (-5.41,.011):
+            with self.assertRaises(ValueError):
+                cycle.cycle_config(base,(q,)*2+(0.,)*12,(0.,)*14,-5.4)
 
     def test_open_more_then_close_with_bounded_motion(self):
         io,r=self.simulate()

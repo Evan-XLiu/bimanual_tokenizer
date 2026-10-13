@@ -98,7 +98,7 @@ class GripperIO(DDSHoldIO):
         while time.monotonic()<end:
             self.check()
             state=self.observation()
-            if not 0<=time.monotonic()-state.received<=.1:
+            if not 0<=time.monotonic()-state.received<=self.profile['controller']['state_timeout']:
                 raise ValueError('Stale gripper feedback')
             telemetry=self.telemetry()
             if any(abs(m['dq'])>.1 for m in telemetry['motors'] if m['index'] in INDICES):

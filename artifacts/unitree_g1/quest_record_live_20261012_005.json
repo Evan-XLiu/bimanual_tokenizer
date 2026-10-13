@@ -1,0 +1,82 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": null,
+  "command_frames": 2937,
+  "phase": "DISARMED",
+  "elapsed_s": 33.30615548300011,
+  "release_reason": "operator_release",
+  "first_fault": null,
+  "camera_recorder_returncode": 0,
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.4,
+      -5.4
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.4,
+      -5.4
+    ],
+    "picked_up": [
+      true,
+      true
+    ],
+    "states": [
+      "RELEASED",
+      "RELEASED"
+    ],
+    "control_mode": "trigger_position",
+    "closing_blocked": [
+      false,
+      false
+    ],
+    "contact_q": [
+      null,
+      null
+    ],
+    "hold_q": [
+      null,
+      null
+    ],
+    "contact_stops": [
+      0,
+      0
+    ],
+    "phase": "RELEASED",
+    "input_time": 6531.772081451
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_record_live_20261012_005",
+  "task": "左夹抓瓶子到中间",
+  "active_span_s": 28.982423299000402,
+  "active_command_frames": 2545,
+  "missing_active_precommand_state": 0,
+  "camera_frame_counts": {
+    "head": 549,
+    "left_wrist": 823,
+    "right_wrist": 823
+  },
+  "camera_receive_fps": {
+    "head": 10.0041,
+    "left_wrist": 15.0017,
+    "right_wrist": 15.0012
+  },
+  "missing_camera_images": 0,
+  "left_closing_blocked_frames": 589,
+  "export_preflight": {
+    "passed": false,
+    "error": "head: stale frame (0.1007s)",
+    "max_age_s": 0.1
+  },
+  "lerobot_exported": false,
+  "task_outcome": "not yet labeled by operator"
+}

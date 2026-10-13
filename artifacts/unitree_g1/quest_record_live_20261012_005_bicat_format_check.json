@@ -1,0 +1,176 @@
+{
+  "dataset": "/home/conrad/bimanual_tokenizer/.local/unitree_g1/datasets/quest_record_live_20261012_005_bicat",
+  "reference_url": "https://huggingface.co/datasets/Evanxw0715/BiCAT-BimanualYAM-Dataset/blob/main/bottles/meta/info.json",
+  "reference_info_sha256": "560001fd1e4ee33b989e4a88bb2edeb37c33892b1e8c36c53ee4f79eb91d21bd",
+  "conclusion": "Pass agreed G1 adaptation of BiCAT schema; not an identical YAM schema or verified YAM action semantics",
+  "missing_reference_features": [],
+  "exact_reference_features": [
+    "observation.images.right",
+    "observation.images.left",
+    "observation.images.top",
+    "observation.state_eef_absolute",
+    "action_eef_absolute",
+    "action_eef_delta",
+    "timestamp",
+    "frame_index",
+    "episode_index",
+    "index",
+    "task_index"
+  ],
+  "intentional_feature_differences": {
+    "action_joint_angles": {
+      "reference": {
+        "dtype": "float32",
+        "names": [
+          "left_joint_0.pos",
+          "left_joint_1.pos",
+          "left_joint_2.pos",
+          "left_joint_3.pos",
+          "left_joint_4.pos",
+          "left_joint_5.pos",
+          "left_gripper.pos",
+          "right_joint_0.pos",
+          "right_joint_1.pos",
+          "right_joint_2.pos",
+          "right_joint_3.pos",
+          "right_joint_4.pos",
+          "right_joint_5.pos",
+          "right_gripper.pos"
+        ],
+        "shape": [
+          14
+        ]
+      },
+      "exported": {
+        "dtype": "float32",
+        "shape": [
+          16
+        ],
+        "names": [
+          "left_shoulder_pitch_joint",
+          "left_shoulder_roll_joint",
+          "left_shoulder_yaw_joint",
+          "left_elbow_joint",
+          "left_wrist_roll_joint",
+          "left_wrist_pitch_joint",
+          "left_wrist_yaw_joint",
+          "left_gripper_motor",
+          "right_shoulder_pitch_joint",
+          "right_shoulder_roll_joint",
+          "right_shoulder_yaw_joint",
+          "right_elbow_joint",
+          "right_wrist_roll_joint",
+          "right_wrist_pitch_joint",
+          "right_wrist_yaw_joint",
+          "right_gripper_motor"
+        ]
+      }
+    },
+    "observation.state_joint_angles": {
+      "reference": {
+        "dtype": "float32",
+        "names": [
+          "left_joint_0.pos",
+          "left_joint_1.pos",
+          "left_joint_2.pos",
+          "left_joint_3.pos",
+          "left_joint_4.pos",
+          "left_joint_5.pos",
+          "left_gripper.pos",
+          "right_joint_0.pos",
+          "right_joint_1.pos",
+          "right_joint_2.pos",
+          "right_joint_3.pos",
+          "right_joint_4.pos",
+          "right_joint_5.pos",
+          "right_gripper.pos"
+        ],
+        "shape": [
+          14
+        ]
+      },
+      "exported": {
+        "dtype": "float32",
+        "shape": [
+          16
+        ],
+        "names": [
+          "left_shoulder_pitch_joint",
+          "left_shoulder_roll_joint",
+          "left_shoulder_yaw_joint",
+          "left_elbow_joint",
+          "left_wrist_roll_joint",
+          "left_wrist_pitch_joint",
+          "left_wrist_yaw_joint",
+          "left_gripper_motor",
+          "right_shoulder_pitch_joint",
+          "right_shoulder_roll_joint",
+          "right_shoulder_yaw_joint",
+          "right_elbow_joint",
+          "right_wrist_roll_joint",
+          "right_wrist_pitch_joint",
+          "right_wrist_yaw_joint",
+          "right_gripper_motor"
+        ]
+      }
+    }
+  },
+  "extra_features": [
+    "next.done",
+    "next.success",
+    "observation.camera_estimated_read_end",
+    "observation.camera_sequence",
+    "observation.effort",
+    "observation.full_body_dq",
+    "observation.full_body_q",
+    "observation.full_body_tau_est",
+    "observation.robot_tick",
+    "observation.source_timestamps",
+    "observation.velocity"
+  ],
+  "video_checks": {
+    "top": {
+      "decoded_frames": 869,
+      "codec": "av1",
+      "fps": 30,
+      "shape": [
+        360,
+        640,
+        3
+      ]
+    },
+    "left": {
+      "decoded_frames": 869,
+      "codec": "av1",
+      "fps": 30,
+      "shape": [
+        480,
+        640,
+        3
+      ]
+    },
+    "right": {
+      "decoded_frames": 869,
+      "codec": "av1",
+      "fps": 30,
+      "shape": [
+        480,
+        640,
+        3
+      ]
+    }
+  },
+  "all_869_pose_delta_and_timestamp_rows_pass": true,
+  "episode_index_and_video_ranges_pass": true,
+  "other_differences": {
+    "robot_type": [
+      "bi_yam_follower",
+      "unitree_g1_dex1"
+    ],
+    "video_files_size_in_mb": [
+      500,
+      200
+    ]
+  },
+  "semantic_limit": "Pose and delta checked against user-approved G1 convention, not independently verified against BiCAT generation code"
+}

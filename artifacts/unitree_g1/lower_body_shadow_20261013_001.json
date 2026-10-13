@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-13",
+  "metadata": {
+    "type": "metadata",
+    "control_mode": "lower_body_shadow",
+    "hardware_motion_enabled": false,
+    "interface": "enp130s0",
+    "duration_s": 20.0,
+    "velocity_command": [
+      0,
+      0,
+      0
+    ],
+    "policy_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+    "policy_sha256": "cf668f75b90d1abf73d2b87612a6e76bccc61ff7e083b63582d3f6aaa3c1759d",
+    "note": "Raw policy outputs only; no position hold, command encoding, publisher or actuator control."
+  },
+  "summary": {
+    "type": "summary",
+    "result": "shadow_completed",
+    "reason": null,
+    "samples": 1001,
+    "elapsed_s": 20.000713031000487,
+    "max_inference_s": 0.0009853400006250013,
+    "max_source_age_s": 0.0025146190000668867,
+    "max_tilt_rad": 0.06538482933715492,
+    "max_target_delta_rad": 2.4794195890426636,
+    "motion_commands_sent": 0,
+    "standing_validated": false,
+    "received": 20929,
+    "duplicate_ticks": 838
+  },
+  "raw_path": ".local/unitree_g1/experiments/lower_body_shadow_20261013_001/shadow.jsonl",
+  "raw_sha256": "42de0fb51eca0c43cc8bd87ff4435383adc19f4a196f9c0c7e05ae5550c23bfc",
+  "source_sha256": {
+    "scripts/unitree_g1/shadow_lower_body.py": "3acb17618d2f2c9b75a92750bc4a489e21a48f8ff9fe1dafb70fbab117728b1c",
+    "scripts/unitree_g1/lower_body_policy.py": "0e212dc989361d3104f55e8c78faee5a69e92677b7a577c0b079abdabf7fc432",
+    "tests/unitree_g1/test_shadow_lower_body.py": "9af22c3e3c267f6562486afe7b319fc47058c591c44b25fe414779ad63928b9f"
+  },
+  "tests": {
+    "passed": 9,
+    "scope": "feedback adapter and pinned policy"
+  },
+  "first_max_target_delta_rad": 2.069851815700531,
+  "peak_target_delta": {
+    "rad": 2.4794195890426636,
+    "motor": 10,
+    "joint": "right_ankle_pitch",
+    "target_rad": 1.6417967081069946,
+    "measured_rad": -0.837622880935669,
+    "sample_index": 3
+  },
+  "hardware_motion_started": false,
+  "limitations": [
+    "Shadow policy history evolves without actuator response; not a closed-loop balance test.",
+    "No world localization, authority transfer, or physical stop validation.",
+    "Raw policy targets are not safe takeover trajectories."
+  ],
+  "remaining": [
+    "Validate initial-pose transition and bounded takeover before publishing.",
+    "Provide reliable localization or a separately validated stance controller.",
+    "Validate software lower-body fault handling; independent emergency stop confirmed by operator.",
+    "Implement and validate hardware publisher ownership and feedback integration."
+  ],
+  "operator_confirmation": {
+    "feet_on_ground": true,
+    "suspension_prevents_fall": true,
+    "independent_estop_verified_in_low_level_mode": true,
+    "estop_operator_present": true,
+    "source": "User confirmation in current session; not independently measured by software."
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "operator_report": "Entered Regular mode",
+  "preflight_passed": false,
+  "motion_service": {
+    "code": 0,
+    "value": {
+      "form": "0",
+      "name": "ai"
+    }
+  },
+  "loco_fsm": {
+    "code": 0,
+    "value": 0
+  },
+  "repeat_read_same_result": true,
+  "sdk_mapping": {
+    "ZeroTorque": 0,
+    "Start": 500
+  },
+  "result": "Mode mismatch; no publisher created, no service/FSM writes",
+  "next_step": "Confirm actual robot/App mode and installed firmware FSM semantics before upper-body takeover"
+}

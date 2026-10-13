@@ -1,0 +1,25 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "preflight_passed": false,
+  "route": "official locomotion + arm_sdk",
+  "custom_whole_body_route": "frozen by user",
+  "network": {
+    "restored_existing_connection": "g1-direct-session",
+    "interface": "enp130s0",
+    "address": "192.168.123.222/24"
+  },
+  "mode": {
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": "ai"
+    },
+    "fsm_code": 0,
+    "fsm_id": 4
+  },
+  "required_fsm": 500,
+  "mode_writes": 0,
+  "result": "Blocked by mode mismatch before publisher creation",
+  "operator_report": "Entered Regular; awaiting distinction from locked standing"
+}

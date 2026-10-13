@@ -1,5 +1,98 @@
 # Quest → G1 受限连接
 
+2026-10-13 最新误差阈值：按用户要求，Quest双臂全部14关节的跟踪误差上限从0.20改为0.50 rad，接管、ACTIVE及归还阶段共用；外接预全开所用Quest配置同步生效。夹爪0.30、腰部0.20、速度/加速度和增益保持不变。下次启动生效，未自动重启，尚未经新阈值真机验证。
+
+2026-10-13 最新外接夹爪调整：按用户要求，左右外接Dex1速度/加速度改为5.0/5.0（电机位置单位/s及/s²），预全开同步使用；双臂仍为1.5/3.0，增益与保护阈值不变。12项外接及13项夹爪回归通过，下次启动生效，尚未进行5.0/5.0真机验收。上轮005使用4.0/2.0，ACTIVE34.378秒，无夹爪fault；operator_release后归还阶段右肩yaw/motor24误差0.20205超过0.20，记录tracking_error，零增益及上肢权重0已提交。见[005报告](../../artifacts/unitree_g1/quest_external_live_20261013_005.json)。
+
+2026-10-13 最新速度调整：用户要求双臂全部14关节速度/加速度为1.5 rad/s、3.0 rad/s²，左右外接Dex1为4.0/2.0电机位置单位；外接预全开共用该配置。增益、误差保护及超时不变，参数在下次启动生效，既有会话快照保留原参数。本次仅离线配置修改，未自动重启或进行新速度真机验收。
+
+## 外接 Dex1＋官方下半身（2026-10-13，新机器人）
+
+新机外接 Dex1 使用 `--control-mode arm_sdk --grippers --gripper-backend external-dex1`。腰臂经 `rt/arm_sdk`，腿部继续由官方运控负责；夹爪经 `rt/dex1/left/cmd`、`rt/dex1/right/cmd`（`unitree_go/MotorCmds_`），反馈来自对应 `state`（`MotorStates_`）。SDK上肢消息不填写31/33，程序不创建`rt/lowcmd`发布器，也不切换运控模式。
+
+依据[官方serial2dds服务](https://github.com/unitreerobotics/dex1_1_service)及本地固定提交 `ced3216290bb22dae356213993786beeaa7143ab`：外接服务坐标0闭合、+5.4全开，Kp/Kd=5/0.05；不得套用旧机器人负向打开标定。程序内部通过符号转换复用闭合误差冻结，记录的`gripper_command.q/target`及独立反馈使用外接服务正向坐标。速度/加速度5.0/5.0，反馈与扳机超时0.2秒，循环时限0.1秒，误差0.30。服务源码未完整填充电机故障字段，反馈可用不等于硬件故障状态完备或标定已验证。
+
+只读联合预检：
+
+```bash
+.venv-g1-xr/bin/python scripts/unitree_g1/external_dex1.py \
+  --interface enp130s0 --output <新的预检报告.json>
+```
+
+需新机器人已安装并运行官方 `dex1_1_gripper_server`，选择实际192.168.123.*网卡，普通启动不带`-c`。不要把录制器的订阅端点或`rt/stamped/dex1/*`当作夹爪状态服务。若本机旧SSH公钥尚未安装，可由用户执行 `ssh-copy-id -i ~/.ssh/g1_camera_ed25519.pub unitree@192.168.123.164`，用新机账户密码授权。
+
+真机入口（当次地址、TLS和现场状态须核对）：
+
+```bash
+.venv-g1-xr/bin/python scripts/unitree_g1/quest_bridge.py \
+  --interface enp130s0 --control-mode arm_sdk \
+  --grippers --gripper-backend external-dex1 \
+  --cert <证书路径> --key <私钥路径> --host-address <Quest可达IP> \
+  --output <全新会话目录> --execute --active-seconds 20 \
+  --scene-confirmation '<本次官方站稳、上肢及夹爪空间清空、可独立停止>'
+```
+
+执行先独立预全开：保持当前双臂和腰，双夹爪受限移至+5.4，ACTIVE最多10秒；到位判据为指令距端点≤0.001、速度≤0.001、反馈距端点≤0.15。完成后夹爪零增益、归还上肢权重，关闭该会话再进入Quest等待；任何故障、不完整到位或停止都会禁止下一阶段。影子模式不预全开、不创建任何运动发布器。
+
+Quest双侧握键接管/退出，扳机0→开、1→闭。退出时独立夹爪立即请求零增益，上肢按原2秒权重斜坡归还。双侧DDS写入不是原子事务，各侧提交分别记录；部分失败时分别尝试清零。运控模式失效禁止继续上肢写入，但独立夹爪清零仍须通过其自身竞争指令检查。`external_gripper_zero_submitted`只表示发送成功，不代表物理卸载。官方服务源码1秒无指令后切BRAKE，但新机安装版本/物理停止行为仍须核实。
+
+`--record`可保留原始诊断记录，包含外接反馈和逐侧提交值；现有16维数据转换器仍拒绝arm_sdk会话，避免把旧31/33反馈误作外接夹爪。此实现没有更改相机或数据导出约定。
+
+本轮11项外接测试及45项Quest/夹爪/arm_sdk/旧预全开回归通过。新机已读到ai/FSM501；联合预检在双侧外接反馈缺失处拒绝，0帧运动指令。尚未完成新机夹爪标定核对、预全开或Quest联合真机验收。见[预检报告](../../artifacts/unitree_g1/external_dex1_preflight_20261013_001.json)。
+
+## 官方运控与arm_sdk路径（2026-10-13）
+
+后续501适配：本机用户操作R1+Y后实测ai/FSM=501，只读预检通过。候选现允许500/501，接管后锁定当次FSM，切换到另一允许值也会停止发布。4、200、801仍拒绝。依据包括[官方上肢动作支持状态](https://github.com/unitreerobotics/unitree_ros2/blob/master/example/src/include/g1/g1_arm_action_client.hpp)及[Holosoma的arm_sdk+loco在501下运行说明](https://github.com/amazon-far/holosoma/blob/main/src/holosoma_inference/holosoma_inference_service/README.md)；前者不是arm_sdk验收证明，本机仍需实测。新增`--active-seconds`（0到180秒，不含0），只缩短ACTIVE时长；默认工作区与速度/加速度不变。以下仅500和R1+X描述保留为初版记录，不作为所有固件通用按键或FSM定义。
+
+用户已选择“官方运控维持站立＋arm_sdk控制上肢”。`quest_bridge.py`默认`--control-mode arm_sdk`；历史调试入口需显式增加`--control-mode debug`。下文旧试验和低层夹爪说明仅适用于debug路径，不能与官方运控并行运行。
+
+当前实现是未经验收的候选适配器，不会自动调用SelectMode、ReleaseMode、SetFsmId、起立、阻尼或移动接口。现场先使用官方App/遥控器恢复运控并进入Regular模式（官方文档R1+X，非Running模式），确认机器人已站稳且可独立停止。旧的调试模式支撑声明不能替代此次站立/交接确认。
+
+只读预检（不会创建指令发布器）：
+
+```bash
+.venv-g1-xr/bin/python scripts/unitree_g1/arm_sdk.py --interface enp130s0
+```
+
+当前候选要求服务名`ai`且FSM=500（官方`LocoClient.Start`所请求的FSM）。若本机Regular状态返回其他值，停止并核实固件语义，不手动改数字绕过检查。预检还要求新鲜全身反馈、无电机错误、双臂静止、腰腿速度≤0.15 rad/s、IMU横滚/俯仰≤0.15 rad及角速度≤0.2 rad/s，连续预检期间均须满足。IMU与速度门槛为本地候选设计，不是官方稳定性认证；没有外部定位或脚底接触验证，不能据此证明站立。
+
+准备好现场确认后，真机双臂验证使用以下命令结构；地址、证书、接口及新目录须使用当次核对值：
+
+```bash
+.venv-g1-xr/bin/python scripts/unitree_g1/quest_bridge.py \
+  --control-mode arm_sdk --interface <本次有线网卡> \
+  --cert <证书路径> --key <私钥路径> --host-address <本次Quest可达IP> \
+  --output <全新会话目录> --execute \
+  --scene-confirmation '<本次Regular模式、站立稳定、上肢空间及独立停止确认>' \
+  --record --task '站立状态双臂遥控验证'
+```
+
+此路径不支持内走线Dex1，单独传入`--grippers`仍会在创建会话/发布器前拒绝，也不执行旧预全开；新机外接方式需显式加`--gripper-backend external-dex1`，见上节。`--record`保存三路相机与发送前全身反馈、14维手臂SDK目标，并记录`arm_sdk_request`（实际提交的腰臂目标、增益和权重）；它不是运控融合后的最终电机指令。`convert_dataset.py`明确拒绝arm_sdk原始诊断会话，不将缺失夹爪动作补成16维数据。
+
+接管以实测双臂为起点，2秒内将槽位29权重由0升至1；双臂限速1.5 rad/s、加速度3.0 rad/s²。权重承担接管斜坡，SDK消息中的双臂Kp/Kd保持原标称80/3、40/1.5，不再把增益斜坡重复相乘。官方arm7示例还控制腰部，因此本适配器将12–14固定在接管前实测腰姿，Kp/Kd=60/1.5（官方示例值），不会回零或跟随手柄。腿部0–11与夹爪31/33不填控制值。IK仍为固定躯干模型的相对平移，不宣称世界坐标位姿精度。
+
+ACTIVE期间持续检查服务/FSM、竞争上肢指令、身体倾斜≤0.30 rad、角速度≤0.5 rad/s和腰部误差≤0.20 rad；这些也是未验收候选阈值。身体检查失败时冻结目标并走权重归还斜坡。允许官方运控在`rt/lowcmd`发包，拒绝其他`rt/arm_sdk`及`rt/user_lowcmd`指令；这不鉴别lowcmd发布者身份，须确保旧控制进程已退出。
+
+松侧握键、超时或一般故障时，将权重在2秒内降到0并发送0.3秒尾帧，随后退出；官方运控继续运行，不发送全身零增益卸载。`arm_sdk_release_submitted=true`仅表示归还权重提交，`physical_handover_verified=false`；主摘要`unload_submitted=false`。运控丢失、竞争发布者或传输故障可能阻止归还帧，不宣称交接成功。官方上肢控制恢复后的运动及任意姿态交接仍需现场验证。
+
+依据：[官方arm7示例](https://github.com/unitreerobotics/unitree_sdk2_python/blob/master/example/g1/high_level/g1_arm7_sdk_dds_example.py)、[官方LocoClient](https://github.com/unitreerobotics/unitree_sdk2_python/blob/master/unitree_sdk2py/g1/loco/g1_loco_client.py)、[官方遥操模式与Dex1限制](https://github.com/unitreerobotics/xr_teleoperate/blob/main/README_zh-CN.md)。
+
+## 历史调试模式记录
+
+2026-10-13 最新双臂参数：按用户要求，Quest全部14个手臂关节速度上限改为 **1.0 rad/s**，加速度上限改为 **2.0 rad/s²**。夹爪参数、增益和0.20 rad跟踪误差保护不变。仅修改软件配置，尚未经真机验证；下方记录保留当时参数。
+
+2026-10-13 最新双臂速度：按用户要求，Quest全部14个手臂关节的速度上限由0.20提高为 **0.40 rad/s**，加速度上限由0.40提高为 **0.80 rad/s²**。夹爪参数、增益和其他保护不变；仅修改软件配置，尚未经真机验证。以下历史记录保留当时数值。
+
+2026-10-12 最新超时：输入、目标及反馈0.20秒，控制循环最大间隔0.10秒，相机帧/状态0.60秒，模式状态1.60秒、模式RPC1.00秒。上述主要超时按用户要求翻倍；启动等待、180秒ACTIVE、2秒斜坡、0.3秒尾帧及离线导出0.10秒限制不变。下方历史超时按对应日期阅读。
+
+2026-10-12 侧握键更新：按用户要求，双侧接管/保持阈值由0.70改为0.50；任一侧低于0.50仍退出。接管前必须先检测双侧同时低于0.20，接管后静止2秒完成增益斜坡。阈值写入会话limits.side_grip_threshold，食指扳机映射不变。
+
+2026-10-12 最新双臂参数：按用户要求，Quest的14个手臂关节跟踪误差阈值由0.10改为0.20 rad（约11.46°），适用于接管、ACTIVE和卸载阶段；超过阈值仍共同卸载。夹爪0.30阈值及闭合冻结行为不变，基础保持profile仍为0.08 rad。此次修改尚未经真机验证，历史试验保留当时阈值。
+
+2026-10-12 最新：扳机0～100%映射全开到近闭合位置，限速/加速度2.4/1.2，夹爪误差阈值0.30。移除旧低速接触识别及自动接触保持。按用户后续要求，ACTIVE闭合时正向误差>0.30进入`CLOSING_BLOCKED`：仅冻结该侧最后指令并立即停止轨迹速度，不卸载双臂或另一侧，不自动恢复收紧。回松扳机，使映射目标比当前指令更开，即可受控打开；原闭合误差回到阈值内后解除锁定。打开方向超差、其他未受闭合保护接管的超差、0.1秒输入/反馈超时仍共同卸载。预全开仍是0.30硬误差保护，到位判据≤0.15。状态CLOSED仅表示接近闭合参考，CLOSING_BLOCKED不证明抓取成功。旧contact_q/hold_q/contact_stops日志字段为空/零，新增closing_blocked标志。以下旧接触保持段落均为历史版本，当前以本段和代码为准。尚未真机验收。
+
+2026-10-12 用户要求每次遥控前先全开双夹爪。真机`--execute --grippers`入口先运行独立单向全开程序：目标−5.4、速度/加速度与Quest共用配置（当前2.4/1.2）、Kp/Kd=5/0.05，跟踪误差0.30；接管/卸载另计，双臂与身体在此期间零增益。单向打开初态允许[−5.4, 0.01]，不改历史闭合参考。双侧指令到达目标、轨迹速度归零且反馈误差≤0.15后立即卸载（打开ACTIVE期限10秒，无固定等待），发布器退出后，才创建Quest会话；故障或人工停止禁止继续。原始日志位于`preopen/`，影子模式不运行这一运动。Quest阶段仍使用下述2.4/1.2夹爪限速。需等终端打印Quest地址后再操作头显。
+
 2026-10-11 扳机映射简化：启用夹爪时，首个新鲜ACTIVE扳机输入自动接管双侧夹爪，0～100%线性映射全开到近闭合；取消首次满捏和15%/25%门槛。接触保持后，映射目标低于保持目标即解除保持并按行程打开。接管斜坡期间仍保持初态；ACTIVE时松开的扳机会触发受控打开。仅离线修改，尚未经真机验收。
 
 2026-10-11 速度更新：按用户要求，Quest双臂速度/加速度现为 **0.20 rad/s、0.40 rad/s²**，夹爪打开/闭合速度/加速度现为 **2.4电机位置单位/秒、1.2电机位置单位/秒²**。双臂0.10 rad与夹爪0.15跟踪误差阈值、增益、接触保持及其他保护不变。仅离线修改，新参数尚未经真机验收；历史记录中的速度保留当时数值。

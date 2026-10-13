@@ -16,11 +16,12 @@ import time
 from arm_execution import vector
 from gripper_probe import GripperIO, gripper_log, gripper_fault, ROOT
 from hold_arms import load_profile, run_hold
+from quest_grippers import gripper_settings
 
 OPEN_DELTA = -.5
 OPEN_S, CLOSE_S, DWELL_S = 10., 16., 1.
 ACTIVE_S = OPEN_S+CLOSE_S+2*DWELL_S
-ABSOLUTE_OPEN_S = 110.
+ABSOLUTE_OPEN_S = 10.  # Deadline, not a fixed dwell: finish on target/feedback.
 REFERENCE = ROOT/'artifacts/unitree_g1/gripper_negative_open_live_20261009_001.json'
 
 
@@ -34,16 +35,28 @@ def cycle_config(base, initial, closed, open_target=None):
     initial,closed=vector(initial),vector(closed)
     if any(x != 0 for x in initial[2:]+closed[2:]):
         raise ValueError('Nonzero padding')
-    if any(not -.05<=c<=.05 or not c-.35<=q<=c+.03
-           for q,c in zip(initial[:2],closed[:2])):
-        raise ValueError('Outside reviewed initial/closed-reference envelope')
     if open_target is not None and open_target != -5.4:
         raise ValueError('Only the explicitly requested -5.4 diagnostic target is supported')
+    if open_target is None:
+        if any(not -.05<=c<=.05 or not c-.35<=q<=c+.03
+               for q,c in zip(initial[:2],closed[:2])):
+            raise ValueError('Outside reviewed initial/closed-reference envelope')
+    elif any(not -.05<=c<=.05 or not -5.4<=q<=.01
+             for q,c in zip(initial[:2],closed[:2])):
+        # Opening only: accept the full stroke through encoder zero (0.01
+        # tolerance), without changing the historical closing target.
+        raise ValueError('Outside opening-only initial envelope [-5.4, 0.01]')
+    settings=gripper_settings() if open_target is not None else None
     return replace(base,
         lower=tuple((q+OPEN_DELTA if open_target is None else open_target)-.01 for q in initial[:2])+(-.1,)*12,
         upper=tuple(max(q,c)+.01 for q,c in zip(initial[:2],closed[:2]))+(.1,)*12,
-        kp=(5.,)*14,kd=(.05,)*14,velocity=(.1,)*14,
-        acceleration=(.2,)*14,tracking_error=(.15,)*14)
+        kp=(5.,)*14,kd=(.05,)*14,
+        velocity=((settings['velocity'] if settings else .1),)*14,
+        acceleration=((settings['acceleration'] if settings else .2),)*14,
+        tracking_error=((settings['tracking_error'] if settings else .15),)*14,
+        state_timeout=settings['timeout'] if settings else base.state_timeout,
+        target_timeout=settings['timeout'] if settings else base.target_timeout,
+        max_step_seconds=settings['servo_timeout'] if settings else base.max_step_seconds)
 
 
 def smooth(u):
@@ -70,7 +83,14 @@ class CycleSource:
         if self.started is None:self.started=now
         elapsed=now-self.started
         if self.open_target is not None:
-            start,end,u=self.initial,self.opened,elapsed/ABSOLUTE_OPEN_S
+            executor.send_targets(self.opened,now,now)
+            if (all(abs(q-self.open_target)<=1e-4 for q in executor.q[:2])
+                    and all(abs(v)<=1e-8 for v in executor.v[:2])
+                    and all(abs(q-self.open_target)<=.15 for q in executor.observation.q[:2])):
+                executor.release_control()
+            elif elapsed>=ABSOLUTE_OPEN_S:
+                raise TimeoutError('Gripper opening did not reach target before deadline')
+            return
         elif elapsed<OPEN_S:
             start,end,u=self.initial,self.opened,elapsed/OPEN_S
         elif elapsed<OPEN_S+DWELL_S:
@@ -87,18 +107,22 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--execute',action='store_true')
     parser.add_argument('--open-target',type=float,choices=[-5.4],
-                        help='Diagnostic absolute opening target; 110s opening then unload, no closing return')
+                        help='Absolute opening at Quest velocity/acceleration; finish at target, 10s ACTIVE deadline')
     parser.add_argument('--scene-confirmation')
     args=parser.parse_args()
     if args.execute and not (args.scene_confirmation or '').strip():
         parser.error('--execute requires --scene-confirmation')
     closed=closed_reference()
     profile,base=load_profile(ROOT/'artifacts/unitree_g1/hold_shadow_profile.json',False)
+    if args.open_target is not None:
+        settings=gripper_settings()
+        profile['controller'].update(state_timeout=settings['timeout'],
+            target_timeout=settings['timeout'],max_step_seconds=settings['servo_timeout'])
     profile.update(hold_s=ACTIVE_S if args.open_target is None else ABSOLUTE_OPEN_S+DWELL_S,period_s=.004)
     args.output.mkdir(parents=True,exist_ok=False)
     (args.output/'source').mkdir()
     hashes={}
-    for name in ('gripper_cycle.py','gripper_probe.py','hold_arms.py','arm_execution.py'):
+    for name in ('gripper_cycle.py','gripper_probe.py','quest_grippers.py','hold_arms.py','arm_execution.py'):
         data=(ROOT/'scripts/unitree_g1'/name).read_bytes()
         (args.output/'source'/name).write_bytes(data)
         hashes[name]=hashlib.sha256(data).hexdigest()
@@ -115,14 +139,22 @@ def main():
         source_sha256=hashes,
         scope='Local open and close; closed reference is previously observed, not calibrated contact. Other motors passive.')
     if args.open_target is not None:
+        settings=gripper_settings()
         metadata.update(absolute_open_target=args.open_target,displacement_motor_units=None,
-            phases_s=dict(engage=2.,open=ABSOLUTE_OPEN_S,open_dwell=DWELL_S,unload=2.,tail=.3),
+            velocity_motor_units_s=settings['velocity'],acceleration_motor_units_s2=settings['acceleration'],
+            tracking_error_motor_units=settings['tracking_error'],
+            phases_s=dict(engage=2.,open_deadline=ABSOLUTE_OPEN_S,open_dwell=0.,unload=2.,tail=.3),
             scope='Uncalibrated -5.4 opening diagnostic, no automatic close; other motors passive; stop on tracking fault.')
     (args.output/'session.json').write_text(json.dumps(metadata,indent=2)+'\n')
     stop=threading.Event()
     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda *_:stop.set())
     io=None
     result=dict(error='initialization_failed',command_frames=0,unload_submitted=False)
+    last_active=None
+    def record(row):
+        nonlocal last_active
+        if row['phase']=='ACTIVE':last_active=row
+        log.write(json.dumps(gripper_log(row),allow_nan=False)+'\n')
     try:
         io=GripperIO(args.interface,args.execute,profile)
         io.preflight()
@@ -132,12 +164,12 @@ def main():
             observation=asdict(state),telemetry=io.telemetry(),controller=asdict(config)),indent=2)+'\n')
         if stop.is_set():raise RuntimeError('Stopped before engagement')
         if args.execute:
-            print('Dex1: absolute -5.4 opening over 110s, then unload without closing; Kp5/Kd.05.' if args.open_target is not None else
+            print('Dex1: open to -5.4 at Quest velocity/acceleration; finish on target and feedback, then unload; Kp5/Kd.05.' if args.open_target is not None else
                   'Dex1: -0.5 from current, then close to recorded reference; 32.3s; Kp5/Kd.05.',flush=True)
             io.open_writer()
             with (args.output/'commands.jsonl').open('x',buffering=1) as log:
                 result=run_hold(io,config,profile,stop.is_set,
-                    lambda row:log.write(json.dumps(gripper_log(row),allow_nan=False)+'\n'),
+                    record,
                     target_source=CycleSource(state.q,closed,args.open_target))
         else:
             result=dict(error=None,preflight_passed=True,command_frames=0,unload_submitted=False)
@@ -147,6 +179,16 @@ def main():
         if 'first_fault' in result:result['first_fault']=gripper_fault(result['first_fault'])
         result.update(hardware_motion_enabled=args.execute,physical_unload_verified=False,
             execution_vector_layout='first two entries = left/right Dex1, remaining twelve inert padding')
+        if args.open_target is not None:
+            feedback=None if last_active is None else last_active.get('feedback')
+            result['opening_complete'] = bool(args.execute and not stop.is_set()
+                and result.get('error') is None and result.get('unload_submitted')
+                and last_active and feedback
+                and all(abs(q-args.open_target)<=1e-4 for q in last_active['q'][:2])
+                and all(abs(q-args.open_target)<=.15 for q in feedback['q'][:2]))
+            result['last_active_feedback'] = None if feedback is None else feedback['q'][:2]
+            if args.execute and not result['opening_complete']:
+                result['error']=result.get('error') or 'Opening did not complete; teleoperation must not start'
         (args.output/'summary.json').write_text(json.dumps(result,indent=2)+'\n')
         print(json.dumps(result,indent=2),flush=True)
     return 1 if result['error'] else 0

@@ -1,0 +1,96 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": "tracking_error",
+  "command_frames": 3343,
+  "phase": "FAULT",
+  "elapsed_s": 37.71520080299979,
+  "release_reason": "tracking_error",
+  "first_fault": {
+    "reason": "tracking_error",
+    "phase": "ACTIVE",
+    "last_step_time": 3929.753238964,
+    "gain_scale": 1.0,
+    "feedback_received": 3929.753188645,
+    "tracking_error_rad": [
+      0.0636153669383715,
+      0.051412216923802545,
+      0.009787616062734983,
+      0.028577943024519437,
+      0.0008944766592966572,
+      0.009943524371856222,
+      0.0017999763829097334,
+      0.0016917150591946872,
+      0.10027242490319924,
+      0.0018097258902344537,
+      0.051169222423406296,
+      0.005521892337577786,
+      0.0742683404903079,
+      0.013808464560236738
+    ],
+    "tracking_exceeded_arm_indices": [
+      23
+    ]
+  },
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.4,
+      -5.4
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.4,
+      -5.4
+    ],
+    "picked_up": [
+      true,
+      true
+    ],
+    "states": [
+      "RELEASED",
+      "RELEASED"
+    ],
+    "control_mode": "trigger_position",
+    "closing_blocked": [
+      false,
+      false
+    ],
+    "contact_q": [
+      null,
+      null
+    ],
+    "hold_q": [
+      null,
+      null
+    ],
+    "contact_stops": [
+      0,
+      0
+    ],
+    "phase": "RELEASED",
+    "input_time": 3929.722661038
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_grippers_live_20261012_007",
+  "active_span_s": 33.40376743100023,
+  "left_closing_blocked": {
+    "frames": 631,
+    "span_s": 7.023325956000008,
+    "command_range": [
+      -2.534621587616652,
+      -2.534621587616652
+    ],
+    "arm_command_max_joint_span_rad": 0.564808434072759,
+    "later_opening": true
+  },
+  "recording_enabled": false,
+  "secondary_worker_error": "ValueError: Stale robot feedback in IK"
+}

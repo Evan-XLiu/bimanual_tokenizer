@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-13",
+  "request": "开始受限的兼容性试验",
+  "outcome": "blocked_before_motion_by_existing_gripper_feedforward",
+  "command_frames": 0,
+  "preflight_evidence": {
+    "error": "ValueError: Existing downstream gripper effort; probe refused",
+    "command_frames": 0,
+    "last_mode": {
+      "service_code": 0,
+      "service": {
+        "form": "0",
+        "name": "ai"
+      },
+      "fsm_code": 0,
+      "fsm_id": 501
+    },
+    "last_downstream_lowcmd": {
+      "received": 13836.378994601,
+      "grippers": {
+        "31": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        },
+        "33": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        }
+      }
+    },
+    "last_gripper_feedback": [
+      {
+        "index": 31,
+        "mode": 1,
+        "vol": 42.0,
+        "temperature": [
+          40,
+          34
+        ],
+        "q": -1.844090461730957,
+        "dq": -0.001963495509698987,
+        "tau_est": 0.3125,
+        "motorstate": 0
+      },
+      {
+        "index": 33,
+        "mode": 1,
+        "vol": 42.0,
+        "temperature": [
+          38,
+          31
+        ],
+        "q": -0.004463911056518555,
+        "dq": 0.0,
+        "tau_est": 0.3125,
+        "motorstate": 0
+      }
+    ],
+    "unload_submitted": false,
+    "physical_handover_verified": false,
+    "physical_gripper_release_verified": false,
+    "hardware_motion_enabled": false
+  },
+  "scope": "Only rt/arm_sdk publisher in separate opt-in probe; normal Quest arm_sdk --grippers remains prohibited. No execute invocation performed.",
+  "planned_probe": {
+    "left_index": 31,
+    "closing_delta": 0.1,
+    "active_s": 6,
+    "motion_s": 3,
+    "peak_velocity": 0.05,
+    "kp": 5,
+    "kd": 0.05,
+    "right_commanded": false,
+    "release": "Explicit left gain-zero phase before arm authority release; this is NOT a verified stop contract."
+  },
+  "validation": {
+    "probe_tests_passed": 7,
+    "arm_sdk_tests_passed": 12,
+    "covers": [
+      "left-only encoding and CRC",
+      "velocity/acceleration bounds",
+      "explicit gripper gain clearing independent of authority weight",
+      "stale/nonfinite feedback",
+      "stop/body fault/logging failure cleanup",
+      "no writes after ownership loss",
+      "zero gains with nonzero feedforward rejected"
+    ]
+  },
+  "finding": "ai/FSM501; observed lowcmd31 and33 mode1 q0 dq0 kp0 kd0 tau0.30000001192092896; measured tau_est0.3125 both. Origin of lowcmd is not cryptographically authenticated. tau_est is not calibrated gripping force.",
+  "next_required": "Determine source and ownership of existing gripper feedforward and establish a stop/restore contract before any compatibility actuation. No automatic retry or baseline interlock bypass.",
+  "limitations": [
+    "No evidence yet that arm_sdk forwards gripper31/33",
+    "No physical gripper release or handover verified",
+    "Implemented probe unvalidated on hardware"
+  ]
+}

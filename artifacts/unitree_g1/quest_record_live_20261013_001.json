@@ -1,0 +1,34 @@
+{
+  "session": ".local/unitree_g1/experiments/quest_record_live_20261013_001",
+  "task": "左夹抓瓶子到中间",
+  "arm_velocity_rad_s": 0.4,
+  "arm_acceleration_rad_s2": 0.8,
+  "preopen": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 1741,
+    "phase": "DISARMED",
+    "elapsed_s": 8.595672356000023,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding",
+    "opening_complete": true,
+    "last_active_feedback": [
+      -5.2753987312316895,
+      -5.331695556640625
+    ]
+  },
+  "teleoperation": {
+    "error": "RuntimeError: Arms not stationary",
+    "command_frames": 0,
+    "unload_submitted": false,
+    "gripper_fault": null,
+    "last_gripper_command": null,
+    "hardware_motion_enabled": true,
+    "physical_unload_verified": false
+  },
+  "recording_started": false,
+  "automatic_retry": false
+}

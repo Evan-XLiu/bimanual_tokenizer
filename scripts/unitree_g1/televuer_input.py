@@ -33,7 +33,7 @@ def gripper_status_lines(path,now):
             lines.append(f'Unload in {remaining:.1f}s'+(' - PLACE OBJECT DOWN' if remaining<=10 else ''))
         else:lines.append('Phase: '+status['phase']+' - no holding guarantee')
         lines.append('Release INDEX trigger: open | Side grip/timeout: unload all')
-        lines.append('Contact uncalibrated - HOLDING does not verify grasp')
+        lines.append('CLOSING_BLOCKED: ease INDEX trigger to open; grasp not verified')
         if status.get('fault'):lines.append('FAULT: '+str(status['fault']['reason']))
         return lines
     except (OSError,ValueError,KeyError,TypeError):

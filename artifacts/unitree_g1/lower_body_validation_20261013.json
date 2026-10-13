@@ -1,0 +1,714 @@
+{
+  "date": "2026-10-13",
+  "stage": "offline policy adapter and simulation screening; failed standing gate",
+  "hardware_approved": false,
+  "live_commands_sent": 0,
+  "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+  "model_sha256": "cf668f75b90d1abf73d2b87612a6e76bccc61ff7e083b63582d3f6aaa3c1759d",
+  "local_urdf": ".local/unitree_g1/xr_teleoperate/assets/g1/g1_body29_hand14.urdf",
+  "local_urdf_sha256": "8bbf006633fc50b616f665c7a970780cc296577a0adfd7d28b049e751c238735",
+  "mapping": [
+    {
+      "motor": 0,
+      "name": "left_hip_pitch_joint",
+      "local_limit": {
+        "lower": "-2.5307",
+        "upper": "2.8798",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "reference_limit": {
+        "lower": "-2.5307",
+        "upper": "2.8798",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 1,
+      "name": "left_hip_roll_joint",
+      "local_limit": {
+        "lower": "-0.5236",
+        "upper": "2.9671",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "reference_limit": {
+        "lower": "-0.5236",
+        "upper": "2.9671",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 2,
+      "name": "left_hip_yaw_joint",
+      "local_limit": {
+        "lower": "-2.7576",
+        "upper": "2.7576",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "reference_limit": {
+        "lower": "-2.7576",
+        "upper": "2.7576",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 3,
+      "name": "left_knee_joint",
+      "local_limit": {
+        "lower": "-0.087267",
+        "upper": "2.8798",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "reference_limit": {
+        "lower": "-0.087267",
+        "upper": "2.8798",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 4,
+      "name": "left_ankle_pitch_joint",
+      "local_limit": {
+        "lower": "-0.87267",
+        "upper": "0.5236",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-0.87267",
+        "upper": "0.5236",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 5,
+      "name": "left_ankle_roll_joint",
+      "local_limit": {
+        "lower": "-0.2618",
+        "upper": "0.2618",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-0.2618",
+        "upper": "0.2618",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 6,
+      "name": "right_hip_pitch_joint",
+      "local_limit": {
+        "lower": "-2.5307",
+        "upper": "2.8798",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "reference_limit": {
+        "lower": "-2.5307",
+        "upper": "2.8798",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 7,
+      "name": "right_hip_roll_joint",
+      "local_limit": {
+        "lower": "-2.9671",
+        "upper": "0.5236",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "reference_limit": {
+        "lower": "-2.9671",
+        "upper": "0.5236",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 8,
+      "name": "right_hip_yaw_joint",
+      "local_limit": {
+        "lower": "-2.7576",
+        "upper": "2.7576",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "reference_limit": {
+        "lower": "-2.7576",
+        "upper": "2.7576",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 9,
+      "name": "right_knee_joint",
+      "local_limit": {
+        "lower": "-0.087267",
+        "upper": "2.8798",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "reference_limit": {
+        "lower": "-0.087267",
+        "upper": "2.8798",
+        "effort": "139",
+        "velocity": "20"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 10,
+      "name": "right_ankle_pitch_joint",
+      "local_limit": {
+        "lower": "-0.87267",
+        "upper": "0.5236",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-0.87267",
+        "upper": "0.5236",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 11,
+      "name": "right_ankle_roll_joint",
+      "local_limit": {
+        "lower": "-0.2618",
+        "upper": "0.2618",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-0.2618",
+        "upper": "0.2618",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 12,
+      "name": "waist_yaw_joint",
+      "local_limit": {
+        "lower": "-2.618",
+        "upper": "2.618",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "reference_limit": {
+        "lower": "-2.618",
+        "upper": "2.618",
+        "effort": "88",
+        "velocity": "32"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 13,
+      "name": "waist_roll_joint",
+      "local_limit": {
+        "lower": "-0.52",
+        "upper": "0.52",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-0.52",
+        "upper": "0.52",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 14,
+      "name": "waist_pitch_joint",
+      "local_limit": {
+        "lower": "-0.52",
+        "upper": "0.52",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-0.52",
+        "upper": "0.52",
+        "effort": "50",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 15,
+      "name": "left_shoulder_pitch_joint",
+      "local_limit": {
+        "lower": "-3.0892",
+        "upper": "2.6704",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-3.0892",
+        "upper": "2.6704",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 16,
+      "name": "left_shoulder_roll_joint",
+      "local_limit": {
+        "lower": "-1.5882",
+        "upper": "2.2515",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-1.5882",
+        "upper": "2.2515",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 17,
+      "name": "left_shoulder_yaw_joint",
+      "local_limit": {
+        "lower": "-2.618",
+        "upper": "2.618",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-2.618",
+        "upper": "2.618",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 18,
+      "name": "left_elbow_joint",
+      "local_limit": {
+        "lower": "-1.0472",
+        "upper": "2.0944",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-1.0472",
+        "upper": "2.0944",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 19,
+      "name": "left_wrist_roll_joint",
+      "local_limit": {
+        "effort": "25",
+        "velocity": "37",
+        "lower": "-1.972222054",
+        "upper": "1.972222054"
+      },
+      "reference_limit": {
+        "effort": "25",
+        "velocity": "37",
+        "lower": "-1.972222054",
+        "upper": "1.972222054"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 20,
+      "name": "left_wrist_pitch_joint",
+      "local_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "reference_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 21,
+      "name": "left_wrist_yaw_joint",
+      "local_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "reference_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 22,
+      "name": "right_shoulder_pitch_joint",
+      "local_limit": {
+        "lower": "-3.0892",
+        "upper": "2.6704",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-3.0892",
+        "upper": "2.6704",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 23,
+      "name": "right_shoulder_roll_joint",
+      "local_limit": {
+        "lower": "-2.2515",
+        "upper": "1.5882",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-2.2515",
+        "upper": "1.5882",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 24,
+      "name": "right_shoulder_yaw_joint",
+      "local_limit": {
+        "lower": "-2.618",
+        "upper": "2.618",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-2.618",
+        "upper": "2.618",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 25,
+      "name": "right_elbow_joint",
+      "local_limit": {
+        "lower": "-1.0472",
+        "upper": "2.0944",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "reference_limit": {
+        "lower": "-1.0472",
+        "upper": "2.0944",
+        "effort": "25",
+        "velocity": "37"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 26,
+      "name": "right_wrist_roll_joint",
+      "local_limit": {
+        "effort": "25",
+        "velocity": "37",
+        "lower": "-1.972222054",
+        "upper": "1.972222054"
+      },
+      "reference_limit": {
+        "effort": "25",
+        "velocity": "37",
+        "lower": "-1.972222054",
+        "upper": "1.972222054"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 27,
+      "name": "right_wrist_pitch_joint",
+      "local_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "reference_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    },
+    {
+      "motor": 28,
+      "name": "right_wrist_yaw_joint",
+      "local_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "reference_limit": {
+        "effort": "5",
+        "velocity": "22",
+        "lower": "-1.614429558",
+        "upper": "1.614429558"
+      },
+      "axis_match": true,
+      "inertial_match": true
+    }
+  ],
+  "simulations": [
+    {
+      "model": "12dof",
+      "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "seconds_requested": 20.0,
+      "seconds_completed": 20.0,
+      "push_newtons": 0.0,
+      "arm_motion": false,
+      "inference_delay_steps": 0,
+      "metrics": {
+        "max_tilt_rad": 0.09220407046021327,
+        "max_drift_m": 0.4841817343302042,
+        "max_foot_lift_m": 0.027197427943118635,
+        "max_joint_limit_excess_rad": 0.0,
+        "max_abs_requested_torque_nm": 39.20728953860801,
+        "max_abs_applied_torque_nm": 39.20728953860801,
+        "min_pelvis_height_m": 0.7719076534739767
+      },
+      "inference_ms_p50": 0.14035249978405773,
+      "inference_ms_max": 20.852654000009352,
+      "screening_limits": {
+        "max_tilt_rad": 0.2,
+        "max_drift_m": 0.15,
+        "max_foot_lift_m": 0.03,
+        "max_joint_limit_excess_rad": 0.01
+      },
+      "violations": [
+        "max_drift_m"
+      ],
+      "failure": null,
+      "passed": false,
+      "hardware_approved": false,
+      "limitations": [
+        "ideal initialized posture",
+        "no Dex1 mass/inertia calibration",
+        "no camera/Quest concurrency",
+        "no hardware authority transition"
+      ],
+      "trace_path": ".local/unitree_g1/experiments/lower_body_12dof_002.trace.jsonl",
+      "trace_sha256": "66340f8434fd95f0ec2c7ec92318810d36bb2f7914021b0fff6226eb9bdb0399"
+    },
+    {
+      "model": "29dof",
+      "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "seconds_requested": 20.0,
+      "seconds_completed": 0.434,
+      "push_newtons": 0.0,
+      "arm_motion": false,
+      "inference_delay_steps": 0,
+      "metrics": {
+        "max_tilt_rad": 0.604659886532697,
+        "max_drift_m": 0.07305040424502209,
+        "max_foot_lift_m": 0.09328320467425828,
+        "max_joint_limit_excess_rad": 0.8216691919265542,
+        "max_abs_requested_torque_nm": 593.4127377008077,
+        "max_abs_applied_torque_nm": 103.00545606188942,
+        "min_pelvis_height_m": 0.6000100307608642
+      },
+      "inference_ms_p50": 0.15036399986456672,
+      "inference_ms_max": 20.53645999967557,
+      "screening_limits": {
+        "max_tilt_rad": 0.2,
+        "max_drift_m": 0.15,
+        "max_foot_lift_m": 0.03,
+        "max_joint_limit_excess_rad": 0.01
+      },
+      "violations": [
+        "max_tilt_rad",
+        "max_foot_lift_m",
+        "max_joint_limit_excess_rad"
+      ],
+      "failure": "fall_screen",
+      "passed": false,
+      "hardware_approved": false,
+      "limitations": [
+        "ideal initialized posture",
+        "no Dex1 mass/inertia calibration",
+        "no camera/Quest concurrency",
+        "no hardware authority transition"
+      ],
+      "trace_path": ".local/unitree_g1/experiments/lower_body_29dof_002.trace.jsonl",
+      "trace_sha256": "779eb72ada0e7953710264304e17a3cc0487e6805649ccd08824962976485ccf"
+    },
+    {
+      "model": "29dof",
+      "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "simulation_dt": 0.001,
+      "seconds_requested": 20.0,
+      "seconds_completed": 0.668,
+      "push_newtons": 0.0,
+      "arm_motion": false,
+      "inference_delay_steps": 0,
+      "metrics": {
+        "max_tilt_rad": 0.6005419382379542,
+        "max_drift_m": 0.10351161518496389,
+        "max_foot_lift_m": 0.29152274449886334,
+        "max_joint_limit_excess_rad": 0.14340060329243237,
+        "max_abs_requested_torque_nm": 304.9658058241484,
+        "max_abs_applied_torque_nm": 113.63295035713428,
+        "min_pelvis_height_m": 0.6479844733762185
+      },
+      "inference_ms_p50": 0.15895150022515736,
+      "inference_ms_max": 28.654910000113887,
+      "screening_limits": {
+        "max_tilt_rad": 0.2,
+        "max_drift_m": 0.15,
+        "max_foot_lift_m": 0.03,
+        "max_joint_limit_excess_rad": 0.01
+      },
+      "violations": [
+        "max_tilt_rad",
+        "max_foot_lift_m",
+        "max_joint_limit_excess_rad"
+      ],
+      "failure": "fall_screen",
+      "passed": false,
+      "hardware_approved": false,
+      "limitations": [
+        "ideal initialized posture",
+        "no Dex1 mass/inertia calibration",
+        "no camera/Quest concurrency",
+        "no hardware authority transition"
+      ],
+      "trace_path": ".local/unitree_g1/experiments/lower_body_29dof_dt0.001_003.trace.jsonl",
+      "trace_sha256": "46dde51a0e8267893566289453390641ab39d44483edab46c62196895a21a2cb"
+    },
+    {
+      "model": "29dof",
+      "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "simulation_dt": 0.0005,
+      "seconds_requested": 20.0,
+      "seconds_completed": 20.0,
+      "push_newtons": 0.0,
+      "arm_motion": false,
+      "inference_delay_steps": 0,
+      "metrics": {
+        "max_tilt_rad": 0.2846616334807469,
+        "max_drift_m": 2.9990969366224456,
+        "max_foot_lift_m": 0.07280016517977395,
+        "max_joint_limit_excess_rad": 0.07046142061267024,
+        "max_abs_requested_torque_nm": 115.10662816376671,
+        "max_abs_applied_torque_nm": 95.73225534949648,
+        "min_pelvis_height_m": 0.7414840799859511
+      },
+      "inference_ms_p50": 0.16083800005617377,
+      "inference_ms_max": 28.400029000295035,
+      "screening_limits": {
+        "max_tilt_rad": 0.2,
+        "max_drift_m": 0.15,
+        "max_foot_lift_m": 0.03,
+        "max_joint_limit_excess_rad": 0.01
+      },
+      "violations": [
+        "max_tilt_rad",
+        "max_drift_m",
+        "max_foot_lift_m",
+        "max_joint_limit_excess_rad"
+      ],
+      "failure": null,
+      "passed": false,
+      "hardware_approved": false,
+      "limitations": [
+        "ideal initialized posture",
+        "no Dex1 mass/inertia calibration",
+        "no camera/Quest concurrency",
+        "no hardware authority transition"
+      ],
+      "trace_path": ".local/unitree_g1/experiments/lower_body_29dof_dt0.0005_003.trace.jsonl",
+      "trace_sha256": "bd5ee9c612e5be13b664993f16f2c9b14a68fa5d411e8378cf9085a2d6617852"
+    }
+  ],
+  "excluded_trials": {
+    "001": "Unsupported 1s free-standing PD-only settling caused fall before policy start; not a policy performance result."
+  },
+  "limitations": [
+    "Local URDF uses 14 finger joints, not the installed Dex1 assembly; hardware mass/inertia remain unverified.",
+    "29dof numerical behavior strongly depends on physics timestep; no hardware inference from early coarse-step falls.",
+    "No live whole-body publisher, Quest merge, integrated preopen, or new dataset export enabled.",
+    "Cold TorchScript inference can exceed 20ms; warmup/deadline handling remain deployment requirements."
+  ]
+}

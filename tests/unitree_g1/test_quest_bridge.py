@@ -50,11 +50,11 @@ class QuestTests(unittest.TestCase):
     def test_quest_tracking_threshold_accepts_old_trip_and_still_unloads(self):
         from quest_bridge import load_quest_profile
         profile, cfg = load_quest_profile()
-        self.assertEqual(cfg.tracking_error, (.10,)*14)
-        self.assertEqual(profile['controller']['tracking_error'], [.10]*14)
+        self.assertEqual(cfg.tracking_error, (.50,)*14)
+        self.assertEqual(profile['controller']['tracking_error'], [.50]*14)
         self.assertFalse(profile['hardware_approved'])
         for phase in ('ACTIVE', 'RELEASING'):
-            for error, trips in ((.0800014209472461, False), (.099, False), (.101, True)):
+            for error, trips in ((.20204985138168652, False), (.499, False), (.501, True)):
                 with self.subTest(phase=phase, error=error):
                     sent = []
                     ex = ArmExecution(cfg, lambda cmd: sent.append(cmd) is None)

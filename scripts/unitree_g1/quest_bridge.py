@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Finite Quest/G1 candidate trial. Default: real feedback, NO motor publisher.
 
-The IK subprocess is forbidden from importing DDS. The parent alone owns the
-bounded executor. Optional Dex1 commands share the same publisher. No replay
+The IK subprocess is forbidden from importing DDS. Default transport: arm_sdk,
+with official locomotion already in operator-confirmed Regular standing mode.
+Debug lowcmd is explicit legacy opt-in; internal Dex1 is debug-only. No replay
 input, automatic rearming or mode changes. Each run requires a fresh gesture.
 """
 import argparse
@@ -21,16 +22,17 @@ import time
 import uuid
 
 from arm_execution import vector
+from arm_sdk import ArmSDKIO, STANDING
 from hold_arms import DDSHoldIO, load_profile, run_hold
 from quest_grippers import QuestGripperIO, gripper_settings, raw_triggers, trigger_pair
 from record_cameras import check_camera_status
 
 ROOT = Path(__file__).resolve().parents[2]
-LIMITS = dict(active_s=180., input_timeout_s=.1, feedback_timeout_s=.1,
-              joint_limits='urdf', velocity_rad_s=.20, acceleration_rad_s2=.40,
+LIMITS = dict(active_s=180., input_timeout_s=.2, feedback_timeout_s=.2,
+              joint_limits='urdf', velocity_rad_s=1.5, acceleration_rad_s2=3.0,
               translation_scale=1., workspace_m=.30, ik_position_error_m=.015,
-              tracking_error_rad=.10, workspace_shape='box_above_start',
-              orientation_mode='free')
+              tracking_error_rad=.50, workspace_shape='box_above_start',
+              orientation_mode='free', side_grip_threshold=.5)
 IK_COST = dict(translation=500., rotation=0., smooth=.1)
 
 
@@ -40,7 +42,10 @@ def load_quest_profile():
     profile['hold_s'] = LIMITS['active_s']
     tracking = (LIMITS['tracking_error_rad'],)*14
     profile['controller']['tracking_error'] = list(tracking)
-    return profile, replace(config, tracking_error=tracking)
+    timeouts=dict(state_timeout=LIMITS['feedback_timeout_s'],
+                  target_timeout=LIMITS['input_timeout_s'],max_step_seconds=.1)
+    profile['controller'].update(timeouts)
+    return profile, replace(config, tracking_error=tracking, **timeouts)
 
 
 def write_json(path, value):
@@ -137,6 +142,7 @@ class QuestSource:
         self.session = None
         self.gripper_io = gripper_io
         self.camera_status = None
+        self.body_checker = None
 
     def snapshot(self, io, phase, q=None):
         state = io.observation()
@@ -165,6 +171,8 @@ class QuestSource:
             time=state.received, q=list(state.q), command_q=list(executor.q),
             phase=executor.phase, initial_q=self.initial))
         try:
+            if self.body_checker is not None:
+                self.body_checker()
             if self.camera_status is not None:
                 check_camera_status(self.camera_status, self.clock())
             if (self.output/'worker_error.json').exists():
@@ -195,13 +203,15 @@ class QuestSource:
             executor._stop('quest_input: '+str(exc), True)
 
 
-def worker(output, nonce, done, with_grippers=False):
+def worker(output, nonce, done, with_grippers=False, trial_limits=None):
     # The spawn context isolates VirtualRobot's NoHardwareImports guard from
     # the parent DDS process. All IK results are proposals, never DDS commands.
+    if trial_limits is not None:
+        LIMITS.update(trial_limits)
     import numpy as np
     from virtual_arms import VirtualRobot, RelativeClutch, read_available
     clutch = RelativeClutch(LIMITS['input_timeout_s'], LIMITS['translation_scale'],
-                            workspace_m=None)
+                            workspace_m=None, grip_threshold=LIMITS['side_grip_threshold'])
     stream = None
     terminal = None
     engaged = False
@@ -291,6 +301,34 @@ def worker(output, nonce, done, with_grippers=False):
             stream.close()
 
 
+def open_grippers_before_teleoperation(args, output, stop):
+    """Run a finite opening in its own DDS lifetime, before any arm publisher."""
+    if getattr(args, 'control_mode', 'debug') != 'debug':
+        raise ValueError('Internal Dex1 pre-opening cannot run with official locomotion')
+    if stop.is_set():
+        raise RuntimeError('Stopped before pre-opening; Quest will not start')
+    destination=output/'preopen'
+    settings=gripper_settings()
+    print(f"Pre-open: both Dex1 to -5.4, velocity={settings['velocity']}, acceleration={settings['acceleration']}; "
+          'finish on target/feedback, then unload. Arms/body passive. Quest starts only after success.',flush=True)
+    with (output/'preopen.log').open('x') as log:
+        process=subprocess.Popen([sys.executable,str(ROOT/'scripts/unitree_g1/gripper_cycle.py'),
+            '--interface',args.interface,'--output',str(destination),'--execute',
+            '--open-target','-5.4','--scene-confirmation',args.scene_confirmation],
+            stdout=log,stderr=subprocess.STDOUT)
+        interrupted=False
+        while process.poll() is None:
+            if stop.is_set() and not interrupted:
+                process.terminate()  # SIGTERM requests the child's bounded unload.
+                interrupted=True
+            time.sleep(.05)
+    if stop.is_set():
+        raise RuntimeError('Stopped during pre-opening; Quest will not start')
+    result=json.loads((destination/'summary.json').read_text())
+    if process.returncode!=0 or result.get('error') is not None or result.get('opening_complete') is not True:
+        raise RuntimeError('Gripper pre-opening failed; inspect preopen/summary.json')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--interface', required=True)
@@ -299,7 +337,13 @@ def main():
     parser.add_argument('--host-address', required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--execute', action='store_true')
-    parser.add_argument('--grippers', action='store_true', help='Enable tested-range Dex1 trigger control in the single publisher')
+    parser.add_argument('--active-seconds', type=float, default=180.,
+                        help='ACTIVE duration, at most 180s; takeover/release are additional')
+    parser.add_argument('--control-mode', choices=('arm_sdk', 'debug'), default='arm_sdk',
+                        help='arm_sdk preserves official leg control; debug is legacy full-body lowcmd')
+    parser.add_argument('--grippers', action='store_true', help='Enable Dex1 trigger control using the selected backend')
+    parser.add_argument('--gripper-backend', choices=('internal', 'external-dex1'), default='internal',
+                        help='External Dex1 uses independent serial2dds topics with arm_sdk')
     parser.add_argument('--scene-confirmation', help='Current operator statement, not historical profile readiness')
     parser.add_argument('--wait-seconds', type=float, default=300.)
     parser.add_argument('--record', action='store_true', help='Record three RGB cameras and causal state/action logs')
@@ -307,8 +351,16 @@ def main():
     parser.add_argument('--camera-host', default='unitree@192.168.123.164')
     parser.add_argument('--camera-ssh-key', type=Path, default=Path.home()/'.ssh/g1_camera_ed25519')
     args = parser.parse_args()
-    if args.record and (not args.grippers or not (args.task or '').strip()):
-        parser.error('--record requires --grippers and a nonempty --task')
+    if not math.isfinite(args.active_seconds) or not 0 < args.active_seconds <= 180:
+        parser.error('--active-seconds must be in (0, 180]')
+    LIMITS['active_s'] = args.active_seconds
+    external_grippers = args.grippers and args.gripper_backend == 'external-dex1'
+    if args.gripper_backend == 'external-dex1' and (not args.grippers or args.control_mode != 'arm_sdk'):
+        parser.error('external-dex1 requires --grippers --control-mode arm_sdk')
+    if args.control_mode == 'arm_sdk' and args.grippers and not external_grippers:
+        parser.error('arm_sdk cannot control internal Dex1; --grippers is supported only in --control-mode debug')
+    if args.record and (not (args.task or '').strip() or (args.control_mode == 'debug' and not args.grippers)):
+        parser.error('--record requires a nonempty --task; debug recording also requires --grippers')
     if not math.isfinite(args.wait_seconds) or not 0 < args.wait_seconds <= 600:
         parser.error('wait-seconds must be in (0, 600]')
     if args.execute and not (args.scene_confirmation or '').strip():
@@ -318,24 +370,32 @@ def main():
             parser.error('TLS file missing')
     # Preserve candidate gains and hardware_approved=false; log Quest overrides.
     profile, config = load_quest_profile()
-    grip_settings = gripper_settings() if args.grippers else None
+    from external_dex1 import ExternalDex1ArmSDKIO, external_settings, preopen_external
+    grip_settings = external_settings() if external_grippers else gripper_settings() if args.grippers else None
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     nonce = uuid.uuid4().hex
     (output/'source').mkdir()
     source_hashes = {}
-    for name in ('quest_bridge.py', 'quest_grippers.py', 'arm_execution.py', 'hold_arms.py', 'virtual_arms.py', 'televuer_input.py', 'record_cameras.py'):
+    for name in ('quest_bridge.py', 'arm_sdk.py', 'external_dex1.py', 'quest_grippers.py', 'gripper_cycle.py', 'gripper_probe.py', 'arm_execution.py', 'hold_arms.py', 'virtual_arms.py', 'televuer_input.py', 'record_cameras.py'):
         data = (ROOT/'scripts/unitree_g1'/name).read_bytes()
         (output/'source'/name).write_bytes(data)
         source_hashes[name] = hashlib.sha256(data).hexdigest()
     write_json(output/'session.json', dict(nonce=nonce, limits=LIMITS, ik_cost=IK_COST, profile=profile,
-        grippers=grip_settings,
-        recording=dict(enabled=args.record, task=args.task, fps=15, shape=[480,640,3],
-                       cameras=['head','left_wrist','right_wrist'], action_semantics='submitted_absolute_position'),
+        control_mode=args.control_mode,
+        command_topic='rt/arm_sdk' if args.control_mode == 'arm_sdk' else 'rt/lowcmd',
+        standing_gate=STANDING if args.control_mode == 'arm_sdk' else None,
+        grippers=grip_settings, preopen_required=bool(args.execute and args.grippers),
+        gripper_backend=args.gripper_backend if args.grippers else None,
+        recording=dict(enabled=args.record, task=args.task, fps=30, shape=[480,640,3],
+                       cameras=['head','left_wrist','right_wrist'],
+                       action_semantics=('arm_sdk_requested_absolute_position' if args.control_mode == 'arm_sdk'
+                                         else 'submitted_absolute_position'),
+                       export_supported=args.control_mode == 'debug' and args.grippers),
         hardware_motion_enabled=args.execute, scene_confirmation=args.scene_confirmation,
         interface=args.interface, host_address=args.host_address,
         source_sha256=source_hashes,
-        scope='candidate translation-only trial; no collision or general teleoperation acceptance'))
+        scope='candidate translation-only trial; arm_sdk recordings are raw-only; external Dex1 actions use independent service coordinates; no hardware acceptance'))
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())
@@ -346,8 +406,19 @@ def main():
     result = dict(error='initialization_failed', command_frames=0, unload_submitted=False)
     source = QuestSource(output, nonce)
     try:
-        io = (QuestGripperIO(args.interface,args.execute,profile,grip_settings) if args.grippers
+        if args.execute and args.grippers:
+            if external_grippers:
+                preopen_external(args.interface, output/'preopen', stop)
+            else:
+                open_grippers_before_teleoperation(args,output,stop)
+        if stop.is_set():
+            raise RuntimeError('Stopped before Quest initialization')
+        io = (ExternalDex1ArmSDKIO(args.interface, args.execute, profile, config) if external_grippers
+              else ArmSDKIO(args.interface, args.execute, profile, config) if args.control_mode == 'arm_sdk'
+              else QuestGripperIO(args.interface,args.execute,profile,grip_settings) if args.grippers
               else DDSHoldIO(args.interface, args.execute, profile))
+        if args.control_mode == 'arm_sdk':
+            source.body_checker = io.check_active_body
         source.gripper_io=io if args.grippers else None
         if args.grippers:io.status_path=output/'gripper_status.json'
         io.record_observation=args.record
@@ -374,19 +445,24 @@ def main():
             '--timeout', str(LIMITS['input_timeout_s'])]+
             (['--gripper-status',str(output/'gripper_status.json')] if args.grippers else []),
             stdout=input_log, stderr=subprocess.STDOUT)
-        ik_proc = context.Process(target=worker, args=(output, nonce, done, args.grippers))
+        ik_proc = context.Process(target=worker, args=(output, nonce, done, args.grippers, dict(LIMITS)))
         ik_proc.start()
         print(f'Quest: https://{args.host_address}:8012/?ws=wss://{args.host_address}:8012', flush=True)
         print('MODE: '+('LIVE CANDIDATE' if args.execute else 'SHADOW: NO MOTOR PUBLISHER'), flush=True)
+        print(f'Transport: {args.control_mode}; '+
+              ('official locomotion owns legs; waist holds engagement pose; '
+               + ('external Dex1 topics enabled; ' if external_grippers else 'no Dex1 commands; ') +
+               'exit returns upper-body authority, not whole-body unload.' if args.control_mode == 'arm_sdk'
+               else 'debug lowcmd: legs/body passive.'), flush=True)
         print('Release both grips, then hold both. Keep still for 2s ramp; small translations only. '
               'Position control; end-effector orientation free (controller rotation is not a target). '
-              'Workspace: forward/lateral +/-30 cm, up 0..30 cm; URDF joint limits. '
+              f'Workspace: forward/lateral +/-{LIMITS["workspace_m"]*100:g} cm, up 0..{LIMITS["workspace_m"]*100:g} cm; URDF joint limits. '
               'Release either grip to end this run. No automatic rearm.', flush=True)
         if args.grippers:
             print('Dex1: after ramp, control starts with fresh ACTIVE input; '
                   'INDEX trigger 0..100% maps full open..near closed. '
-                  'Contact holds; a more-open trigger target releases hold. '
-                  'Contact detection is UNCALIBRATED; HOLDING is not grasp verification. '
+                  'Trigger position control; excessive closing error stops that gripper. '
+                  'Request a more-open position to release; other faults unload all. '
                   'Side grips remain the stop/clutch. '
                   'Grippers unload with arms; no object holding on exit.',flush=True)
         deadline = time.monotonic()+args.wait_seconds
@@ -457,6 +533,18 @@ def main():
                 result['gripper_fault']=io.grippers.fault
                 result['last_gripper_command']=io.grippers.last_sent
             io.close()
+            if external_grippers:
+                result['external_gripper_zero_submitted'] = list(io.external.zero_submitted)
+                result['external_gripper_cleanup_error'] = io.external_cleanup_error
+                result['physical_gripper_release_verified'] = False
+                if io.external_cleanup_error:
+                    result['error'] = result.get('error') or io.external_cleanup_error
+        if args.control_mode == 'arm_sdk':
+            result['arm_sdk_release_submitted'] = bool(args.execute and result.get('unload_submitted'))
+            result['unload_submitted'] = False
+            result['physical_handover_verified'] = False
+            result['last_arm_sdk_request'] = io.last_sdk if io else None
+        result['control_mode'] = args.control_mode
         result.update(hardware_motion_enabled=args.execute, physical_unload_verified=False)
         if not args.execute:
             result['unload_submitted'] = False

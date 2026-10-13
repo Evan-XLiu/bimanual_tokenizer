@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/unitreerobotics/unitree_ros",
+  "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+  "source_root": ".local/unitree_g1/unitree_ros",
+  "sha256": {
+    "robots/g1_description/g1_29dof_mode_15_with_dex1_1.urdf": "1a0a4f493d6686cd93952d8e67d6144d4c337929151c745e0440b8a28f08ed1a",
+    "robots/g1_description/README.md": "0f3d66629ca904b3d01d8b20186b26d17cca513d7217f66649dc68523aa94f43",
+    "robots/g1_description/meshes/Dex1_base_link.STL": "03f1cb02f94d6b280953f6c5a10da2eab6220ea5c301408d3c4decca66c8cdad",
+    "robots/g1_description/meshes/Dex1_finger_link_1.STL": "7cd2ff199556e3955547a34c75ed9ea777fb7d704fc98e7318d0f67e4aaedf5a",
+    "robots/g1_description/meshes/Dex1_finger_link_2.STL": "e8297ce8184c64d34d70cd9d6c7b583fba6a3adae2075523e97fb956ada65eb3",
+    "robots/g1_description/meshes/dex1_col_1.stl": "5edf010f581635fcb4a79fe20cda65a96c95138112ab91d7e79629980f535c92",
+    "robots/g1_description/meshes/dex1_col_2.stl": "0d791ffb8b438bc4a5fd937eab383db4daa62685a73982e852cc559623036ba9"
+  },
+  "scope": "Dex1 subtree only; retain mode5 body from pinned rl_gym rev1.0; mode15 mount is an uncalibrated assumption",
+  "hardware_approved": false
+}

@@ -1,0 +1,720 @@
+{
+  "date": "2026-10-13",
+  "session": ".local/unitree_g1/experiments/arm_sdk_dex1_pulse_20261013_001",
+  "operator_authorization": "尝试31/33指令，我会手动判断是覆盖还是叠加",
+  "tested_side": "left31 only; right33 not actuated",
+  "experiment": "Explicit opt-in torque-pulse, only observed stock .30 signature accepted. Kp/Kd0; tau peak+.10 for 1s including .2s rise/.2s fall; ACTIVE4s; stock upper-body hold with 2s engagement/release and .3s tail.",
+  "summary": {
+    "error": null,
+    "command_frames": 737,
+    "preflight_passed": true,
+    "mode": {
+      "service_code": 0,
+      "service": {
+        "form": "0",
+        "name": "ai"
+      },
+      "fsm_code": 0,
+      "fsm_id": 501
+    },
+    "initial_grippers": [
+      {
+        "index": 31,
+        "mode": 1,
+        "vol": 49.0,
+        "temperature": [
+          40,
+          33
+        ],
+        "q": -1.8063699007034302,
+        "dq": -0.008835730142891407,
+        "tau_est": 0.3125,
+        "motorstate": 0
+      },
+      {
+        "index": 33,
+        "mode": 1,
+        "vol": 49.0,
+        "temperature": [
+          37,
+          30
+        ],
+        "q": -0.0037581920623779297,
+        "dq": -0.004908738657832146,
+        "tau_est": 0.3125,
+        "motorstate": 0
+      }
+    ],
+    "baseline_lowcmd": {
+      "received": 17633.095108914,
+      "grippers": {
+        "31": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        },
+        "33": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        }
+      }
+    },
+    "physical_unload_verified": false,
+    "phase": "DISARMED",
+    "elapsed_s": 8.31801178599926,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "arm_sdk_release_submitted": true,
+    "gripper_zero_gain_submitted": true,
+    "gripper_zero_request_submitted": true,
+    "last_request": {
+      "q": -1.8063467741012573,
+      "kp": 0.0,
+      "kd": 0.0,
+      "tau": 0.0,
+      "stage": "ZERO_REQUEST",
+      "weight": 0.0,
+      "elapsed_active_s": 6.315720083999622
+    },
+    "final_telemetry": {
+      "received": 17641.414834717,
+      "tick": 914810,
+      "imu_rpy": [
+        0.006949117872864008,
+        0.0419791117310524,
+        -0.12064778804779053
+      ],
+      "imu_gyroscope": [
+        0.0053263213485479355,
+        0.009587379172444344,
+        0.0031957929022610188
+      ],
+      "motors": [
+        {
+          "index": 0,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            34,
+            33
+          ],
+          "q": -0.35683801770210266,
+          "dq": -0.007635816000401974,
+          "tau_est": 0.52734375,
+          "motorstate": 0
+        },
+        {
+          "index": 1,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            34,
+            33
+          ],
+          "q": -0.01841629110276699,
+          "dq": 0.01308997068554163,
+          "tau_est": 0.615234375,
+          "motorstate": 0
+        },
+        {
+          "index": 2,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            33,
+            33
+          ],
+          "q": 0.019779829308390617,
+          "dq": 0.0017141626449301839,
+          "tau_est": -1.845703125,
+          "motorstate": 0
+        },
+        {
+          "index": 3,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            36,
+            42
+          ],
+          "q": 0.6112743020057678,
+          "dq": 0.01636246219277382,
+          "tau_est": -11.42578125,
+          "motorstate": 0
+        },
+        {
+          "index": 4,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            41,
+            40
+          ],
+          "q": -0.2887842059135437,
+          "dq": -0.0031038017477840185,
+          "tau_est": 1.6209280490875244,
+          "motorstate": 0
+        },
+        {
+          "index": 5,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            39,
+            39
+          ],
+          "q": 0.04528036713600159,
+          "dq": -0.014809155836701393,
+          "tau_est": -1.129547357559204,
+          "motorstate": 0
+        },
+        {
+          "index": 6,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            34,
+            33
+          ],
+          "q": -0.3597014546394348,
+          "dq": -0.0032724926713854074,
+          "tau_est": -1.669921875,
+          "motorstate": 0
+        },
+        {
+          "index": 7,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            34,
+            33
+          ],
+          "q": 0.022353509441018105,
+          "dq": 0.0,
+          "tau_est": -2.197265625,
+          "motorstate": 0
+        },
+        {
+          "index": 8,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            34,
+            33
+          ],
+          "q": -0.0201548021286726,
+          "dq": -0.0051424880512058735,
+          "tau_est": 2.572798252105713,
+          "motorstate": 0
+        },
+        {
+          "index": 9,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            37,
+            45
+          ],
+          "q": 0.6402750611305237,
+          "dq": -0.00436332356184721,
+          "tau_est": -13.18359375,
+          "motorstate": 0
+        },
+        {
+          "index": 10,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            38,
+            38
+          ],
+          "q": -0.30273157358169556,
+          "dq": 0.006349027622491121,
+          "tau_est": 0.09674695134162903,
+          "motorstate": 0
+        },
+        {
+          "index": 11,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            41,
+            41
+          ],
+          "q": -0.03181566298007965,
+          "dq": -2.7915899408981204e-05,
+          "tau_est": 1.3972771167755127,
+          "motorstate": 0
+        },
+        {
+          "index": 12,
+          "mode": 1,
+          "vol": 48.5,
+          "temperature": [
+            33,
+            32
+          ],
+          "q": -0.0037899063900113106,
+          "dq": -0.02571243979036808,
+          "tau_est": 0.5593039989471436,
+          "motorstate": 0
+        },
+        {
+          "index": 13,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            39,
+            38
+          ],
+          "q": -0.004326713737100363,
+          "dq": -7.621443955940777e-07,
+          "tau_est": -0.05233534425497055,
+          "motorstate": 0
+        },
+        {
+          "index": 14,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            43,
+            42
+          ],
+          "q": -0.04231521487236023,
+          "dq": -0.002526663476601243,
+          "tau_est": 1.2901397943496704,
+          "motorstate": 0
+        },
+        {
+          "index": 15,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            42,
+            41
+          ],
+          "q": 0.2862671911716461,
+          "dq": -0.003067961661145091,
+          "tau_est": 1.0625,
+          "motorstate": 0
+        },
+        {
+          "index": 16,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            45,
+            45
+          ],
+          "q": 0.2069436013698578,
+          "dq": -0.02147573232650757,
+          "tau_est": 2.375,
+          "motorstate": 0
+        },
+        {
+          "index": 17,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            44,
+            43
+          ],
+          "q": -0.02847451902925968,
+          "dq": -0.0015339808305725455,
+          "tau_est": 0.6875,
+          "motorstate": 0
+        },
+        {
+          "index": 18,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            43,
+            42
+          ],
+          "q": 0.9860141277313232,
+          "dq": -0.010737866163253784,
+          "tau_est": -1.0625,
+          "motorstate": 0
+        },
+        {
+          "index": 19,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            40,
+            39
+          ],
+          "q": 0.12030963599681854,
+          "dq": -0.003067961661145091,
+          "tau_est": 0.0,
+          "motorstate": 0
+        },
+        {
+          "index": 20,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            38,
+            36
+          ],
+          "q": 0.05603823810815811,
+          "dq": 0.0,
+          "tau_est": -0.2562499940395355,
+          "motorstate": 0
+        },
+        {
+          "index": 21,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            40,
+            37
+          ],
+          "q": -0.02883404679596424,
+          "dq": -0.006135923322290182,
+          "tau_est": 0.08749999850988388,
+          "motorstate": 0
+        },
+        {
+          "index": 22,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            42,
+            42
+          ],
+          "q": 0.2875974476337433,
+          "dq": 0.0015339808305725455,
+          "tau_est": 1.25,
+          "motorstate": 0
+        },
+        {
+          "index": 23,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            45,
+            45
+          ],
+          "q": -0.210083469748497,
+          "dq": -0.003067961661145091,
+          "tau_est": -2.5,
+          "motorstate": 0
+        },
+        {
+          "index": 24,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            44,
+            43
+          ],
+          "q": 0.03284876048564911,
+          "dq": 0.010737866163253784,
+          "tau_est": -0.5,
+          "motorstate": 0
+        },
+        {
+          "index": 25,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            43,
+            42
+          ],
+          "q": 0.9873083829879761,
+          "dq": 0.004601942375302315,
+          "tau_est": -0.875,
+          "motorstate": 0
+        },
+        {
+          "index": 26,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            43,
+            42
+          ],
+          "q": -0.11769707500934601,
+          "dq": -0.004601942375302315,
+          "tau_est": -0.25,
+          "motorstate": 0
+        },
+        {
+          "index": 27,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            40,
+            35
+          ],
+          "q": 0.04978246986865997,
+          "dq": -0.006135923322290182,
+          "tau_est": -0.16875000298023224,
+          "motorstate": 0
+        },
+        {
+          "index": 28,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            38,
+            36
+          ],
+          "q": 0.013697969727218151,
+          "dq": 0.0,
+          "tau_est": -0.02500000037252903,
+          "motorstate": 0
+        },
+        {
+          "index": 29,
+          "mode": 0,
+          "vol": 0.0,
+          "temperature": [
+            0,
+            0
+          ],
+          "q": 0.0,
+          "dq": 0.0,
+          "tau_est": 0.0,
+          "motorstate": 0
+        },
+        {
+          "index": 30,
+          "mode": 0,
+          "vol": 0.0,
+          "temperature": [
+            0,
+            0
+          ],
+          "q": 0.0,
+          "dq": 0.0,
+          "tau_est": 0.0,
+          "motorstate": 0
+        },
+        {
+          "index": 31,
+          "mode": 1,
+          "vol": 49.0,
+          "temperature": [
+            40,
+            33
+          ],
+          "q": -1.8063699007034302,
+          "dq": -0.003926991019397974,
+          "tau_est": 0.3125,
+          "motorstate": 0
+        },
+        {
+          "index": 32,
+          "mode": 0,
+          "vol": 0.0,
+          "temperature": [
+            0,
+            0
+          ],
+          "q": 0.0,
+          "dq": 0.0,
+          "tau_est": 0.0,
+          "motorstate": 0
+        },
+        {
+          "index": 33,
+          "mode": 1,
+          "vol": 48.5,
+          "temperature": [
+            37,
+            30
+          ],
+          "q": -0.0037505626678466797,
+          "dq": 0.007853982038795948,
+          "tau_est": 0.3125,
+          "motorstate": 0
+        },
+        {
+          "index": 34,
+          "mode": 0,
+          "vol": 0.0,
+          "temperature": [
+            0,
+            0
+          ],
+          "q": 0.0,
+          "dq": 0.0,
+          "tau_est": 0.0,
+          "motorstate": 0
+        }
+      ]
+    },
+    "final_lowcmd": {
+      "received": 17641.414235955,
+      "grippers": {
+        "31": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        },
+        "33": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        }
+      }
+    },
+    "last_mode": {
+      "service_code": 0,
+      "service": {
+        "form": "0",
+        "name": "ai"
+      },
+      "fsm_code": 0,
+      "fsm_id": 501
+    },
+    "last_downstream_lowcmd": {
+      "received": 17641.414235955,
+      "grippers": {
+        "31": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        },
+        "33": {
+          "mode": 1.0,
+          "q": 0.0,
+          "dq": 0.0,
+          "kp": 0.0,
+          "kd": 0.0,
+          "tau": 0.30000001192092896
+        }
+      }
+    },
+    "last_gripper_feedback": [
+      {
+        "index": 31,
+        "mode": 1,
+        "vol": 49.0,
+        "temperature": [
+          40,
+          33
+        ],
+        "q": -1.8063699007034302,
+        "dq": -0.003926991019397974,
+        "tau_est": 0.3125,
+        "motorstate": 0
+      },
+      {
+        "index": 33,
+        "mode": 1,
+        "vol": 48.5,
+        "temperature": [
+          37,
+          30
+        ],
+        "q": -0.0037505626678466797,
+        "dq": 0.007853982038795948,
+        "tau_est": 0.3125,
+        "motorstate": 0
+      }
+    ],
+    "unload_submitted": false,
+    "physical_handover_verified": false,
+    "physical_gripper_release_verified": false,
+    "hardware_motion_enabled": true
+  },
+  "analysis": {
+    "rows": 737,
+    "plateau_rows": 35,
+    "plateau_request_tau": [
+      0.1
+    ],
+    "plateau_authority_weight": [
+      1.0
+    ],
+    "downstream_gripper_signatures": {
+      "31": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.30000001192092896
+        ]
+      ],
+      "33": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.30000001192092896
+        ]
+      ]
+    },
+    "signature_field_order": [
+      "q",
+      "kp",
+      "kd",
+      "tau"
+    ],
+    "max_logged_downstream_age_s": 0.001958658001967706,
+    "feedback_ranges": {
+      "31": {
+        "q": [
+          -1.8063851594924927,
+          -1.8063315153121948
+        ],
+        "dq": [
+          -0.03141592815518379,
+          0.028470683842897415
+        ],
+        "tau_est": [
+          0.29296875,
+          0.322265625
+        ]
+      },
+      "33": {
+        "q": [
+          -0.0037734508514404297,
+          -0.0037353038787841797
+        ],
+        "dq": [
+          -0.028470683842897415,
+          0.027488937601447105
+        ],
+        "tau_est": [
+          0.29296875,
+          0.322265625
+        ]
+      }
+    }
+  },
+  "conclusion": "Left31 torque request was not reflected in sampled lowcmd: throughout trial left and right tau stayed .3000000119, including 35 plateau samples at SDK tau.10/weight1. Consistent with ignored/unforwarded torque field in current firmware/mode, not overwrite or addition. No identifiable gripper displacement.",
+  "limitations": [
+    "Does not establish right33 command handling",
+    "Does not test position/gain commands",
+    "No claim about all firmware versions or alternate modes",
+    "No calibrated grip-force measurement",
+    "Stock .30 remained after zero SDK request; no physical torque unload claimed",
+    "Operator visual result not yet received"
+  ],
+  "validation": {
+    "probe_tests_passed": 9,
+    "arm_sdk_tests_passed": 12
+  },
+  "automatic_retry": false
+}

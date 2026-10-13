@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-13",
+  "request": "查明现有前馈的来源及交接规则，然后再进行控制尝试",
+  "status": "source_attributed_handover_unresolved_no_motion_attempt",
+  "command_frames_sent": 0,
+  "network": "Restored existing g1-direct-session 192.168.123.222/24 after loss of wired IPv4; default Wi-Fi route preserved.",
+  "actual_lowcmd_sources": [
+    {
+      "traffic": {
+        "topic": "rt/lowcmd",
+        "publication_handle": 7503477393537532859,
+        "samples": 763,
+        "first_received": 17210.797462692,
+        "gripper_signatures": {
+          "{\"31\": {\"dq\": 0.0, \"kd\": 0.0, \"kp\": 0.0, \"mode\": 1, \"q\": 0.0, \"tau\": 0.30000001192092896}, \"33\": {\"dq\": 0.0, \"kd\": 0.0, \"kp\": 0.0, \"mode\": 1, \"q\": 0.0, \"tau\": 0.30000001192092896}}": 763
+        },
+        "last_received": 17218.770402816
+      },
+      "endpoint": {
+        "key": "0110d70b-3380-b4ce-7eaf-050100001403",
+        "instance_handle": 7503477393537532859,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "topic": "rt/lowcmd"
+      },
+      "participant": {
+        "key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "instance_handle": 6530229694414702042,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:48565@2\"), Property(key=\"__Pid\", value=\"3366\"), Property(key=\"__ProcessName\", value=\"humanoid\"))"
+      }
+    }
+  ],
+  "attribution_summary": "763 sampled lowcmd frames over 8s match publisher handle7503477393537532859. Participant advertises humanoid PID3366, host Unitree, 192.168.123.161. Same participant subscribes arm_sdk/user_lowcmd. Both grippers tau0.3 in every sampled frame.",
+  "other_endpoints": "emergency_stop advertises lowcmd publisher but no samples observed from it; rt/arm_sdk and user_lowcmd endpoints exist but no traffic sampled. g1_dex_protocol_v2.0 processes expose Dex3 topics; these do not establish a Dex1 path.",
+  "current_readonly_preflight": {
+    "passed": true,
+    "service": "ai",
+    "fsm_id": 501
+  },
+  "historical_002_gripper_torque": {
+    "ENGAGING": {
+      "rows": 180,
+      "left_tau_est_range": [
+        0.29296875,
+        0.3125
+      ],
+      "right_tau_est_range": [
+        0.29296875,
+        0.3125
+      ]
+    },
+    "ACTIVE": {
+      "rows": 1770,
+      "left_tau_est_range": [
+        0.29296875,
+        0.322265625
+      ],
+      "right_tau_est_range": [
+        0.29296875,
+        0.3125
+      ]
+    },
+    "RELEASING": {
+      "rows": 184,
+      "left_tau_est_range": [
+        0.29296875,
+        0.3125
+      ],
+      "right_tau_est_range": [
+        0.29296875,
+        0.3125
+      ]
+    },
+    "RELEASED": {
+      "rows": 28,
+      "left_tau_est_range": [
+        0.3125,
+        0.3125
+      ],
+      "right_tau_est_range": [
+        0.29296875,
+        0.3125
+      ]
+    }
+  },
+  "historical_interpretation": "With SDK gripper slots left unused (mode0), estimated gripper torque remained near0.3 across engagement/active/release. This does not establish behavior when slot31 mode1 is used.",
+  "handover": {
+    "established_public_contract": "Official arm7 example populates waist12-14 and arms15-28; slot29.q controls upper-body authority and is ramped to0 on exit.",
+    "not_established": [
+      "Whether31/33 are forwarded, ignored or combined with baseline feedforward",
+      "Whether slot29 weight affects31/33",
+      "Whether explicit zero commands clear, retain or restore stock torque",
+      "Whether timeout/stop-publishing returns gripper authority"
+    ],
+    "access_limit": "SSH to192.168.123.161:22 returns Connection refused. Cannot inspect humanoid runtime/firmware via available SSH access. Development computer .164 has no corresponding humanoid module; master config opaque."
+  },
+  "sources": [
+    "https://github.com/unitreerobotics/unitree_sdk2_python/blob/master/example/g1/high_level/g1_arm7_sdk_dds_example.py",
+    "https://github.com/unitreerobotics/xr_teleoperate/blob/main/README_zh-CN.md"
+  ],
+  "next_required": "Read access to version-matched humanoid gripper handling implementation or a verified manufacturer protocol/stop contract; attribution alone does not authorize removing the existing-effort interlock.",
+  "limitations": [
+    "DDS properties are unauthenticated self-report",
+    "Default reader history samples a subset of packets, not full publisher rate",
+    "tau_est is not calibrated gripping force"
+  ],
+  "robot_changes": []
+}

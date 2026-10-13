@@ -1,0 +1,522 @@
+{
+  "read_only": true,
+  "command_frames_sent": 0,
+  "elapsed_s": 8.001184292003018,
+  "discovery": {
+    "participants": {
+      "01100edb-f485-a2b2-a043-891d000001c1": {
+        "key": "01100edb-f485-a2b2-a043-891d000001c1",
+        "instance_handle": 11028374490454190385,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"ROG\"), Property(key=\"__NetworkAddresses\", value=\"localprocess\"), Property(key=\"__Pid\", value=\"25407\"), Property(key=\"__ProcessName\", value=\"python\"))"
+      },
+      "01100edb-ca96-3ce2-7920-5e1c000001c1": {
+        "key": "01100edb-ca96-3ce2-7920-5e1c000001c1",
+        "instance_handle": 3412163690858291611,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"ROG\"), Property(key=\"__NetworkAddresses\", value=\"localprocess\"), Property(key=\"__Pid\", value=\"25407\"), Property(key=\"__ProcessName\", value=\"python\"))"
+      },
+      "0110dc0f-cab8-ef90-0990-35b9000001c1": {
+        "key": "0110dc0f-cab8-ef90-0990-35b9000001c1",
+        "instance_handle": 12527751994425668007,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:40114@2\"), Property(key=\"__Pid\", value=\"1\"), Property(key=\"__ProcessName\", value=\"python3\"))"
+      },
+      "011069f3-7ed0-5177-7f58-9885000001c1": {
+        "key": "011069f3-7ed0-5177-7f58-9885000001c1",
+        "instance_handle": 9865521353617966067,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:37168@2\"), Property(key=\"__Pid\", value=\"2945\"), Property(key=\"__ProcessName\", value=\"python3\"))"
+      },
+      "01109404-6755-9082-e47a-2121000001c1": {
+        "key": "01109404-6755-9082-e47a-2121000001c1",
+        "instance_handle": 3975590907428463898,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:36153@2\"), Property(key=\"__Pid\", value=\"1\"), Property(key=\"__ProcessName\", value=\"dds_bridge\"))"
+      },
+      "011010fb-9cbb-74e5-18db-e76f000001c1": {
+        "key": "011010fb-9cbb-74e5-18db-e76f000001c1",
+        "instance_handle": 2213737746922032583,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:52625@2\"), Property(key=\"__Pid\", value=\"3130\"), Property(key=\"__ProcessName\", value=\"xfkTon\"))"
+      },
+      "01103b66-caac-cbd5-0dba-53cf000001c1": {
+        "key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "instance_handle": 10093549999362567476,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:50589@2\"), Property(key=\"__Pid\", value=\"3092\"), Property(key=\"__ProcessName\", value=\"unitreeWebRTCClientMaster\"))"
+      },
+      "011053e5-f14f-ef39-a966-2552000001c1": {
+        "key": "011053e5-f14f-ef39-a966-2552000001c1",
+        "instance_handle": 170921696721855409,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:53579@2\"), Property(key=\"__Pid\", value=\"2647\"), Property(key=\"__ProcessName\", value=\"python3\"))"
+      },
+      "011081ec-e096-6119-3516-70da000001c1": {
+        "key": "011081ec-e096-6119-3516-70da000001c1",
+        "instance_handle": 17543724706084817119,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:44350@2\"), Property(key=\"__Pid\", value=\"2815\"), Property(key=\"__ProcessName\", value=\"emergency_stop\"))"
+      },
+      "01107885-c4e0-f2de-9c0f-4b5b000001c1": {
+        "key": "01107885-c4e0-f2de-9c0f-4b5b000001c1",
+        "instance_handle": 5695837155966366553,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:47565@2\"), Property(key=\"__Pid\", value=\"3000\"), Property(key=\"__ProcessName\", value=\"ai_odom_node\"))"
+      },
+      "0110d70b-5e24-3d33-f0e8-d9b4000001c1": {
+        "key": "0110d70b-5e24-3d33-f0e8-d9b4000001c1",
+        "instance_handle": 29341944327424988,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:48565@2\"), Property(key=\"__Pid\", value=\"3366\"), Property(key=\"__ProcessName\", value=\"humanoid\"))"
+      },
+      "0110d70b-3380-b4ce-7eaf-0501000001c1": {
+        "key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "instance_handle": 6530229694414702042,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:48565@2\"), Property(key=\"__Pid\", value=\"3366\"), Property(key=\"__ProcessName\", value=\"humanoid\"))"
+      },
+      "0110617f-2816-4a3e-2cdf-e924000001c1": {
+        "key": "0110617f-2816-4a3e-2cdf-e924000001c1",
+        "instance_handle": 17975572051890258727,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:58379@2\"), Property(key=\"__Pid\", value=\"3065\"), Property(key=\"__ProcessName\", value=\"vui_service\"))"
+      },
+      "0110d232-6abe-83a5-946a-f1d8000001c1": {
+        "key": "0110d232-6abe-83a5-946a-f1d8000001c1",
+        "instance_handle": 5204511125145759696,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:45381@2\"), Property(key=\"__Pid\", value=\"2857\"), Property(key=\"__ProcessName\", value=\"LogStreamService\"))"
+      },
+      "01106b97-e9a8-d3a8-8b68-719e000001c1": {
+        "key": "01106b97-e9a8-d3a8-8b68-719e000001c1",
+        "instance_handle": 2560641045673316052,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:43245@2\"), Property(key=\"__Pid\", value=\"3423\"), Property(key=\"__ProcessName\", value=\"g1_dex_protocol_v2.0\"))"
+      },
+      "011090e0-6319-fc9b-7f25-c159000001c1": {
+        "key": "011090e0-6319-fc9b-7f25-c159000001c1",
+        "instance_handle": 17951159224854035633,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:52916@2\"), Property(key=\"__Pid\", value=\"2876\"), Property(key=\"__ProcessName\", value=\"motion_switcher_service\"))"
+      },
+      "0110580b-ddad-b01e-aad0-db2c000001c1": {
+        "key": "0110580b-ddad-b01e-aad0-db2c000001c1",
+        "instance_handle": 874191798847905067,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:54005@2\"), Property(key=\"__Pid\", value=\"2974\"), Property(key=\"__ProcessName\", value=\"robot_state_service\"))"
+      },
+      "0110d86c-32b4-ae8d-4cc5-6103000001c1": {
+        "key": "0110d86c-32b4-ae8d-4cc5-6103000001c1",
+        "instance_handle": 1626566011859896745,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:36185@2\"), Property(key=\"__Pid\", value=\"2564\"), Property(key=\"__ProcessName\", value=\"basic_service\"))"
+      },
+      "01106f05-e21e-53f3-7a34-89d2000001c1": {
+        "key": "01106f05-e21e-53f3-7a34-89d2000001c1",
+        "instance_handle": 4944601051921515322,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:56558@2\"), Property(key=\"__Pid\", value=\"2689\"), Property(key=\"__ProcessName\", value=\"python3\"))"
+      },
+      "011074ce-8123-e599-6200-d782000001c1": {
+        "key": "011074ce-8123-e599-6200-d782000001c1",
+        "instance_handle": 861633712311108995,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:55836@2\"), Property(key=\"__Pid\", value=\"3561\"), Property(key=\"__ProcessName\", value=\"g1_dex_protocol_v2.0\"))"
+      },
+      "0110b686-df0a-0353-87ff-9092000001c1": {
+        "key": "0110b686-df0a-0353-87ff-9092000001c1",
+        "instance_handle": 662420352495299459,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:36456@2\"), Property(key=\"__Pid\", value=\"2671\"), Property(key=\"__ProcessName\", value=\"battery_guard\"))"
+      },
+      "011008f2-d28a-8543-c312-9b36000001c1": {
+        "key": "011008f2-d28a-8543-c312-9b36000001c1",
+        "instance_handle": 17644394180471697051,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:48395@2\"), Property(key=\"__Pid\", value=\"2982\"), Property(key=\"__ProcessName\", value=\"robot_type_api_server\"))"
+      },
+      "0110925d-6b80-e66f-c977-0fdd000001c1": {
+        "key": "0110925d-6b80-e66f-c977-0fdd000001c1",
+        "instance_handle": 6643802320153083220,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:38220@2\"), Property(key=\"__Pid\", value=\"2660\"), Property(key=\"__ProcessName\", value=\"python3\"))"
+      },
+      "011060d5-acc3-7072-5a6d-5ab7000001c1": {
+        "key": "011060d5-acc3-7072-5a6d-5ab7000001c1",
+        "instance_handle": 17503963819522696389,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:44694@2\"), Property(key=\"__Pid\", value=\"2836\"), Property(key=\"__ProcessName\", value=\"python3\"))"
+      },
+      "011060d5-4892-ad80-ffc9-2966000001c1": {
+        "key": "011060d5-4892-ad80-ffc9-2966000001c1",
+        "instance_handle": 13593694929067272980,
+        "qos": "Qos(Policy.Liveliness.Automatic(lease_duration=10000000000), Property(key=\"__Hostname\", value=\"Unitree\"), Property(key=\"__NetworkAddresses\", value=\"udp/239.255.0.1:7400@2,udp/192.168.123.161:44694@2\"), Property(key=\"__Pid\", value=\"2836\"), Property(key=\"__ProcessName\", value=\"python3\"))"
+      }
+    },
+    "publishers": {
+      "01109404-6755-9082-e47a-212100000403": {
+        "key": "01109404-6755-9082-e47a-212100000403",
+        "instance_handle": 3087517076667943292,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01109404-6755-9082-e47a-2121000001c1",
+        "topic": "rt/user_lowcmd"
+      },
+      "01109404-6755-9082-e47a-212100000603": {
+        "key": "01109404-6755-9082-e47a-212100000603",
+        "instance_handle": 15453413684535695335,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01109404-6755-9082-e47a-2121000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "01109404-6755-9082-e47a-212100000803": {
+        "key": "01109404-6755-9082-e47a-212100000803",
+        "instance_handle": 2864929676423212750,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01109404-6755-9082-e47a-2121000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "011081ec-e096-6119-3516-70da00000803": {
+        "key": "011081ec-e096-6119-3516-70da00000803",
+        "instance_handle": 14807518339806478190,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011081ec-e096-6119-3516-70da000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "011081ec-e096-6119-3516-70da00000e03": {
+        "key": "011081ec-e096-6119-3516-70da00000e03",
+        "instance_handle": 13359413271760529185,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011081ec-e096-6119-3516-70da000001c1",
+        "topic": "rt/lowcmd"
+      },
+      "011090e0-6319-fc9b-7f25-c15900000403": {
+        "key": "011090e0-6319-fc9b-7f25-c15900000403",
+        "instance_handle": 10513326969903715067,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011090e0-6319-fc9b-7f25-c159000001c1",
+        "topic": "rt/api/motion_switcher/response"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00002403": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00002403",
+        "instance_handle": 2717883241902463011,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00002c03": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00002c03",
+        "instance_handle": 12484172297008960062,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/api/motion_switcher/request"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00003203": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00003203",
+        "instance_handle": 5682692124259745712,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/api/dex3_msg_controller/request"
+      },
+      "0110617f-2816-4a3e-2cdf-e92400001b03": {
+        "key": "0110617f-2816-4a3e-2cdf-e92400001b03",
+        "instance_handle": 9122342546149633098,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110617f-2816-4a3e-2cdf-e924000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "0110d70b-5e24-3d33-f0e8-d9b400001203": {
+        "key": "0110d70b-5e24-3d33-f0e8-d9b400001203",
+        "instance_handle": 1185274391832998311,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110d70b-5e24-3d33-f0e8-d9b4000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "0110d70b-5e24-3d33-f0e8-d9b400001503": {
+        "key": "0110d70b-5e24-3d33-f0e8-d9b400001503",
+        "instance_handle": 4889409954262920197,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110d70b-5e24-3d33-f0e8-d9b4000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "0110d70b-3380-b4ce-7eaf-050100001403": {
+        "key": "0110d70b-3380-b4ce-7eaf-050100001403",
+        "instance_handle": 7503477393537532859,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "topic": "rt/lowcmd"
+      },
+      "0110d70b-3380-b4ce-7eaf-050100001603": {
+        "key": "0110d70b-3380-b4ce-7eaf-050100001603",
+        "instance_handle": 9856670849384621947,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "topic": "rt/sportmodestate"
+      },
+      "0110d70b-3380-b4ce-7eaf-050100001803": {
+        "key": "0110d70b-3380-b4ce-7eaf-050100001803",
+        "instance_handle": 5984518407814597856,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "topic": "rt/lf/sportmodestate"
+      },
+      "01106b97-e9a8-d3a8-8b68-719e00000203": {
+        "key": "01106b97-e9a8-d3a8-8b68-719e00000203",
+        "instance_handle": 15166354217639191321,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01106b97-e9a8-d3a8-8b68-719e000001c1",
+        "topic": "rt/dex3/left/state"
+      },
+      "01106b97-e9a8-d3a8-8b68-719e00000403": {
+        "key": "01106b97-e9a8-d3a8-8b68-719e00000403",
+        "instance_handle": 5130798804112434725,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01106b97-e9a8-d3a8-8b68-719e000001c1",
+        "topic": "rt/lf/dex3/left/state"
+      },
+      "01106b97-e9a8-d3a8-8b68-719e00000803": {
+        "key": "01106b97-e9a8-d3a8-8b68-719e00000803",
+        "instance_handle": 2050796118785747338,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01106b97-e9a8-d3a8-8b68-719e000001c1",
+        "topic": "rt/api/dex3_msg_controller/response"
+      },
+      "01106f05-e21e-53f3-7a34-89d200000a03": {
+        "key": "01106f05-e21e-53f3-7a34-89d200000a03",
+        "instance_handle": 1191290317684795036,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "01106f05-e21e-53f3-7a34-89d2000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "011074ce-8123-e599-6200-d78200000203": {
+        "key": "011074ce-8123-e599-6200-d78200000203",
+        "instance_handle": 9060629275122355591,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011074ce-8123-e599-6200-d782000001c1",
+        "topic": "rt/dex3/right/state"
+      },
+      "011074ce-8123-e599-6200-d78200000403": {
+        "key": "011074ce-8123-e599-6200-d78200000403",
+        "instance_handle": 17469402539691973758,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011074ce-8123-e599-6200-d782000001c1",
+        "topic": "rt/lf/dex3/right/state"
+      },
+      "011074ce-8123-e599-6200-d78200000803": {
+        "key": "011074ce-8123-e599-6200-d78200000803",
+        "instance_handle": 4224191849116088570,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011074ce-8123-e599-6200-d782000001c1",
+        "topic": "rt/api/dex3_msg_controller/response"
+      },
+      "0110b686-df0a-0353-87ff-909200000203": {
+        "key": "0110b686-df0a-0353-87ff-909200000203",
+        "instance_handle": 17762014501195675046,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "0110b686-df0a-0353-87ff-9092000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "011060d5-4892-ad80-ffc9-296600000403": {
+        "key": "011060d5-4892-ad80-ffc9-296600000403",
+        "instance_handle": 15590695347967505780,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=100000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011060d5-4892-ad80-ffc9-2966000001c1",
+        "topic": "rt/arm_sdk"
+      },
+      "011060d5-4892-ad80-ffc9-296600000603": {
+        "key": "011060d5-4892-ad80-ffc9-296600000603",
+        "instance_handle": 14920590994050571124,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.TransientLocal, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.OwnershipStrength(strength=0), Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.Reliability.Reliable(max_blocking_time=1000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TransportPriority(priority=0), Policy.WriterDataLifecycle(autodispose=True))",
+        "participant_key": "011060d5-4892-ad80-ffc9-2966000001c1",
+        "topic": "rt/api/sport/request"
+      }
+    },
+    "subscribers": {
+      "01109404-6755-9082-e47a-212100000a04": {
+        "key": "01109404-6755-9082-e47a-212100000a04",
+        "instance_handle": 10054588519889886559,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "01109404-6755-9082-e47a-2121000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "011081ec-e096-6119-3516-70da00000a04": {
+        "key": "011081ec-e096-6119-3516-70da00000a04",
+        "instance_handle": 11539987203239864982,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "011081ec-e096-6119-3516-70da000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "01100edb-ca96-3ce2-7920-5e1c00000504": {
+        "key": "01100edb-ca96-3ce2-7920-5e1c00000504",
+        "instance_handle": 2393846427973904497,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01100edb-ca96-3ce2-7920-5e1c000001c1",
+        "topic": "rt/lowcmd"
+      },
+      "011090e0-6319-fc9b-7f25-c15900000604": {
+        "key": "011090e0-6319-fc9b-7f25-c15900000604",
+        "instance_handle": 12704223876459248729,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "011090e0-6319-fc9b-7f25-c159000001c1",
+        "topic": "rt/api/motion_switcher/request"
+      },
+      "01100edb-ca96-3ce2-7920-5e1c00000704": {
+        "key": "01100edb-ca96-3ce2-7920-5e1c00000704",
+        "instance_handle": 7241115760525485231,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01100edb-ca96-3ce2-7920-5e1c000001c1",
+        "topic": "rt/arm_sdk"
+      },
+      "01100edb-ca96-3ce2-7920-5e1c00000904": {
+        "key": "01100edb-ca96-3ce2-7920-5e1c00000904",
+        "instance_handle": 10515013002037568449,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01100edb-ca96-3ce2-7920-5e1c000001c1",
+        "topic": "rt/user_lowcmd"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00005204": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00005204",
+        "instance_handle": 15097166589338425019,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/lf/dex3/left/state"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00005404": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00005404",
+        "instance_handle": 1817182388986539959,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/lf/dex3/right/state"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00005804": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00005804",
+        "instance_handle": 6959690101086880354,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/lf/sportmodestate"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00006204": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00006204",
+        "instance_handle": 3096986764185511303,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00006a04": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00006a04",
+        "instance_handle": 11901437288991540461,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/api/motion_switcher/response"
+      },
+      "01103b66-caac-cbd5-0dba-53cf00007204": {
+        "key": "01103b66-caac-cbd5-0dba-53cf00007204",
+        "instance_handle": 7300984094758680542,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.Reliable(max_blocking_time=10000000000), Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01103b66-caac-cbd5-0dba-53cf000001c1",
+        "topic": "rt/api/dex3_msg_controller/response"
+      },
+      "0110617f-2816-4a3e-2cdf-e92400001904": {
+        "key": "0110617f-2816-4a3e-2cdf-e92400001904",
+        "instance_handle": 1987195658702700561,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110617f-2816-4a3e-2cdf-e924000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "0110d70b-5e24-3d33-f0e8-d9b400001404": {
+        "key": "0110d70b-5e24-3d33-f0e8-d9b400001404",
+        "instance_handle": 11450220464068449976,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110d70b-5e24-3d33-f0e8-d9b4000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "0110d70b-5e24-3d33-f0e8-d9b400001604": {
+        "key": "0110d70b-5e24-3d33-f0e8-d9b400001604",
+        "instance_handle": 1992659103582646104,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110d70b-5e24-3d33-f0e8-d9b4000001c1",
+        "topic": "rt/api/sport/request"
+      },
+      "0110d70b-3380-b4ce-7eaf-050100000404": {
+        "key": "0110d70b-3380-b4ce-7eaf-050100000404",
+        "instance_handle": 18053159425374149245,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "topic": "rt/user_lowcmd"
+      },
+      "0110d70b-3380-b4ce-7eaf-050100000804": {
+        "key": "0110d70b-3380-b4ce-7eaf-050100000804",
+        "instance_handle": 4316006148670402845,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "topic": "rt/loco_sdk"
+      },
+      "0110d70b-3380-b4ce-7eaf-050100000a04": {
+        "key": "0110d70b-3380-b4ce-7eaf-050100000a04",
+        "instance_handle": 17279450241241115298,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110d70b-3380-b4ce-7eaf-0501000001c1",
+        "topic": "rt/arm_sdk"
+      },
+      "01106b97-e9a8-d3a8-8b68-719e00000604": {
+        "key": "01106b97-e9a8-d3a8-8b68-719e00000604",
+        "instance_handle": 12366409848885956412,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "01106b97-e9a8-d3a8-8b68-719e000001c1",
+        "topic": "rt/dex3/left/cmd"
+      },
+      "01106b97-e9a8-d3a8-8b68-719e00000a04": {
+        "key": "01106b97-e9a8-d3a8-8b68-719e00000a04",
+        "instance_handle": 2151190011159785772,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "01106b97-e9a8-d3a8-8b68-719e000001c1",
+        "topic": "rt/api/dex3_msg_controller/request"
+      },
+      "0110d86c-32b4-ae8d-4cc5-610300000a04": {
+        "key": "0110d86c-32b4-ae8d-4cc5-610300000a04",
+        "instance_handle": 5925082338699965477,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110d86c-32b4-ae8d-4cc5-6103000001c1",
+        "topic": "rt/lowcmd"
+      },
+      "01106f05-e21e-53f3-7a34-89d200000c04": {
+        "key": "01106f05-e21e-53f3-7a34-89d200000c04",
+        "instance_handle": 16546115214998970525,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01106f05-e21e-53f3-7a34-89d2000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "011074ce-8123-e599-6200-d78200000604": {
+        "key": "011074ce-8123-e599-6200-d78200000604",
+        "instance_handle": 1872097336494241609,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "011074ce-8123-e599-6200-d782000001c1",
+        "topic": "rt/dex3/right/cmd"
+      },
+      "011074ce-8123-e599-6200-d78200000a04": {
+        "key": "011074ce-8123-e599-6200-d78200000a04",
+        "instance_handle": 7802008543754997263,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "011074ce-8123-e599-6200-d782000001c1",
+        "topic": "rt/api/dex3_msg_controller/request"
+      },
+      "01106f05-e21e-53f3-7a34-89d200001e04": {
+        "key": "01106f05-e21e-53f3-7a34-89d200001e04",
+        "instance_handle": 3534414070490516377,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "01106f05-e21e-53f3-7a34-89d2000001c1",
+        "topic": "rt/lf/sportmodestate"
+      },
+      "0110b686-df0a-0353-87ff-909200000404": {
+        "key": "0110b686-df0a-0353-87ff-909200000404",
+        "instance_handle": 10499314645764301193,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.DurabilityService(cleanup_delay=0, history=Policy.History.KeepLast(depth=1), max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Lifespan(lifespan=9223372036854775807), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.DisallowTypeCoercion(force_type_validation=False))",
+        "participant_key": "0110b686-df0a-0353-87ff-9092000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "011060d5-4892-ad80-ffc9-296600000804": {
+        "key": "011060d5-4892-ad80-ffc9-296600000804",
+        "instance_handle": 4320122798589408656,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "011060d5-4892-ad80-ffc9-2966000001c1",
+        "topic": "rt/api/sport/response"
+      },
+      "011060d5-4892-ad80-ffc9-296600000a04": {
+        "key": "011060d5-4892-ad80-ffc9-296600000a04",
+        "instance_handle": 7778663350212180686,
+        "qos": "Qos(Policy.DataRepresentation(use_cdrv0_representation=True, use_xcdrv2_representation=True), Policy.Deadline(deadline=9223372036854775807), Policy.DestinationOrder.ByReceptionTimestamp, Policy.Durability.Volatile, Policy.History.KeepLast(depth=1), Policy.IgnoreLocal.Nothing, Policy.LatencyBudget(budget=0), Policy.Liveliness.Automatic(lease_duration=9223372036854775807), Policy.Ownership.Shared, Policy.PresentationAccessScope.Instance(coherent_access=False, ordered_access=False), Policy.ReaderDataLifecycle(autopurge_nowriter_samples_delay=9223372036854775807, autopurge_disposed_samples_delay=9223372036854775807), Policy.Reliability.BestEffort, Policy.ResourceLimits(max_samples=-1, max_instances=-1, max_samples_per_instance=-1), Policy.TimeBasedFilter(filter_time=0), Policy.TransportPriority(priority=0), Policy.TypeConsistency.AllowTypeCoercion(ignore_sequence_bounds=True, ignore_string_bounds=True, ignore_member_names=False, prevent_type_widening=False, force_type_validation=False))",
+        "participant_key": "011060d5-4892-ad80-ffc9-2966000001c1",
+        "topic": "rt/sportmodestate"
+      }
+    }
+  },
+  "traffic": {
+    "rt/lowcmd:7503477393537532859": {
+      "topic": "rt/lowcmd",
+      "publication_handle": 7503477393537532859,
+      "samples": 763,
+      "first_received": 17210.797462692,
+      "gripper_signatures": {
+        "{\"31\": {\"dq\": 0.0, \"kd\": 0.0, \"kp\": 0.0, \"mode\": 1, \"q\": 0.0, \"tau\": 0.30000001192092896}, \"33\": {\"dq\": 0.0, \"kd\": 0.0, \"kp\": 0.0, \"mode\": 1, \"q\": 0.0, \"tau\": 0.30000001192092896}}": 763
+      },
+      "last_received": 17218.770402816
+    }
+  },
+  "limitation": "DDS metadata is self-reported, not authenticated process identity."
+}

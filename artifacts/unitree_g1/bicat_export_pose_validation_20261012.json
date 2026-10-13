@@ -1,0 +1,31 @@
+{
+  "source_session": "/home/conrad/bimanual_tokenizer/.local/unitree_g1/experiments/quest_record_live_20261012_005",
+  "frames_checked": 869,
+  "fps": 30,
+  "eef_conventions": {
+    "model_sha256": "2846f24b4e12e9fd9d2c332f2957ff5196e0d714235aac2099a1f5790347c190",
+    "base_frame": "pelvis",
+    "tool_definition": "Same virtual L_ee/R_ee frame as Quest IK: wrist_yaw + 0.05 m local X; not a calibrated Dex1 fingertip/TCP",
+    "tool_offset_xyz_m": [
+      0.05,
+      0,
+      0
+    ],
+    "pose_order": "left then right; x,y,z,qw,qx,qy,qz,gripper",
+    "position_units": "m",
+    "quaternion": "unit wxyz; first nonzero component positive",
+    "observation": "FK of pre-command measured arm and waist positions",
+    "action": "FK of submitted arm targets with the same measured waist positions",
+    "delta_translation": "target minus measured position, expressed in pelvis frame",
+    "delta_rotation": "q_target * inverse(q_measured), Hamilton product, pelvis frame",
+    "delta_gripper": "absolute submitted target in native motor position units",
+    "tcp_calibrated": false
+  },
+  "validation": "All selected real-session pose features finite; no real episode exported or outcome assigned",
+  "offline_tests_passed": 13,
+  "av1_mp4_parquet_official_reader_roundtrip": true,
+  "pinocchio_comparison": {
+    "configurations": 100,
+    "max_position_or_rotation_element_error": 6.661338147750939e-16
+  }
+}

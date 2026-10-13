@@ -1,0 +1,120 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": "tracking_error",
+  "command_frames": 6660,
+  "phase": "FAULT",
+  "elapsed_s": 75.4226108490002,
+  "release_reason": "tracking_error",
+  "first_fault": {
+    "reason": "tracking_error",
+    "phase": "ACTIVE",
+    "last_step_time": 4834.670663844,
+    "gain_scale": 1.0,
+    "feedback_received": 4834.670613672,
+    "tracking_error_rad": [
+      0.003116061253788313,
+      0.003394285559733522,
+      0.0011291423177609006,
+      0.009292573738444582,
+      2.0534161495631975e-05,
+      0.00469696443267556,
+      0.00018488385943089825,
+      0.20079263815809711,
+      0.19065514185115934,
+      0.019615731267633274,
+      0.0263350721135156,
+      0.002991509361503636,
+      0.021038873644485034,
+      0.004528036344634933
+    ],
+    "tracking_exceeded_arm_indices": [
+      22
+    ]
+  },
+  "camera_recorder_returncode": 0,
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.4,
+      -5.4
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.4,
+      -5.4
+    ],
+    "picked_up": [
+      true,
+      true
+    ],
+    "states": [
+      "RELEASED",
+      "RELEASED"
+    ],
+    "control_mode": "trigger_position",
+    "closing_blocked": [
+      false,
+      false
+    ],
+    "contact_q": [
+      null,
+      null
+    ],
+    "hold_q": [
+      null,
+      null
+    ],
+    "contact_stops": [
+      0,
+      0
+    ],
+    "phase": "RELEASED",
+    "input_time": 4834.641044029
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_record_live_20261012_001",
+  "task": "左夹抓瓶子到中间",
+  "active_span_s": 71.10883340600049,
+  "active_command_frames": 6271,
+  "missing_active_precommand_state": 0,
+  "cameras": {
+    "head": {
+      "total_frames": 1067,
+      "active_frames": 711,
+      "receive_fps": 10.00404487,
+      "max_receive_gap_s": 0.133457822,
+      "invalid_jpeg_files": 0
+    },
+    "left_wrist": {
+      "total_frames": 1599,
+      "active_frames": 1066,
+      "receive_fps": 14.99994427,
+      "max_receive_gap_s": 0.077145679,
+      "invalid_jpeg_files": 0
+    },
+    "right_wrist": {
+      "total_frames": 1599,
+      "active_frames": 1066,
+      "receive_fps": 14.99974587,
+      "max_receive_gap_s": 0.075479002,
+      "invalid_jpeg_files": 0
+    }
+  },
+  "left_closing_blocked_frames": 446,
+  "export_preflight": {
+    "include_failed_for_readonly_audit": true,
+    "passed": false,
+    "error": "head: stale frame (0.1010s)",
+    "max_age_s": 0.1
+  },
+  "lerobot_exported": false,
+  "task_outcome": "not yet labeled by operator"
+}

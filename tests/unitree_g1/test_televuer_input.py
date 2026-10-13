@@ -53,11 +53,11 @@ class InputTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'status.json'
             self.assertIn('UNAVAILABLE',m.gripper_status_lines(path,1)[0])
-            status=dict(time=1.,states=['HOLDING','OPEN'],phase='ACTIVE',
+            status=dict(time=1.,states=['POSITIONED','OPEN'],phase='ACTIVE',
                         hardware_motion_enabled=False,remaining_s=8.,fault=None)
             path.write_text(json.dumps(status))
             lines=m.gripper_status_lines(path,1.1)
-            self.assertIn('SHADOW | L: HOLDING | R: OPEN',lines[0])
+            self.assertIn('SHADOW | L: POSITIONED | R: OPEN',lines[0])
             self.assertIn('PLACE OBJECT DOWN',lines[1])
             self.assertIn('STALE',m.gripper_status_lines(path,2)[0])
             self.assertIn('STALE',m.gripper_status_lines(path,0)[0])

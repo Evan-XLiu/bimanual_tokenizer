@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-13",
+  "scope": "Candidate arm_sdk migration; no live motion or service transition performed",
+  "validation": {
+    "full_control_suite": {
+      "tests": 130,
+      "passed": 129,
+      "skipped": 1
+    },
+    "final_arm_sdk_suite": {
+      "tests": 11,
+      "passed": 11
+    },
+    "note": "One additional transport test was added after the full suite and passed in the final targeted suite."
+  },
+  "read_only_preflight": {
+    "interface": "enp130s0",
+    "passed": false,
+    "command_frames": 0,
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": ""
+    },
+    "fsm_code": 3102,
+    "fsm_id": null,
+    "reason": "Official ai/FSM=500 not confirmed"
+  },
+  "limitations": [
+    "Internal Dex1 disabled for arm_sdk",
+    "arm_sdk recording is raw-only; 16D export blocked",
+    "Waist holds measured engagement pose with candidate 60/1.5 gains",
+    "FSM 500 and standing thresholds require installed-firmware/physical validation",
+    "Weight-zero submission does not prove physical handover"
+  ],
+  "source_sha256": {
+    "scripts/unitree_g1/arm_sdk.py": "c3374e59d3e039e78d80780699c115b3923331b0f7cf199fe38454e32943a7be",
+    "scripts/unitree_g1/hold_arms.py": "94e41744ca0938a708b5d0c870cc0b8da069d81cbb1a00cc0dd58efe440b1070",
+    "scripts/unitree_g1/quest_bridge.py": "c00a4fc77455c90d760aad7a5f33e6a1980f96396efe8385cc2ff2abb4da6784",
+    "scripts/unitree_g1/convert_dataset.py": "ed894bcb1445622ebdee68435725bcbe047432f074c2f6594df8dfee303d4512",
+    "tests/unitree_g1/test_arm_sdk.py": "fdacb0299c1f7b4c88c3bb3cb302565d3a82c69a4035f919ac3dfcef66b5ba9e"
+  }
+}

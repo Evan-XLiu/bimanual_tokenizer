@@ -1,0 +1,22 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "preflight_passed": false,
+  "mode": {
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": ""
+    },
+    "fsm_code": 3102,
+    "fsm_id": null
+  },
+  "error": "Official ai/FSM=500 not confirmed; blocked before publisher creation",
+  "offline_tests": {
+    "arm_sdk": 11,
+    "passed": 11
+  },
+  "operator_action_required": "Restore official Regular locomotion and confirm stable standing, stationary arms and clear space.",
+  "grippers_enabled": false,
+  "motion_started": false
+}

@@ -1,0 +1,116 @@
+{
+  "unload_submitted": true,
+  "physical_unload_verified": false,
+  "error": "tracking_error",
+  "command_frames": 1751,
+  "phase": "FAULT",
+  "elapsed_s": 20.184684170000082,
+  "release_reason": "tracking_error",
+  "first_fault": {
+    "reason": "tracking_error",
+    "phase": "ACTIVE",
+    "last_step_time": 1187.952461789,
+    "gain_scale": 1.0,
+    "feedback_received": 1187.952445865,
+    "tracking_error_rad": [
+      0.02856520548808833,
+      0.20130522119530608,
+      0.03681641306658101,
+      0.06253986899515579,
+      0.015305114712490409,
+      0.049574761927484,
+      0.017674891474309173,
+      0.07442030028734115,
+      0.007060166376557847,
+      0.005085553722858183,
+      0.03739330519141282,
+      0.009637116237567578,
+      0.021386544411961278,
+      0.0022467988548953988
+    ],
+    "tracking_exceeded_arm_indices": [
+      16
+    ]
+  },
+  "camera_recorder_returncode": 0,
+  "gripper_fault": null,
+  "last_gripper_command": {
+    "q": [
+      -5.4,
+      -5.4
+    ],
+    "kp": [
+      0.0,
+      0.0
+    ],
+    "kd": [
+      0.0,
+      0.0
+    ],
+    "target": [
+      -5.4,
+      -5.4
+    ],
+    "picked_up": [
+      true,
+      true
+    ],
+    "states": [
+      "RELEASED",
+      "RELEASED"
+    ],
+    "control_mode": "trigger_position",
+    "closing_blocked": [
+      false,
+      false
+    ],
+    "contact_q": [
+      null,
+      null
+    ],
+    "hold_q": [
+      null,
+      null
+    ],
+    "contact_stops": [
+      0,
+      0
+    ],
+    "phase": "RELEASED",
+    "input_time": 1187.808273151
+  },
+  "hardware_motion_enabled": true,
+  "session": ".local/unitree_g1/experiments/quest_record_live_20261013_002",
+  "task": "左夹抓瓶子到中间",
+  "arm_velocity_rad_s": 0.4,
+  "arm_acceleration_rad_s2": 0.8,
+  "active_span_s": 15.857455773000083,
+  "active_command_frames": 1367,
+  "final_arm_zero_gains": true,
+  "preopen": {
+    "unload_submitted": true,
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 1023,
+    "phase": "DISARMED",
+    "elapsed_s": 4.971368486999836,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "hardware_motion_enabled": true,
+    "execution_vector_layout": "first two entries = left/right Dex1, remaining twelve inert padding",
+    "opening_complete": true,
+    "last_active_feedback": [
+      -5.277132034301758,
+      -5.332125186920166
+    ]
+  },
+  "camera_summary": {
+    "error": null,
+    "elapsed_s": 46.673500128000114,
+    "latest": {
+      "left_wrist": 1190.251150861,
+      "right_wrist": 1190.249171859,
+      "head": 1190.202392568
+    }
+  }
+}

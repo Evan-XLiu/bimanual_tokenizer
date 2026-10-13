@@ -12,7 +12,13 @@ import uuid
 import numpy as np
 from PIL import Image
 
+from export_kinematics import MODEL_PATH, conventions, eef_features
+
+# Raw recording roles stay stable so historical sessions remain readable.
 ROLES = ('head', 'left_wrist', 'right_wrist')
+EXPORT_FPS = 30
+IMAGE_KEYS = dict(head='top', left_wrist='left', right_wrist='right')
+IMAGE_SHAPES = dict(head=(360,640,3), left_wrist=(480,640,3), right_wrist=(480,640,3))
 INDICES = (*range(15, 22), 31, *range(22, 29), 33)
 ROOT = Path(__file__).resolve().parents[2]
 ARM_NAMES = json.loads((ROOT/'artifacts/unitree_g1/hold_shadow_profile.json').read_text())['joint_names']
@@ -34,10 +40,15 @@ def finite(values, size):
 
 
 def features():
-    result = {f'observation.images.{role}': dict(dtype='video', shape=(480,640,3),
+    result = {f'observation.images.{IMAGE_KEYS[role]}': dict(dtype='video', shape=IMAGE_SHAPES[role],
                names=['height','width','channels']) for role in ROLES}
-    for key in ('observation.state','observation.velocity','observation.effort','action'):
+    for key in ('observation.state_joint_angles','observation.velocity','observation.effort','action_joint_angles'):
         result[key] = dict(dtype='float32',shape=(16,),names=NAMES)
+    for key in ('observation.state_eef_absolute','action_eef_absolute','action_eef_delta'):
+        suffix = 'eef_delta' if key == 'action_eef_delta' else 'eef'
+        names = [f'{side}_{suffix}.{component}' for side in ('left','right')
+                 for component in ('x','y','z','qw','qx','qy','qz','gripper')]
+        result[key] = dict(dtype='float32',shape=(16,),names=names)
     for key in ('q','dq','tau_est'):
         result[f'observation.full_body_{key}'] = dict(dtype='float32',shape=(35,),
                                                       names=[f'motor_{i}' for i in range(35)])
@@ -51,13 +62,17 @@ def features():
     return result
 
 
-def plan_episode(session, *, max_age_s=.1, allow_shadow=False, include_failed=False):
-    """Select a contiguous 15Hz grid; never fill gaps or select future observations."""
+def plan_episode(session, *, max_age_s=.2, allow_shadow=False, include_failed=False):
+    """Select a contiguous 30Hz grid; never fill gaps or select future observations."""
     metadata = json.loads((session/'session.json').read_text())
+    if metadata.get('control_mode') == 'arm_sdk':
+        raise ValueError('arm_sdk recordings are raw-only: no verified internal Dex1 action or motor-command semantics')
+    if metadata.get('control_mode') not in (None, 'debug'):
+        raise ValueError('Unvalidated control_mode: whole-body/simulation recordings require independent export validation')
     summary = json.loads((session/'summary.json').read_text())
     camera_summary = json.loads((session/'cameras/summary.json').read_text())
     recording = metadata['recording']
-    if (not recording['enabled'] or recording['fps'] != 15 or recording['shape'] != [480,640,3]
+    if (not recording['enabled'] or recording['fps'] not in (15, 30) or recording['shape'] != [480,640,3]
             or recording['cameras'] != list(ROLES) or not (recording.get('task') or '').strip()):
         raise ValueError('Session is not a supported three-camera training recording')
     if not metadata['hardware_motion_enabled'] and not allow_shadow:
@@ -66,8 +81,8 @@ def plan_episode(session, *, max_age_s=.1, allow_shadow=False, include_failed=Fa
                   or summary.get('camera_recorder_returncode') != 0)
     if failed and not include_failed:
         raise ValueError('Faulted/incomplete session: raw data retained; use --include-failed intentionally')
-    if not math.isfinite(max_age_s) or not 0 < max_age_s <= .1:
-        raise ValueError('max_age_s must be in (0, 0.1]')
+    if not math.isfinite(max_age_s) or not 0 < max_age_s <= .2:
+        raise ValueError('max_age_s must be in (0, 0.2]')
     commands = [row for row in read_jsonl(session/'commands.jsonl') if row.get('phase') == 'ACTIVE']
     pickup_index = next((i for i,row in enumerate(commands)
                          if all(row.get('gripper_command',{}).get('picked_up',[False,False]))),None)
@@ -95,7 +110,7 @@ def plan_episode(session, *, max_age_s=.1, allow_shadow=False, include_failed=Fa
                 or any(b['sequence'] <= a['sequence'] for a,b in zip(rows,rows[1:]))):
             raise ValueError(f'{role}: absent or nonmonotonic frames')
         camera_times[role] = stamps
-    fps = recording['fps']
+    fps = EXPORT_FPS
     count = math.floor((command_times[-1]-command_times[0])*fps+1e-8)+1
     if count < 2:
         raise ValueError('Episode shorter than two dataset frames')
@@ -174,25 +189,30 @@ def plan_episode(session, *, max_age_s=.1, allow_shadow=False, include_failed=Fa
 def make_frame(row, images, *, task, last, success):
     motors = {m['index']:m for m in row['observation_before_command']['motors']}
     action = [*row['q'][:7],row['gripper_command']['q'][0],*row['q'][7:],row['gripper_command']['q'][1]]
-    frame = {'action':np.asarray(action,dtype=np.float32),'task':task,
+    frame = {'action_joint_angles':np.asarray(action,dtype=np.float32),'task':task,
         'next.done':np.asarray([last],dtype=bool),'next.success':np.asarray([last and success],dtype=bool),
         'observation.source_timestamps':np.asarray([row['command_send_started'],row['command_send_finished'],
             row['observation_before_command']['received'],*[f['host_received'] for f,_ in images]],dtype=np.float64),
         'observation.camera_estimated_read_end':np.asarray([f['estimated_read_end'] for f,_ in images],dtype=np.float64),
         'observation.camera_sequence':np.asarray([f['sequence'] for f,_ in images],dtype=np.int64),
         'observation.robot_tick':np.asarray([row['observation_before_command']['tick']],dtype=np.int64)}
-    for name,key in (('state','q'),('velocity','dq'),('effort','tau_est')):
+    for name,key in (('state_joint_angles','q'),('velocity','dq'),('effort','tau_est')):
         frame[f'observation.{name}'] = np.asarray([motors[i][key] for i in INDICES],dtype=np.float32)
         frame[f'observation.full_body_{key}'] = np.asarray([motors[i][key] for i in range(35)],dtype=np.float32)
+    frame.update(eef_features([motors[i]['q'] for i in range(35)],row['q'],row['gripper_command']['q']))
     for role,(_,path) in zip(ROLES,images):
         with Image.open(path) as image:
             if image.size != (640,480):
                 raise ValueError('Decoded camera image has wrong dimensions')
-            frame[f'observation.images.{role}'] = np.array(image.convert('RGB'))
+            image = image.convert('RGB')
+            height,width,_ = IMAGE_SHAPES[role]
+            if image.size != (width,height):
+                image = image.resize((width,height), Image.Resampling.LANCZOS)
+            frame[f'observation.images.{IMAGE_KEYS[role]}'] = np.array(image)
     return frame
 
 
-def convert(sessions, root, repo_id, *, outcome, allow_shadow=False, include_failed=False, max_age_s=.1):
+def convert(sessions, root, repo_id, *, outcome, allow_shadow=False, include_failed=False, max_age_s=.2):
     if importlib.metadata.version('lerobot') != '0.4.4':
         raise RuntimeError('Use the isolated LeRobot 0.4.4 data environment')
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
@@ -206,8 +226,8 @@ def convert(sessions, root, repo_id, *, outcome, allow_shadow=False, include_fai
         raise ValueError('Cannot label a faulted session successful')
     stage = root.with_name(root.name+'.partial-'+uuid.uuid4().hex[:8])
     stage.parent.mkdir(parents=True,exist_ok=True)
-    dataset = LeRobotDataset.create(repo_id=repo_id,root=stage,fps=15,features=features(),
-        robot_type='unitree_g1_dex1',use_videos=True,video_backend='pyav',vcodec='h264',encoder_threads=2)
+    dataset = LeRobotDataset.create(repo_id=repo_id,root=stage,fps=EXPORT_FPS,features=features(),
+        robot_type='unitree_g1_dex1',use_videos=True,video_backend='pyav',vcodec='libsvtav1',encoder_threads=2)
     try:
         for selected,quality in plans:
             for i,(row,images) in enumerate(selected):
@@ -222,25 +242,30 @@ def convert(sessions, root, repo_id, *, outcome, allow_shadow=False, include_fai
         for selected,_ in plans:
             for index in (start,start+len(selected)-1):
                 sample = reopened[index]
-                for key in ('observation.state','action'):
+                for key in ('observation.state_joint_angles','action_joint_angles',
+                            'observation.state_eef_absolute','action_eef_absolute','action_eef_delta'):
                     if tuple(sample[key].shape) != (16,):raise ValueError('LeRobot vector shape mismatch')
                 for role in ROLES:
-                    if tuple(sample[f'observation.images.{role}'].shape) != (3,480,640):
+                    if tuple(sample[f'observation.images.{IMAGE_KEYS[role]}'].shape) != (3,*IMAGE_SHAPES[role][:2]):
                         raise ValueError('LeRobot video readback shape mismatch')
             start += len(selected)
         audit = dict(format='LeRobot v3.0',lerobot_version='0.4.4',outcome=outcome,
             converter_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             joint_order=NAMES,motor_indices=list(INDICES),
+            eef_conventions=conventions(),video_codec='av1',video_encoder='libsvtav1',
             units='arms: rad/rad_s; grippers: native motor position/s; tau_est is uncalibrated motor effort',
             action='absolute position actually submitted after limits/contact logic; zero feedforward',
-            sampling='15Hz grid, first submitted action at/after each grid point; source timestamps retained',
-            camera_roles=dict(head='USB2.0_Camera_RGB',left_wrist='261523071841',right_wrist='261523072307'),
+            sampling='30Hz grid, first submitted action at/after each grid point; source timestamps retained',
+            camera_roles=dict(top='USB2.0_Camera_RGB',left='261523071841',right='261523072307'),
+            image_transform='top: resize full 640x480 source to 640x360 using Lanczos; left/right unchanged',
+            raw_to_export_camera_keys=IMAGE_KEYS,
             episodes=[dict(q,outcome=outcome) for _,q in plans],reader_validation='first/last frame of each episode, all 3 videos')
         for index,session in enumerate(sessions):
             provenance=stage/'meta/g1_sources'/f'episode_{index:06d}'
             provenance.mkdir(parents=True)
             for name in ('session.json','summary.json','cameras/metadata.json','cameras/summary.json'):
                 (provenance/name.replace('/','_')).write_bytes((session/name).read_bytes())
+        (stage/'meta/g1_export_kinematics.json').write_bytes(MODEL_PATH.read_bytes())
         (stage/'meta/g1_recording.json').write_text(json.dumps(audit,indent=2,allow_nan=False)+'\n')
         # Re-read is complete before exposing the final dataset directory.
         stage.rename(root)
@@ -260,7 +285,7 @@ def main():
     parser.add_argument('--outcome',choices=('success','failure'),required=True)
     parser.add_argument('--allow-shadow',action='store_true')
     parser.add_argument('--include-failed',action='store_true')
-    parser.add_argument('--max-age-s',type=float,default=.1)
+    parser.add_argument('--max-age-s',type=float,default=.2)
     args = parser.parse_args()
     audit = convert(args.session,args.root,args.repo_id,outcome=args.outcome,
         allow_shadow=args.allow_shadow,include_failed=args.include_failed,max_age_s=args.max_age_s)

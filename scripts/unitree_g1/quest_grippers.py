@@ -24,13 +24,10 @@ def gripper_settings():
             open_report.get('full_open_visually_confirmed') is not True):
         raise ValueError('Missing successful visually confirmed full-open trial')
     return dict(indices=[31,33],closed=closed,opened=[-5.4,-5.4],
-                kp=5.,kd=.05,velocity=2.4,acceleration=1.2,tracking_error=.15,
-                timeout=.1,
-                contact_error=.06,contact_clear_error=.03,contact_speed=.05,
-                contact_confirm_s=.12,contact_timeout_s=.5,
-                hold_offset=.08,closed_margin=.12,position_tolerance=.01,
-                contact_calibrated=False,
-                mapping='Automatic control on fresh ACTIVE input; trigger 0..1 maps open..closed; contact holds until a more-open target',
+                kp=5.,kd=.05,velocity=2.4,acceleration=1.2,tracking_error=.30,
+                timeout=.2, servo_timeout=.1,
+                position_tolerance=.01,control_mode='trigger_position',
+                mapping='Fresh ACTIVE trigger 0..1 maps open..closed; excessive closing error freezes that side until a more-open request',
                 reference=str(path.relative_to(ROOT)),open_reference=str(open_path.relative_to(ROOT)))
 
 
@@ -50,14 +47,9 @@ def raw_triggers(event):
 class GripperFollower:
     def __init__(self,settings):
         self.c=dict(settings)
-        for name in ('contact_error','contact_clear_error','contact_speed','contact_confirm_s',
-                     'contact_timeout_s','hold_offset','closed_margin','position_tolerance'):
+        for name in ('position_tolerance','velocity','acceleration','tracking_error','timeout','servo_timeout'):
             if not math.isfinite(self.c[name]) or self.c[name]<=0:
-                raise ValueError('Invalid contact setting: '+name)
-        if not (self.c['contact_clear_error']<self.c['contact_error']<=self.c['hold_offset']<self.c['tracking_error']
-                and self.c['contact_confirm_s']<self.c['contact_timeout_s']
-                and self.c['position_tolerance']<self.c['closed_margin']):
-            raise ValueError('Invalid contact protection ordering')
+                raise ValueError('Invalid gripper setting: '+name)
         self.initialized=False
         self.fault=None
         self.last_sent=None
@@ -83,11 +75,8 @@ class GripperFollower:
         self.v=(0.,0.)
         self.picked_up=[False,False]
         self.states=['WAITING_INPUT']*2
-        self.contact_since=[None,None]
-        self.confirm_since=[None,None]
-        self.contact_q=[None,None]
-        self.hold_q=[None,None]
-        self.contact_stops=[0,0]
+        self.closing_blocked=[False,False]
+
         self.input_time=None
         self.active_since=None
         self.last_time=now
@@ -106,53 +95,25 @@ class GripperFollower:
         self.picked_up=[True,True]
         for i,t in enumerate(values):
             requested=self.c['opened'][i]+t*(self.c['closed'][i]-self.c['opened'][i])
-            if self.hold_q[i] is not None and requested<self.hold_q[i]:
-                self.contact_since[i]=self.confirm_since[i]=None
-                self.contact_q[i]=self.hold_q[i]=None
-            target.append(self.hold_q[i] if self.hold_q[i] is not None else requested)
+            target.append(requested)
         self.target=tuple(target)
 
     def motion_step(self,i,feedback,speed,now,dt):
         q,t,v=self.q[i],self.target[i],self.v[i]
-        error=q-feedback
-        if self.hold_q[i] is not None:
-            if self.states[i]=='CONTACT_CANDIDATE':
-                # Freeze immediately; confirmation must NOT keep advancing into an obstacle.
-                if error<self.c['contact_clear_error']:
-                    self.contact_since[i]=self.confirm_since[i]=None
-                    self.contact_q[i]=self.hold_q[i]=None
-                    self.states[i]='CONTACT_CLEARED'
-                    return q,0.
-                if abs(speed)<=self.c['contact_speed']:
-                    if self.confirm_since[i] is None:self.confirm_since[i]=now
-                    if now-self.confirm_since[i]>=self.c['contact_confirm_s']:
-                        self.states[i]='HOLDING'
-                else:
-                    self.confirm_since[i]=None
-                if self.states[i]=='CONTACT_CANDIDATE' and now-self.contact_since[i]>=self.c['contact_timeout_s']:
-                    raise ValueError('Gripper contact confirmation timeout')
-            elif error<self.c['contact_clear_error'] or abs(speed)>self.c['contact_speed']:
-                # Do not chase a slipping/deforming object or automatically increase force.
-                self.states[i]='HOLD_UNCERTAIN'
-            return self.hold_q[i],0.
-        closing=self.picked_up[i] and t>=q and t>feedback+self.c['contact_error'] and v>=0
-        if closing and error>=self.c['contact_error'] and abs(speed)<=self.c['contact_speed']:
-            if feedback>=self.c['closed'][i]-self.c['closed_margin']:
-                # A near-closed obstruction is ambiguous; never report a successful grasp.
-                raise ValueError('Gripper obstruction near closed limit')
-            self.states[i]='CONTACT_CANDIDATE'
-            self.contact_since[i]=self.confirm_since[i]=now
-            self.contact_q[i]=feedback
-            # Never advance farther on detection, and cap the retained closure offset.
-            self.hold_q[i]=min(q,feedback+self.c['hold_offset'])
-            self.contact_stops[i]+=1
-            return self.hold_q[i],0.  # Contact stop intentionally overrides the motion ramp.
+        if self.closing_blocked[i]:
+            if t>=q:
+                self.states[i]='CLOSING_BLOCKED'
+                return q,0.  # Protective stop: no further closing or automatic re-squeeze.
+            # Allow a more-open trigger request to reduce the existing positive
+            # error without immediately faulting on the obstruction that caused it.
+            if q-feedback<=self.c['tracking_error']:
+                self.closing_blocked[i]=False
         qn,vn=bounded_joint_step(q,t,v,self.c['velocity'],self.c['acceleration'],
                                  self.lower[i],self.upper[i],dt)
         tol=self.c['position_tolerance']
         if not self.picked_up[i]:self.states[i]='WAITING_INPUT'
         elif abs(t-self.c['opened'][i])<=tol and abs(feedback-t)<=tol:self.states[i]='OPEN'
-        elif abs(t-self.c['closed'][i])<=tol and abs(feedback-t)<=tol:self.states[i]='CLOSED_EMPTY'
+        elif abs(t-self.c['closed'][i])<=tol and abs(feedback-t)<=tol:self.states[i]='CLOSED'
         elif t<q-tol:self.states[i]='OPENING'
         elif t>q+tol:self.states[i]='CLOSING'
         else:self.states[i]='POSITIONED'
@@ -163,11 +124,19 @@ class GripperFollower:
         if self.fault is None:
             try:
                 feedback,speeds=self.feedback(telemetry,now)
-                errors=[abs(q-f) for q,f in zip(self.q,feedback)]
-                if max(errors)>self.c['tracking_error']:
-                    raise ValueError('Gripper tracking_error')
+                for i,(q,f) in enumerate(zip(self.q,feedback)):
+                    error=q-f
+                    if error < -self.c['tracking_error']:
+                        raise ValueError('Gripper tracking_error')
+                    if error > self.c['tracking_error'] and not self.closing_blocked[i]:
+                        if (command.phase=='ACTIVE' and self.picked_up[i]
+                                and self.target[i]>=q and self.v[i]>=0):
+                            self.closing_blocked[i]=True
+                            self.v=tuple(0. if j==i else v for j,v in enumerate(self.v))
+                        else:
+                            raise ValueError('Gripper tracking_error')
                 dt=now-self.last_time
-                if not 0<=dt<=.05:raise ValueError('Gripper servo deadline')
+                if not 0<=dt<=self.c['servo_timeout']:raise ValueError('Gripper servo deadline')
                 if command.phase=='ACTIVE':
                     if self.active_since is None:self.active_since=now
                     stamp=self.input_time if self.input_time is not None else self.active_since
@@ -191,8 +160,10 @@ class GripperFollower:
                             target=self.target,picked_up=list(self.picked_up),
                             states=(['FAULT']*2 if self.fault else list(self.states) if command.phase=='ACTIVE'
                                     else [command.phase]*2),
-                            contact_q=list(self.contact_q),hold_q=list(self.hold_q),
-                            contact_stops=list(self.contact_stops),
+                            control_mode='trigger_position',
+                            closing_blocked=list(self.closing_blocked),
+                            contact_q=[None,None],hold_q=[None,None],
+                            contact_stops=[0,0],  # Legacy log fields; automatic hold is disabled.
                             phase=command.phase,input_time=self.input_time)
         return self.last_sent
 

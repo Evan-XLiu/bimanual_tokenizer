@@ -1,0 +1,757 @@
+{
+  "date": "2026-10-13",
+  "robot": "Replacement G1, operator-confirmed external Dex1",
+  "requested_architecture": "Official locomotion owns lower body; Quest controls arms via arm_sdk and external Dex1 via dedicated MotorCmds topics",
+  "hardware_motion_commands_sent": 762,
+  "implementation_files": {
+    "scripts/unitree_g1/external_dex1.py": "5ae1239d0507d7dec6d0272a528f3e9b8b6d2404cee545b456378b9b92a82c52",
+    "scripts/unitree_g1/quest_bridge.py": "0403023e9f18343eaec063e679e2cd2a8286f1511e9ca7c2a5d61e5770bb2f14",
+    "tests/unitree_g1/test_external_dex1.py": "defc0fb5dbe156bece418d8a233a4896c8c8a284b563d63e69ca35d707af2e2f"
+  },
+  "validation": {
+    "external_dex1": 12,
+    "quest_bridge": 18,
+    "quest_grippers": 13,
+    "arm_sdk": 12,
+    "legacy_preopen": 2,
+    "total_passed": 57
+  },
+  "official_service_commit": "ced3216290bb22dae356213993786beeaa7143ab",
+  "read_only_preflight": {
+    "read_only": true,
+    "command_frames": 0,
+    "preflight_passed": true,
+    "mode": {
+      "service_code": 0,
+      "service": {
+        "form": "0",
+        "name": "ai"
+      },
+      "fsm_code": 0,
+      "fsm_id": 501
+    },
+    "external_feedback": [
+      {
+        "index": 0,
+        "q": 2.804715156555176,
+        "dq": -0.0009817477548494935,
+        "tau_est": -0.0390625,
+        "motorstate": 0,
+        "received": 21219.153455995,
+        "status_limitation": "Service may not populate motor fault fields"
+      },
+      {
+        "index": 1,
+        "q": 0.35178011655807495,
+        "dq": -0.008835729211568832,
+        "tau_est": 0.0,
+        "motorstate": 0,
+        "received": 21219.153525001,
+        "status_limitation": "Service may not populate motor fault fields"
+      }
+    ],
+    "external_counts": [
+      1494,
+      1495
+    ]
+  },
+  "network": "Existing g1-direct-session reactivated on enp130s0",
+  "ssh": "Public key login succeeded after operator repeated installation",
+  "pending": [
+    "Operator Quest browser connection and dual-grip engagement",
+    "Finite Quest arm/gripper test and operator visual assessment",
+    "Physical handover verification"
+  ],
+  "recording": "Raw diagnostic only, existing arm_sdk export rejection retained",
+  "physical_handover_verified": false,
+  "access_recheck": {
+    "operator_report": "完成 SSH 公钥配置",
+    "ssh_result": "192.168.123.164 reachable; host key matches known_hosts; explicitly offered g1_camera_ed25519 public key rejected",
+    "public_key_fingerprint": "SHA256:SucNCtF0vEZ05yS2oa2C7Nes+AMOuwgfedDZC9YV6cM",
+    "preflight_report": "artifacts/unitree_g1/external_dex1_preflight_20261013_002.json",
+    "mode": "ai/FSM501",
+    "external_state_counts": [
+      0,
+      0
+    ],
+    "command_frames": 0,
+    "pending": "Operator ssh-copy-id output to diagnose rejected public key"
+  },
+  "service_inventory": {
+    "host": "unitree@192.168.123.164",
+    "interface": "eth0",
+    "serial_ports": [
+      "/dev/ttyUSB0",
+      "/dev/ttyUSB1",
+      "/dev/ttyUSB2",
+      "/dev/ttyUSB3"
+    ],
+    "unit": "dex1_gripper.service",
+    "state": "inactive (dead)",
+    "enabled": true,
+    "user": "unitree",
+    "group": "dialout",
+    "executable": "/home/unitree/dex1_1_service/bin/dex1_1_gripper_server",
+    "version": "1.0.1",
+    "source_commit": "e35edaa10963e954c8f0a38b21ee963cf9a8ca73",
+    "journal": "No entries in current boot",
+    "startup_permission": "sudo requires password; requested operator start existing service",
+    "source_timeout_ms": 1000,
+    "source_timeout_action": "BRAKE, zero q/dq/kp/kd/tau",
+    "physical_timeout_verified": false
+  },
+  "quest_preparation": {
+    "host_address": "172.25.109.23",
+    "tls_directory": ".local/unitree_g1/tls/external-g1-20261013",
+    "port_8012": "free at inspection",
+    "server_started": false
+  },
+  "startup_blocker": {
+    "sudo_authentication": "Succeeded; systemctl start process is waiting",
+    "dex1_job": "start waiting, no MainPID or start timestamp",
+    "dependency": "dex1_gripper.service After=multi-user.target",
+    "blocked_target": "multi-user.target waits for data_sync.service",
+    "blocking_service": "data_sync.service Type=oneshot, TimeoutStartUSec=infinity; repeatedly waiting for Internet connectivity",
+    "prepared_fix": "/tmp/g1-dex1-session-start.sh uploaded to robot; not yet executed",
+    "fix_scope": "Cancel pending inactive Dex1 start; runtime drop-in clears After and sets After=network.target; reload and start only Dex1. No data_sync or locomotion modification. Override disappears on reboot.",
+    "operator_action": "Ctrl+C from waiting command, then sudo bash /tmp/g1-dex1-session-start.sh",
+    "hardware_motion_commands_sent_by_local_controller": 0,
+    "v1_result": "Runtime drop-in loaded but original After=multi-user.target remained: dependency lists cannot be reset via drop-ins. Service still inactive with pending start.",
+    "prepared_fix_v2": "/tmp/g1-dex1-session-start-v2.sh and /tmp/dex1_gripper_direct.service uploaded; independent runtime unit using original executable/user/group/environment, After=network.target, Conflicts and Before original service, Restart=no. Not yet executed."
+  },
+  "service_active": {
+    "unit": "dex1_gripper_direct.service",
+    "pid": 21270,
+    "right_motor_id": 0,
+    "right_port": "/dev/ttyUSB0",
+    "left_motor_id": 1,
+    "left_port": "/dev/ttyUSB3",
+    "automatic_restart": false,
+    "runtime_only": true
+  },
+  "initialization_001": {
+    "session": ".local/unitree_g1/experiments/quest_external_live_20261013_001",
+    "command_frames": 0,
+    "error": "Pinned DataWriter lacks get_matched_subscriptions; replaced with publication matched listener and added regression test"
+  },
+  "preopen_002": {
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 762,
+    "phase": "DISARMED",
+    "elapsed_s": 8.464936504002253,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "opening_complete": true,
+    "arm_sdk_release_submitted": true,
+    "external_gripper_zero_submitted": [
+      true,
+      true
+    ],
+    "external_gripper_cleanup_error": null,
+    "unload_submitted": false,
+    "physical_gripper_release_verified": false,
+    "physical_handover_verified": false,
+    "backend": "external-dex1"
+  },
+  "quest_session_002": {
+    "session": ".local/unitree_g1/experiments/quest_external_live_20261013_002",
+    "status": "Exited while waiting: FSM query failed, no Quest commands sent",
+    "active_limit_s": 20,
+    "url": "https://172.25.109.23:8012/?ws=wss://172.25.109.23:8012",
+    "recording": "Motion diagnostics; no camera recording",
+    "summary": {
+      "error": "OwnershipLost: Official ai/FSM=(500, 501) not confirmed or query stale: {'service_code': 0, 'service': {'form': '0', 'name': 'ai'}, 'fsm_code': 3104, 'fsm_id': None}",
+      "command_frames": 0,
+      "unload_submitted": false,
+      "gripper_fault": null,
+      "last_gripper_command": null,
+      "external_gripper_zero_submitted": [
+        false,
+        false
+      ],
+      "external_gripper_cleanup_error": null,
+      "physical_gripper_release_verified": false,
+      "arm_sdk_release_submitted": false,
+      "physical_handover_verified": false,
+      "last_arm_sdk_request": null,
+      "control_mode": "arm_sdk",
+      "hardware_motion_enabled": true,
+      "physical_unload_verified": false
+    }
+  },
+  "quest_session_003": {
+    "session": ".local/unitree_g1/experiments/quest_external_live_20261013_003",
+    "status": "Ended with motor20 tracking_error; gripper zero and arm authority return submitted",
+    "url": "https://172.20.10.4:8012/?ws=wss://172.20.10.4:8012",
+    "active_limit_s": 20,
+    "preopen": {
+      "physical_unload_verified": false,
+      "error": null,
+      "command_frames": 428,
+      "phase": "DISARMED",
+      "elapsed_s": 4.756076142002712,
+      "release_reason": "operator_release",
+      "first_fault": null,
+      "opening_complete": true,
+      "arm_sdk_release_submitted": true,
+      "external_gripper_zero_submitted": [
+        true,
+        true
+      ],
+      "external_gripper_cleanup_error": null,
+      "unload_submitted": false,
+      "physical_gripper_release_verified": false,
+      "physical_handover_verified": false,
+      "backend": "external-dex1"
+    },
+    "summary": {
+      "unload_submitted": false,
+      "physical_unload_verified": false,
+      "error": "tracking_error",
+      "command_frames": 462,
+      "phase": "FAULT",
+      "elapsed_s": 5.268383151000307,
+      "release_reason": "tracking_error",
+      "first_fault": {
+        "reason": "tracking_error",
+        "phase": "ACTIVE",
+        "last_step_time": 21649.809206533,
+        "gain_scale": 1.0,
+        "feedback_received": 21649.808525273,
+        "tracking_error_rad": [
+          0.09810223722621209,
+          0.0250769637678728,
+          0.020749433073074697,
+          0.1857256541040676,
+          0.02845652888588429,
+          0.2016420416438115,
+          0.0026233112251073925,
+          0.012257699532898791,
+          0.043168850925641655,
+          0.03019774782341729,
+          0.07232485374766018,
+          0.013284766111023513,
+          0.05317501982215833,
+          0.01535418625679056
+        ],
+        "tracking_exceeded_arm_indices": [
+          20
+        ]
+      },
+      "gripper_fault": null,
+      "last_gripper_command": {
+        "q": [
+          5.4,
+          5.4
+        ],
+        "kp": [
+          0.0,
+          0.0
+        ],
+        "kd": [
+          0.0,
+          0.0
+        ],
+        "states": [
+          "RELEASED",
+          "RELEASED"
+        ],
+        "phase": "RELEASED",
+        "backend": "external-dex1",
+        "coordinate": "external_service_q"
+      },
+      "external_gripper_zero_submitted": [
+        true,
+        true
+      ],
+      "external_gripper_cleanup_error": null,
+      "physical_gripper_release_verified": false,
+      "arm_sdk_release_submitted": true,
+      "physical_handover_verified": false,
+      "last_arm_sdk_request": {
+        "topic": "rt/arm_sdk",
+        "weight": 0.0,
+        "joint_indices": [
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28
+        ],
+        "q": [
+          -1.3391895663517062e-05,
+          0.0010047400137409568,
+          -0.06425166875123978,
+          0.49068275546864265,
+          0.18389197362913037,
+          -0.06986078816917646,
+          0.3620852580281956,
+          0.12986707200236797,
+          -0.4168427787625325,
+          0.005094529614069978,
+          0.5227977080778207,
+          -0.2807800851137215,
+          -0.07745154651683579,
+          0.391764271647161,
+          -0.09546009358441106,
+          -0.44386075695518445,
+          -0.04140789244082014
+        ],
+        "kp": [
+          60.0,
+          60.0,
+          60.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          40.0,
+          40.0,
+          40.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          40.0,
+          40.0,
+          40.0
+        ],
+        "kd": [
+          1.5,
+          1.5,
+          1.5,
+          3.0,
+          3.0,
+          3.0,
+          3.0,
+          1.5,
+          1.5,
+          1.5,
+          3.0,
+          3.0,
+          3.0,
+          3.0,
+          1.5,
+          1.5,
+          1.5
+        ]
+      },
+      "control_mode": "arm_sdk",
+      "hardware_motion_enabled": true
+    }
+  },
+  "quest_session_004": {
+    "session": ".local/unitree_g1/experiments/quest_external_live_20261013_004",
+    "status": "Exited due to stale Quest target; release submitted",
+    "active_limit_s": 180,
+    "url": "https://172.20.10.4:8012/?ws=wss://172.20.10.4:8012",
+    "preopen": {
+      "physical_unload_verified": false,
+      "error": null,
+      "command_frames": 430,
+      "phase": "DISARMED",
+      "elapsed_s": 4.750613963999058,
+      "release_reason": "operator_release",
+      "first_fault": null,
+      "opening_complete": true,
+      "arm_sdk_release_submitted": true,
+      "external_gripper_zero_submitted": [
+        true,
+        true
+      ],
+      "external_gripper_cleanup_error": null,
+      "unload_submitted": false,
+      "physical_gripper_release_verified": false,
+      "physical_handover_verified": false,
+      "backend": "external-dex1"
+    },
+    "operator_authorization": "启动180s测试",
+    "summary": {
+      "unload_submitted": false,
+      "physical_unload_verified": false,
+      "error": "quest_input: Stale or future Quest target",
+      "command_frames": 5008,
+      "phase": "FAULT",
+      "elapsed_s": 57.67791566099913,
+      "release_reason": "quest_input: Stale or future Quest target",
+      "first_fault": {
+        "reason": "quest_input: Stale or future Quest target",
+        "phase": "ACTIVE",
+        "last_step_time": 21836.085470365,
+        "gain_scale": 1.0,
+        "feedback_received": 21836.096144132,
+        "tracking_error_rad": [
+          0.0327780678048076,
+          0.028104202745859036,
+          0.015507643564287188,
+          0.024228719376814034,
+          0.003933282102881901,
+          0.005895687216721263,
+          0.00443629086513847,
+          0.01366331303656454,
+          0.06912234077157087,
+          0.016579380389621284,
+          0.031638985036858414,
+          0.0012071968484620443,
+          0.0153835161305175,
+          0.003105343114219561
+        ],
+        "tracking_exceeded_arm_indices": []
+      },
+      "gripper_fault": null,
+      "last_gripper_command": {
+        "q": [
+          5.4,
+          5.4
+        ],
+        "kp": [
+          0.0,
+          0.0
+        ],
+        "kd": [
+          0.0,
+          0.0
+        ],
+        "states": [
+          "RELEASED",
+          "RELEASED"
+        ],
+        "phase": "RELEASED",
+        "backend": "external-dex1",
+        "coordinate": "external_service_q"
+      },
+      "external_gripper_zero_submitted": [
+        true,
+        true
+      ],
+      "external_gripper_cleanup_error": null,
+      "physical_gripper_release_verified": false,
+      "arm_sdk_release_submitted": true,
+      "physical_handover_verified": false,
+      "last_arm_sdk_request": {
+        "topic": "rt/arm_sdk",
+        "weight": 0.0,
+        "joint_indices": [
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28
+        ],
+        "q": [
+          -0.0010311759542673826,
+          -0.0028615999035537243,
+          -0.05996355041861534,
+          -0.0592632054462375,
+          -0.07246980622262181,
+          -0.25905107472712136,
+          -0.23366504659582343,
+          0.03974214708381795,
+          -0.15769986616989204,
+          -0.36964357555408806,
+          0.04030165200888758,
+          0.15045927861632413,
+          -0.2153273614679074,
+          -0.419712161182412,
+          -0.3042467294763823,
+          -0.10509742486245491,
+          0.31024906111844625
+        ],
+        "kp": [
+          60.0,
+          60.0,
+          60.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          40.0,
+          40.0,
+          40.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          40.0,
+          40.0,
+          40.0
+        ],
+        "kd": [
+          1.5,
+          1.5,
+          1.5,
+          3.0,
+          3.0,
+          3.0,
+          3.0,
+          1.5,
+          1.5,
+          1.5,
+          3.0,
+          3.0,
+          3.0,
+          3.0,
+          1.5,
+          1.5,
+          1.5
+        ]
+      },
+      "control_mode": "arm_sdk",
+      "hardware_motion_enabled": true
+    }
+  },
+  "quest_session_005": {
+    "session": ".local/unitree_g1/experiments/quest_external_live_20261013_005",
+    "status": "Ended: tracking_error on motor24 during RELEASING after operator_release",
+    "active_limit_s": 180,
+    "limits": {
+      "active_s": 180.0,
+      "input_timeout_s": 0.2,
+      "feedback_timeout_s": 0.2,
+      "joint_limits": "urdf",
+      "velocity_rad_s": 1.5,
+      "acceleration_rad_s2": 3.0,
+      "translation_scale": 1.0,
+      "workspace_m": 0.3,
+      "ik_position_error_m": 0.015,
+      "tracking_error_rad": 0.2,
+      "workspace_shape": "box_above_start",
+      "orientation_mode": "free",
+      "side_grip_threshold": 0.5
+    },
+    "grippers": {
+      "indices": [
+        0,
+        1
+      ],
+      "opened": [
+        -5.4,
+        -5.4
+      ],
+      "closed": [
+        0.0,
+        0.0
+      ],
+      "kp": 5.0,
+      "kd": 0.05,
+      "velocity": 4.0,
+      "acceleration": 2.0,
+      "tracking_error": 0.3,
+      "timeout": 0.2,
+      "servo_timeout": 0.1,
+      "position_tolerance": 0.01,
+      "backend": "external-dex1",
+      "internal_coordinate": "negative of service q",
+      "physical_opened": [
+        5.4,
+        5.4
+      ],
+      "physical_closed": [
+        0.0,
+        0.0
+      ],
+      "reference": "https://github.com/unitreerobotics/dex1_1_service",
+      "calibration_verified": false
+    },
+    "url": "https://172.20.10.4:8012/?ws=wss://172.20.10.4:8012",
+    "preopen": {
+      "physical_unload_verified": false,
+      "error": null,
+      "command_frames": 418,
+      "phase": "DISARMED",
+      "elapsed_s": 4.647537134998856,
+      "release_reason": "operator_release",
+      "first_fault": null,
+      "opening_complete": true,
+      "arm_sdk_release_submitted": true,
+      "external_gripper_zero_submitted": [
+        true,
+        true
+      ],
+      "external_gripper_cleanup_error": null,
+      "unload_submitted": false,
+      "physical_gripper_release_verified": false,
+      "physical_handover_verified": false,
+      "backend": "external-dex1"
+    },
+    "summary": {
+      "unload_submitted": false,
+      "physical_unload_verified": false,
+      "error": "tracking_error",
+      "command_frames": 3385,
+      "phase": "FAULT",
+      "elapsed_s": 38.70101756499935,
+      "release_reason": "operator_release",
+      "first_fault": {
+        "reason": "tracking_error",
+        "phase": "RELEASING",
+        "last_step_time": 22157.142276118,
+        "gain_scale": 0.766386829498515,
+        "feedback_received": 22157.141453177,
+        "tracking_error_rad": [
+          0.014803342505817718,
+          0.0662428506571058,
+          0.07652387062634908,
+          0.09566316477519388,
+          0.029073212501546708,
+          0.0992514761246096,
+          0.007213090207137594,
+          0.029744665896028477,
+          0.058949045812393464,
+          0.20204985138168652,
+          0.019540275906199778,
+          0.013331817567569848,
+          0.01921091015969109,
+          0.0005828448311017741
+        ],
+        "tracking_exceeded_arm_indices": [
+          24
+        ]
+      },
+      "gripper_fault": null,
+      "last_gripper_command": {
+        "q": [
+          5.4,
+          5.4
+        ],
+        "kp": [
+          0.0,
+          0.0
+        ],
+        "kd": [
+          0.0,
+          0.0
+        ],
+        "states": [
+          "RELEASED",
+          "RELEASED"
+        ],
+        "phase": "RELEASED",
+        "backend": "external-dex1",
+        "coordinate": "external_service_q"
+      },
+      "external_gripper_zero_submitted": [
+        true,
+        true
+      ],
+      "external_gripper_cleanup_error": null,
+      "physical_gripper_release_verified": false,
+      "arm_sdk_release_submitted": true,
+      "physical_handover_verified": false,
+      "last_arm_sdk_request": {
+        "topic": "rt/arm_sdk",
+        "weight": 0.0,
+        "joint_indices": [
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28
+        ],
+        "q": [
+          -0.0013927571708336473,
+          -0.006324226967990398,
+          -0.059208743274211884,
+          0.3509249016488841,
+          -0.062120277240425716,
+          0.4047718052061983,
+          0.5736078871085036,
+          9.639168069664042e-05,
+          0.4904645355499636,
+          -0.03096582427219344,
+          0.14052720757809262,
+          0.14324608442714337,
+          -0.9372701048492463,
+          0.9596548420442397,
+          -0.2663188149335214,
+          -0.05909441198740792,
+          0.004162908185221077
+        ],
+        "kp": [
+          60.0,
+          60.0,
+          60.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          40.0,
+          40.0,
+          40.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          40.0,
+          40.0,
+          40.0
+        ],
+        "kd": [
+          1.5,
+          1.5,
+          1.5,
+          3.0,
+          3.0,
+          3.0,
+          3.0,
+          1.5,
+          1.5,
+          1.5,
+          3.0,
+          3.0,
+          3.0,
+          3.0,
+          1.5,
+          1.5,
+          1.5
+        ]
+      },
+      "control_mode": "arm_sdk",
+      "hardware_motion_enabled": true
+    }
+  },
+  "next_run_external_limits": {
+    "velocity": 5.0,
+    "acceleration": 5.0,
+    "tests_passed": 25,
+    "live_validated": false,
+    "automatic_restart": false
+  }
+}

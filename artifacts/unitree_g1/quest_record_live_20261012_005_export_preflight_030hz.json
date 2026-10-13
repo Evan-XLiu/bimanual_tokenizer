@@ -1,0 +1,35 @@
+{
+  "frames": 869,
+  "fps": 30,
+  "task": "左夹抓瓶子到中间",
+  "failed_session": false,
+  "excluded_active_commands_before_dual_pickup": 3,
+  "configured_max_age_s": 0.2,
+  "hardware_motion_enabled": true,
+  "active_duration_s": 28.949051870999938,
+  "max_camera_age_s": 0.1008481530006975,
+  "camera_age_p95_s": [
+    0.09686538460027803,
+    0.0561393201998726,
+    0.05413399780009058
+  ],
+  "max_intercamera_receipt_skew_s": 0.08666603100027714,
+  "max_command_grid_jitter_s": 0.013954048000414332,
+  "over_one_period_camera_samples": 1442,
+  "duplicate_camera_samples": {
+    "head": 579,
+    "left_wrist": 434,
+    "right_wrist": 434
+  },
+  "alignment": "causal host receipt; remote OpenCV read-completion estimate is diagnostic only",
+  "exposure_synchronization_verified": false,
+  "source_session": "/home/conrad/bimanual_tokenizer/.local/unitree_g1/experiments/quest_record_live_20261012_005",
+  "source_nonce": "0c19518c9ca44614829da77a045cc5ad",
+  "source_hashes": {
+    "session.json": "71bb591b4cf66c66b24ece2f2421ad3d17bd62b9a7c0cf01f13140fd1addf8a2",
+    "summary.json": "a6f788bee605ae9d8fee8ebec83e9697a3b769e64a5314d9d080438c242b5090",
+    "commands.jsonl": "3c2bff8d3a4ea75420d0459a81117b040f37faff4f0132053cc1442ddb613ab0",
+    "cameras/frames.jsonl": "e33bc9025a074baafbe1d6b4477f77d066d729fed312f9877064343bfa961830",
+    "cameras/metadata.json": "f49720ef57d3f911e74e1a08fd81d8647a1cbde1c56dbbec6294908a2d8e1945"
+  }
+}

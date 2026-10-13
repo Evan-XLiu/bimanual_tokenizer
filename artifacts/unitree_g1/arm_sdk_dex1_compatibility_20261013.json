@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-13",
+  "request": "通过Quest扳机控制内走线Dex1闭合，保留官方运控站立与arm_sdk上肢路径",
+  "status": "blocked_on_verified_transport",
+  "motion_commands_sent_this_investigation": 0,
+  "readonly_probe": {
+    "script": "scripts/unitree_g1/inspect_gripper.py --interface enp130s0",
+    "window_s": 6,
+    "lowstate_samples": 6259,
+    "motor_count": 35,
+    "last_gripper_q": {
+      "31": -1.8442668914794922,
+      "33": -0.004471540451049805
+    },
+    "dex1_endpoints_observed": false,
+    "dex1_state_received": false,
+    "dex3_endpoints_observed": true,
+    "dex3_state_received": false,
+    "limitation": "Finite observation, not proof of permanent endpoint absence. Endpoint discovery is not proof of actual command traffic."
+  },
+  "official_sources": [
+    "https://github.com/unitreerobotics/xr_teleoperate/blob/main/teleop/robot_control/robot_arm.py",
+    "https://github.com/unitreerobotics/xr_teleoperate/blob/main/README_zh-CN.md",
+    "https://github.com/unitreerobotics/dex1_1_service"
+  ],
+  "finding": "Official internal Dex1 controller rejects motion_mode. No verified internal Dex1 arm_sdk or independent transport identified. External dex1_1_service requires its serial hardware path; starting it does not establish access to the internal grippers.",
+  "existing_trigger_logic": "0..1 maps full-open to near-closed, with velocity/acceleration limits, closing-error freeze, opening release and stale-input protection; available in existing debug transport only.",
+  "validation": {
+    "test_quest_grippers": 13,
+    "test_arm_sdk": 12,
+    "result": "25 unittest tests passed"
+  },
+  "next_required_evidence": "Firmware-specific documented interface for internal Dex1 concurrent with ai/FSM501: topic, message fields/indices, units, authority and stop semantics; alternatively a manufacturer-supported independent hardware connection.",
+  "preserved_constraints": [
+    "No lowcmd publisher alongside official locomotion",
+    "No guessed Dex3 command mapping",
+    "No reactivation of frozen custom lower-body route",
+    "No enabling unverified arm_sdk slots 31/33"
+  ],
+  "web_research": {
+    "date": "2026-10-13",
+    "conclusion": "No verified internal Dex1 + arm_sdk solution or enabling firmware version found. Unverified does not mean impossible. A real-hardware success report uses independent Dex1 DDS, a different transport.",
+    "sources": [
+      {
+        "url": "https://github.com/unitreerobotics/xr_teleoperate/blob/main/README_zh-CN.md",
+        "finding": "Internal arm_sdk control unverified; motion unsupported."
+      },
+      {
+        "url": "https://github.com/Orboh/DimOS_base_G1-TOYOTA-BODY-RESEARCH/pull/7",
+        "finding": "Author reports 2026-06-13 real G1 arm and right Dex1 operation with stock locomotion. PR code reviewed: rt/dex1/right/cmd MotorCmds_ and right/state MotorStates_; only right gripper. No internal slot31/33 support evidence."
+      },
+      {
+        "url": "https://github.com/4paradigm/phanthymotus-driver/pull/317",
+        "finding": "PR code reviewed: detects internal and external Dex1, explicitly rejects internal type."
+      },
+      {
+        "url": "https://github.com/unitreerobotics/dex1_1_service/blob/main/README_zh-CN.md",
+        "finding": "Serial-to-DDS driver; needs compatible independent serial hardware, not a lowstate bridge."
+      },
+      {
+        "url": "https://github.com/unitreerobotics/dex1_1_service/issues/4",
+        "finding": "Serial motor calibration issue; not internal arm_sdk compatibility."
+      }
+    ],
+    "github_search_counts": {
+      "dex1_in_xr_teleoperate": 18,
+      "dex1_in_unitree_org": 70,
+      "gripper_and_arm_sdk": 6,
+      "exact_dex1_internal": 2
+    },
+    "limitations": "Search not exhaustive; third-party hardware reports not independently reproduced. No robot commands or controller changes in this research.",
+    "next_step": "Read-only robot-side service/configuration and serial hardware inventory may distinguish a stopped independent service from absent hardware. Do not blindly start serial detection/calibration. Independent connection is conditional on hardware compatibility; keeping internal wiring requires protocol evidence or a separately designed supervised experiment."
+  }
+}

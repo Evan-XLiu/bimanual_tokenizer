@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -51,6 +52,22 @@ class ClutchTests(unittest.TestCase):
         self.assertIsNone(self.feed(2.10, session='b'))
         self.assertNotEqual(self.c.state, 'following')
 
+    def test_half_grip_engages_and_either_side_below_half_releases(self):
+        self.feed(.9,grip=.5)
+        self.assertNotEqual(self.c.state,'following')
+        self.feed(1.,grip=0.)
+        self.feed(1.01,grip=.5)
+        self.assertEqual(self.c.state,'following')
+        self.assertIsNotNone(self.feed(1.02,grip=.619,x=.01))
+        for side in ('left','right'):
+            e=event(1.03,grip=1.)
+            e['raw'][side+'State']['squeezeValue']=.499
+            self.assertIsNone(self.c.accept(e,1.03,self.robot))
+            self.assertEqual(self.c.state,'hold')
+            self.c=m.RelativeClutch()
+            self.feed(1.,grip=0.)
+            self.feed(1.01,grip=.5)
+
     def test_jump_invalid_and_old_backlog(self):
         self.engage()
         self.assertIsNone(self.feed(1.06, x=0.5))
@@ -97,6 +114,17 @@ class ClutchTests(unittest.TestCase):
 
 class RealIKTests(unittest.TestCase):
     def test_continuous_two_arm_trajectory(self):
+        # SDK encoding tests may already have imported hardware modules in the
+        # discovery process. Check the virtual-only boundary in a fresh process.
+        result = subprocess.run(
+            [sys.executable, '-c',
+             'from test_virtual_arms import RealIKTests; '
+             'RealIKTests()._check_continuous_two_arm_trajectory()'],
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True, text=True, timeout=120)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def _check_continuous_two_arm_trajectory(self):
         with tempfile.TemporaryDirectory() as tmp:
             robot = m.VirtualRobot(Path(tmp), False)
             start = robot.q.copy()

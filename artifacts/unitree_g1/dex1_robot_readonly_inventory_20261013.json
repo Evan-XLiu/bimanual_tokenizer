@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-13",
+  "scope": {
+    "host": "unitree@192.168.123.164",
+    "hostname": "ubuntu",
+    "kernel": "5.10.104-tegra",
+    "architecture": "aarch64",
+    "limitation": "Only this development computer inspected; motion-control computer and physical wiring were not directly inspected."
+  },
+  "read_only": true,
+  "motor_commands_sent": 0,
+  "remote_configuration_changed": false,
+  "dex1_installation": {
+    "directory": "/home/unitree/dex1_1_service",
+    "compiled_server_exists": true,
+    "compiled_server_bytes": 3735912,
+    "source_sha256": "d61518b02afb80ad91ece91d0c4e74352c213f38da9e54d17d5b2e8e82b47973",
+    "source_behavior": "main.cpp enumerates /dev/ttyUSB* only; returns without server startup when none found. No executable was launched."
+  },
+  "services": {
+    "named_dex1_gripper_process_observed": false,
+    "matching_dex1_system_or_user_unit_found": false,
+    "startup_paths_searched": [
+      "/etc/systemd/system",
+      "/etc/init.d",
+      "/etc/udev/rules.d",
+      "/home/unitree/.config/systemd",
+      "/home/unitree/.config/autostart",
+      "/etc/rc.local",
+      "/etc/crontab",
+      "/etc/cron.d",
+      "/unitree/etc"
+    ],
+    "master_service": {
+      "running": true,
+      "executable": "/unitree/module/master_service/master_service",
+      "configuration": "/unitree/module/master_service/master_service.json",
+      "configuration_readable_as_json": false,
+      "configuration_format_observation": "Non-text FMX-prefixed data; not decoded. Cannot exclude configuration hidden in this file."
+    }
+  },
+  "devices": {
+    "ttyUSB": [],
+    "ttyACM": [],
+    "serial_by_id_exists": false,
+    "serial_by_path_exists": false,
+    "usb_serial_sysfs_directory_exists": false,
+    "onboard_uart": [
+      "ttyTHS0",
+      "ttyTHS3",
+      "ttyTHS4",
+      "ttyS0",
+      "ttyS1",
+      "ttyS2",
+      "ttyS3"
+    ],
+    "uart_drivers": [
+      "serial-tegra",
+      "serial8250"
+    ],
+    "uart_limitation": "Device nodes alone do not demonstrate a gripper connection; no UART device was opened."
+  },
+  "usb": {
+    "devices": [
+      {
+        "vid_pid": "8086:0b5b",
+        "count": 2,
+        "driver": "uvcvideo"
+      },
+      {
+        "vid_pid": "1bcf:2d4f",
+        "count": 1,
+        "driver": [
+          "uvcvideo",
+          "snd-usb-audio"
+        ]
+      },
+      {
+        "vid_pid": "0bda:a85b",
+        "count": 1,
+        "driver": [
+          "rtk_btusb",
+          "rtl8852bu"
+        ]
+      },
+      {
+        "vid_pid": "05e3:0625",
+        "count": 1,
+        "driver": "hub"
+      },
+      {
+        "vid_pid": "05e3:0610",
+        "count": 1,
+        "driver": "hub"
+      },
+      {
+        "vid_pid": "0bda:0411",
+        "count": 1,
+        "driver": "hub"
+      },
+      {
+        "vid_pid": "0bda:5411",
+        "count": 1,
+        "driver": "hub"
+      }
+    ],
+    "usb_serial_converter_observed": false,
+    "topology": "USB3 Realtek hub -> Genesys hub -> two Intel video devices; USB2 Realtek hub -> Genesys hub, Sunplus video/audio, Realtek wireless."
+  },
+  "kernel_log": {
+    "accessible": true,
+    "boot_start": "2026-10-13 16:37:55 CST",
+    "searched_current_boot": true,
+    "patterns": [
+      "ttyUSB",
+      "ttyACM",
+      "usbserial",
+      "ftdi",
+      "cp210",
+      "ch34",
+      "pl2303"
+    ],
+    "matching_lines": 0,
+    "limitation": "No matching log entries is not proof of absence of physical or unpowered wiring."
+  },
+  "conclusion": "Installed Dex1 software exists, but no usable USB serial hardware path is enumerated on this computer. A stopped standalone service alone does not explain the missing channel. Combined with prior lowstate31/33 feedback, observations are consistent with internal-bus Dex1. No independent control path established.",
+  "remaining_unknowns": [
+    "Physical connectors and any disconnected/unpowered serial adapter",
+    "Opaque master-service configuration",
+    "Other onboard computer hardware/configuration",
+    "Firmware support for forwarding internal Dex1 through arm_sdk"
+  ],
+  "not_performed": [
+    "Starting/stopping services",
+    "Running gripper server, serial motor discovery or calibration",
+    "Opening serial device nodes",
+    "Sending DDS motor commands",
+    "Changing firmware or wiring"
+  ]
+}

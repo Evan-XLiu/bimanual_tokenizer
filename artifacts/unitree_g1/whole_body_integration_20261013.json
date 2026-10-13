@@ -1,0 +1,1625 @@
+{
+  "date": "2026-10-13",
+  "status": "offline unified controller implemented; hardware gate remains closed",
+  "hardware_approved": false,
+  "hardware_commands_sent": 0,
+  "user_model_choice": "No measured Dex1 data; use official model and mass sensitivity study",
+  "numeric_fix": "Engine-visible affine PD bias with implicitfast; continuous PD equality regression passed; use 1ms and verify at 0.5ms",
+  "model_fix": "Retain mode5 rev1.0 body, replace fused rubber-hand mass with bare wrist inertia and official mode15 Dex1 subtree. Assumed mount, 0.364946 kg/hand, coupled finger sliders.",
+  "standing_fix": "Bounded position/velocity/integral outer loop feeding official policy velocity command; reliable world pose required.",
+  "load_fix": "Known-mass FK CoM compensation plus bounded IMU waist trim; 0.2rad bound, 0.3rad/s and 0.6rad/s^2 waist limits.",
+  "controller_features": [
+    "Single servo owner composes slots0..28 and31/33; inactive29/30/32/34 remain disabled.",
+    "Integrated preopen then ACTIVE then UPPER_HOLD while lower policy continues.",
+    "Operator release/input timeout/camera or recording failure holds upper setpoints, retains body gains.",
+    "Policy worker uses single-slot latest-input mailbox; servo performs no inference.",
+    "Recording uses bounded queue, records pre-submit state and only successful simulation submissions.",
+    "Lower-body faults and failed submissions latch without claiming a zero-gain stop can balance the robot.",
+    "Leg targets clipped to model bounds with raw policy targets and clipped indices retained.",
+    "No live DDS publisher, service/FSM switch, robot execution or new LeRobot export introduced."
+  ],
+  "remaining": [
+    "Proprioceptive flat-ground stance odometry fails 180s global drift gate (1.125m); reliable external/base localization or a validated non-stepping stance policy is required before hardware integration.",
+    "Mode15 Dex1 mount on mode5 body and real wrist camera/bracket inertia unmeasured.",
+    "Motor-to-slider affine simulation mapping is not a calibrated Dex1 transmission.",
+    "Simulated finger drive and ideal initial pose do not verify physical preopen, contact force or startup authority transfer.",
+    "Real Quest/camera concurrency, hardware exclusive DDS ownership and independent body-fault stop remain unvalidated."
+  ],
+  "regression": {
+    "command": ".venv-g1-xr/bin/python -m unittest discover -s tests/unitree_g1 -v",
+    "tests": 153,
+    "passed": 152,
+    "skipped": 1,
+    "note": "Full 152-test suite passed (151 pass, 1 skip); subsequent export whitelist addition validated by the focused recording suite.",
+    "focused_export_guard_log_tail": [
+      "",
+      "----------------------------------------------------------------------",
+      "Ran 10 tests in 1.529s",
+      "",
+      "OK (skipped=1)"
+    ]
+  },
+  "matrix_before_load_compensation": {
+    "hardware_approved": false,
+    "hardware_commands_sent": 0,
+    "purpose": "Offline development matrix, including negative and stress cases",
+    "code_sha256": {
+      "sim_lower_body.py": "815e429ed70bfa04604ae28927aa429e83b9a40bbf8486299d6d64f67debc98e",
+      "g1_sim_model.py": "f2306c8c948712b88028c7ba0408e39246848ad1f172df81646ca5fd4af691cd",
+      "lower_body_policy.py": "0e212dc989361d3104f55e8c78faee5a69e92677b7a577c0b079abdabf7fc432",
+      "standing_reference.py": "04c6fd172d27a8ccc84e6505a53f340900c8c09ba87673532b758c026b793399",
+      "stance_odometry.py": "4f4672005e19ff93238efbb36c530336a07c4b93be42fd17bad87cbf5fd90575",
+      "whole_body_control.py": "826a58b4645ea204ee22633876ae56a7db23c8a73d1bdca17d09f85c187d5d40",
+      "validate_lower_body.py": "edf912907688e9095cd1260605d73dffb46c3fb6a91bf32e92e7f6d875c1e8fa"
+    },
+    "cases": {
+      "explicit_29dof": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "explicit",
+          "dex1": null,
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.341142000000005
+        },
+        "position_hold": false,
+        "unified": false,
+        "upper_phase_history": [],
+        "clipped_leg_frames": 0,
+        "final_body_gains_positive": null,
+        "pose_source": null,
+        "gripper_cycle": false,
+        "elbow_target": 0.0,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.002,
+        "seconds_requested": 20.0,
+        "seconds_completed": 0.854,
+        "push_newtons": 0.0,
+        "arm_motion": false,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.6024084698610774,
+          "max_drift_m": 0.31226525165891145,
+          "max_foot_lift_m": 0.28489281155663204,
+          "max_joint_limit_excess_rad": 0.7952258485792041,
+          "max_abs_requested_torque_nm": 658.1517832698414,
+          "max_abs_applied_torque_nm": 122.17235543555432,
+          "min_pelvis_height_m": 0.6773252452516781,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.1542469999549212,
+        "inference_ms_max": 0.19570099993870826,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_tilt_rad",
+          "max_drift_m",
+          "max_foot_lift_m",
+          "max_joint_limit_excess_rad"
+        ],
+        "failure": "fall_screen",
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "no world pose feedback",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/explicit_29dof.trace.jsonl",
+        "trace_sha256": "e4432832685ed616db077561dc9970ba534c7b069bac0fc77481d24c00156fc6"
+      },
+      "implicit_zero_0.002": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": null,
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.341142000000005
+        },
+        "position_hold": false,
+        "unified": false,
+        "upper_phase_history": [],
+        "clipped_leg_frames": 0,
+        "final_body_gains_positive": null,
+        "pose_source": null,
+        "gripper_cycle": false,
+        "elbow_target": 0.0,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.002,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": false,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.2073535709666041,
+          "max_drift_m": 2.225417868762533,
+          "max_foot_lift_m": 0.03308046964951074,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 71.43452464372932,
+          "max_abs_applied_torque_nm": 71.43452464372933,
+          "min_pelvis_height_m": 0.7620437300029782,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.15837949968044995,
+        "inference_ms_max": 1.8172499994761893,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_tilt_rad",
+          "max_drift_m",
+          "max_foot_lift_m"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "no world pose feedback",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/implicit_zero_0.002.trace.jsonl",
+        "trace_sha256": "2bb5e6da0947d285d0a00a6fc31f5ff7a08a2e545d04df8bc234f150ee85eb6b"
+      },
+      "implicit_zero_0.001": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": null,
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.341142000000005
+        },
+        "position_hold": false,
+        "unified": false,
+        "upper_phase_history": [],
+        "clipped_leg_frames": 0,
+        "final_body_gains_positive": null,
+        "pose_source": null,
+        "gripper_cycle": false,
+        "elbow_target": 0.0,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": false,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.18002668058111404,
+          "max_drift_m": 1.8083354658538067,
+          "max_foot_lift_m": 0.030733140796899122,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 64.8173650216479,
+          "max_abs_applied_torque_nm": 64.8173650216479,
+          "min_pelvis_height_m": 0.767966674931791,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.15513200014538597,
+        "inference_ms_max": 24.882796000383678,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_drift_m",
+          "max_foot_lift_m"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "no world pose feedback",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/implicit_zero_0.001.trace.jsonl",
+        "trace_sha256": "3f2165499df9345346cb3be87b862606089dcf3ecffe2c1b6be619e0d37c72af"
+      },
+      "implicit_zero_0.0005": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": null,
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.341142000000005
+        },
+        "position_hold": false,
+        "unified": false,
+        "upper_phase_history": [],
+        "clipped_leg_frames": 0,
+        "final_body_gains_positive": null,
+        "pose_source": null,
+        "gripper_cycle": false,
+        "elbow_target": 0.0,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.0005,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": false,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.17320240963190667,
+          "max_drift_m": 1.7919281527187914,
+          "max_foot_lift_m": 0.02993696526740436,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 63.420047741290375,
+          "max_abs_applied_torque_nm": 63.42004774129038,
+          "min_pelvis_height_m": 0.7668313150483794,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.16025900004024152,
+        "inference_ms_max": 1.901229999930365,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_drift_m"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "no world pose feedback",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/implicit_zero_0.0005.trace.jsonl",
+        "trace_sha256": "72cd721b43c277fbef022db9dbaf7fc8ee782718f1154b56d09c9b6cd7b6e835"
+      },
+      "dex1_hold_0.002": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": false,
+        "upper_phase_history": [],
+        "clipped_leg_frames": 0,
+        "final_body_gains_positive": null,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": false,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.002,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": false,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.19616935291031348,
+          "max_drift_m": 0.0662759598389926,
+          "max_foot_lift_m": 0.03222863404707614,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 66.95483030572005,
+          "max_abs_applied_torque_nm": 66.95483030572005,
+          "min_pelvis_height_m": 0.7633479117032653,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.15790000043125474,
+        "inference_ms_max": 0.9948670003723237,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_foot_lift_m"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/dex1_hold_0.002.trace.jsonl",
+        "trace_sha256": "cf5ac28732da545818e5a326b42b14afee46daed457f4ec3b1530802e71f379f"
+      },
+      "dex1_hold_0.001": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": false,
+        "upper_phase_history": [],
+        "clipped_leg_frames": 0,
+        "final_body_gains_positive": null,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": false,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": false,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.182698760224954,
+          "max_drift_m": 0.060248921473611175,
+          "max_foot_lift_m": 0.0287407351682515,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 64.76153539758937,
+          "max_abs_applied_torque_nm": 64.76153539758937,
+          "min_pelvis_height_m": 0.7657737997923697,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.1652350001677405,
+        "inference_ms_max": 2.5339590001749457,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/dex1_hold_0.001.trace.jsonl",
+        "trace_sha256": "bd5d9f32298dd05adad10b1c65c8ad333fee8233823b7da92784de31cade74be"
+      },
+      "dex1_hold_0.0005": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": false,
+        "upper_phase_history": [],
+        "clipped_leg_frames": 0,
+        "final_body_gains_positive": null,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": false,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.0005,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": false,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.17020017886544492,
+          "max_drift_m": 0.05606217757210949,
+          "max_foot_lift_m": 0.027611976111396763,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 63.71452628526125,
+          "max_abs_applied_torque_nm": 63.71452628526124,
+          "min_pelvis_height_m": 0.7677300838375337,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.1636840001992823,
+        "inference_ms_max": 2.144117999705486,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/dex1_hold_0.0005.trace.jsonl",
+        "trace_sha256": "e318ff793309c3caf561a082ae26097c243cbbb9f506e0c0a3bb3b5dc70eca3a"
+      },
+      "unified_180s_simulation_truth": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 44780,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 180.0,
+        "seconds_completed": 180.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.19490543579902728,
+          "max_drift_m": 0.05651054348154112,
+          "max_foot_lift_m": 0.029216866377163364,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 65.03941305960807,
+          "max_abs_applied_torque_nm": 65.03941305960807,
+          "min_pelvis_height_m": 0.765578672277434,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.17506699987279717,
+        "inference_ms_max": 0.39711599947622744,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/unified_180s_simulation_truth.trace.jsonl",
+        "trace_sha256": "3484ab118bda1334541891dbc43b7df384b02c861512d5ea4fdb9c429d8a47fc"
+      },
+      "unified_180s_kinematic": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 39800,
+        "final_body_gains_positive": true,
+        "pose_source": "kinematic",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 180.0,
+        "seconds_completed": 180.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.2129898372117205,
+          "max_drift_m": 1.1254221604641081,
+          "max_foot_lift_m": 0.029134095110967234,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 65.04074181033958,
+          "max_abs_applied_torque_nm": 65.0407418103396,
+          "min_pelvis_height_m": 0.7639319972979177,
+          "max_odometry_error_m": 1.1235961956332265
+        },
+        "inference_ms_p50": 0.17784500005291193,
+        "inference_ms_max": 0.38477900034195045,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_tilt_rad",
+          "max_drift_m"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: kinematic",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/unified_180s_kinematic.trace.jsonl",
+        "trace_sha256": "36dc23992cd110edac2c52dc85646bafce159255df799c18e9b4215913613a15"
+      },
+      "mount_200g": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.2,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 34.13103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 5960,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.21692315249860633,
+          "max_drift_m": 0.07390789382742254,
+          "max_foot_lift_m": 0.027148600587175026,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 64.80619154729963,
+          "max_abs_applied_torque_nm": 64.80619154729963,
+          "min_pelvis_height_m": 0.7652793712848742,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.1786770003491256,
+        "inference_ms_max": 0.23417300053552026,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_tilt_rad"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/mount_200g.trace.jsonl",
+        "trace_sha256": "a2bfba6ccbf41fdfabefa7e871433ce52f47c1d8970fe09399f35dbec2d8fd05"
+      },
+      "left_payload_500g": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.5,
+          "total_mass_kg": 34.23103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 5400,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.23079435397744189,
+          "max_drift_m": 0.08747743561672801,
+          "max_foot_lift_m": 0.028765561592549782,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 63.95200719816744,
+          "max_abs_applied_torque_nm": 63.95200719816744,
+          "min_pelvis_height_m": 0.7616026029842562,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.18233099990538904,
+        "inference_ms_max": 0.38164699981280137,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_tilt_rad"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/left_payload_500g.trace.jsonl",
+        "trace_sha256": "6d9cee6f84fed888b090acee063b64321335bb356fefccc15d85a3ea134d0eb6"
+      },
+      "mount_and_payload": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.2,
+          "left_payload_kg": 0.5,
+          "total_mass_kg": 34.63103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 10440,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.3394710344390586,
+          "max_drift_m": 4.666641819194736,
+          "max_foot_lift_m": 0.11562993563635797,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 110.87861293647761,
+          "max_abs_applied_torque_nm": 88.0,
+          "min_pelvis_height_m": 0.7148872850936521,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.18185699946116074,
+        "inference_ms_max": 0.238683999668865,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [
+          "max_tilt_rad",
+          "max_drift_m",
+          "max_foot_lift_m"
+        ],
+        "failure": null,
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/mount_and_payload.trace.jsonl",
+        "trace_sha256": "de6c8ad7fb5711b4cf532d1e86fad17f40db93005339eb50cee8e461acb2d060"
+      },
+      "push_10N": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 5120,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 10.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.1939892685660645,
+          "max_drift_m": 0.05651054348154112,
+          "max_foot_lift_m": 0.029216866377163364,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 66.02449301670967,
+          "max_abs_applied_torque_nm": 66.02449301670967,
+          "min_pelvis_height_m": 0.765578672277434,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.187188000381866,
+        "inference_ms_max": 0.23401700036629336,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/push_10N.trace.jsonl",
+        "trace_sha256": "3aade75b2c090aa425672eb4f996d4b2681acd31fcc248078afcf401d277273b"
+      },
+      "push_20N": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 5160,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 20.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.19202347721958044,
+          "max_drift_m": 0.06435056552382445,
+          "max_foot_lift_m": 0.029216866377163364,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 68.03427154224681,
+          "max_abs_applied_torque_nm": 68.03427154224681,
+          "min_pelvis_height_m": 0.7623485510538922,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.1791969998521381,
+        "inference_ms_max": 0.2574219997768523,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/push_20N.trace.jsonl",
+        "trace_sha256": "92ab37e17e76d7c26cc7b8d6118313f8bd1423d43c39da09ccd1cdb7f0d60b75"
+      },
+      "camera_failure": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "camera_failure"
+          }
+        ],
+        "clipped_leg_frames": 5020,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.19368045119241223,
+          "max_drift_m": 0.05651054348154112,
+          "max_foot_lift_m": 0.029216866377163364,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 64.97239077426003,
+          "max_abs_applied_torque_nm": 64.97239077426005,
+          "min_pelvis_height_m": 0.765578672277434,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.1820485003918293,
+        "inference_ms_max": 0.23925700043037068,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/camera_failure.trace.jsonl",
+        "trace_sha256": "ecffec6788c9f8ccc43f316e0d833966b9f0aed7d01ea8ba97dc9d394e83a671"
+      },
+      "input_timeout": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.200000000000001,
+            "phase": "UPPER_HOLD",
+            "reason": "upper_input_deadline"
+          }
+        ],
+        "clipped_leg_frames": 5020,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.19368045119241223,
+          "max_drift_m": 0.05651054348154112,
+          "max_foot_lift_m": 0.029216866377163364,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 64.97240337001955,
+          "max_abs_applied_torque_nm": 64.97240337001953,
+          "min_pelvis_height_m": 0.765578672277434,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.1829484999689157,
+        "inference_ms_max": 0.24174699956347467,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/input_timeout.trace.jsonl",
+        "trace_sha256": "14f4c24b6bab2fc1c4a56f8f1f36b8c8dcdfe6c8ef6e3d0730d02745a91ab7c8"
+      },
+      "inference_delay_20ms": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 3100,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 20.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 1,
+        "metrics": {
+          "max_tilt_rad": 0.17904201178146004,
+          "max_drift_m": 0.05651054348154112,
+          "max_foot_lift_m": 0.029216866377163364,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 64.70985425586461,
+          "max_abs_applied_torque_nm": 64.7098542558646,
+          "min_pelvis_height_m": 0.765578672277434,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.17840700002125232,
+        "inference_ms_max": 0.23379200047202175,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/inference_delay_20ms.trace.jsonl",
+        "trace_sha256": "994d6238a254e935677321fe9cb2db0402c0c9fd1ae3665b60d2c5e6a1acbcac"
+      },
+      "inference_delay_60ms": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.0,
+          "left_payload_kg": 0.0,
+          "total_mass_kg": 33.73103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          }
+        ],
+        "clipped_leg_frames": 1220,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 20.0,
+        "seconds_completed": 5.021000000000001,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 3,
+        "metrics": {
+          "max_tilt_rad": 0.17904201178146004,
+          "max_drift_m": 0.05651054348154112,
+          "max_foot_lift_m": 0.029216866377163364,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 64.70985425586461,
+          "max_abs_applied_torque_nm": 64.7098542558646,
+          "min_pelvis_height_m": 0.765578672277434,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.18776899969452643,
+        "inference_ms_max": 0.27339899952494306,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": "policy_deadline",
+        "passed": false,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_matrix_007/inference_delay_60ms.trace.jsonl",
+        "trace_sha256": "a1cf1340e5840a7d6e41424d372c991480e98f22ee31bc83006e5c6ab22cc291"
+      }
+    }
+  },
+  "matrix_with_load_compensation": {
+    "hardware_approved": false,
+    "hardware_commands_sent": 0,
+    "purpose": "Offline development matrix, including negative and stress cases",
+    "code_sha256": {
+      "sim_lower_body.py": "5ec44ffc2f4903552bf7d9983e51664d79d3871fbeb1fdd8191561bedcfdcef6",
+      "g1_sim_model.py": "f2306c8c948712b88028c7ba0408e39246848ad1f172df81646ca5fd4af691cd",
+      "lower_body_policy.py": "0e212dc989361d3104f55e8c78faee5a69e92677b7a577c0b079abdabf7fc432",
+      "standing_reference.py": "04c6fd172d27a8ccc84e6505a53f340900c8c09ba87673532b758c026b793399",
+      "stance_odometry.py": "4f4672005e19ff93238efbb36c530336a07c4b93be42fd17bad87cbf5fd90575",
+      "whole_body_control.py": "c87b0b1e9fe16ed9da63396e478b386ed862e45bac8571530514c55b2680d815",
+      "upper_body_balance.py": "257cc2d492060908bdd8a4274ede69e0f688da155aa4191d0c3fc6bf8abbb787",
+      "validate_lower_body.py": "682a8623ca2d9eaf7893b0ac8234db3d28b37c301cc48981b44458b74a9aa016"
+    },
+    "cases": {
+      "compensated_load_0.001": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.2,
+          "left_payload_kg": 0.5,
+          "total_mass_kg": 34.63103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "load_compensation": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.153,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.154,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 14940,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.001,
+        "seconds_requested": 60.0,
+        "seconds_completed": 60.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.18875220817325444,
+          "max_drift_m": 0.062411276920616536,
+          "max_foot_lift_m": 0.02929496837890881,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 67.21956290017356,
+          "max_abs_applied_torque_nm": 67.21956290017354,
+          "min_pelvis_height_m": 0.7660213140827289,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.25292449981861864,
+        "inference_ms_max": 0.4954450005243416,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_compensated_matrix_010/compensated_load_0.001.trace.jsonl",
+        "trace_sha256": "42644b75b5d334d1d59dd9b959d633eea2b180d6b22298a850e6dbcd51534a9d"
+      },
+      "compensated_load_0.0005": {
+        "model": "29dof",
+        "model_metadata": {
+          "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+          "servo": "implicit",
+          "dex1": {
+            "commit": "5994d4faef0a9cadd3287f8de0199a67eeb2a259",
+            "mass_per_hand_kg": 0.364946,
+            "mount": "mode15 wrist +0.0415m X assumed on mode5; not measured",
+            "finger_drive": "URDF prismatic meters; no calibrated lowcmd motor-to-slider conversion"
+          },
+          "extra_mass_each_wrist_kg": 0.2,
+          "left_payload_kg": 0.5,
+          "total_mass_kg": 34.63103494
+        },
+        "position_hold": true,
+        "unified": true,
+        "load_compensation": true,
+        "upper_phase_history": [
+          {
+            "time": 0.0,
+            "phase": "PREOPEN",
+            "reason": ""
+          },
+          {
+            "time": 3.1505,
+            "phase": "READY",
+            "reason": ""
+          },
+          {
+            "time": 3.1510000000000002,
+            "phase": "ACTIVE",
+            "reason": ""
+          },
+          {
+            "time": 10.0,
+            "phase": "UPPER_HOLD",
+            "reason": "operator_release"
+          }
+        ],
+        "clipped_leg_frames": 27880,
+        "final_body_gains_positive": true,
+        "pose_source": "simulation_truth",
+        "gripper_cycle": true,
+        "elbow_target": 0.5,
+        "source_commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "simulation_dt": 0.0005,
+        "seconds_requested": 60.0,
+        "seconds_completed": 60.0,
+        "push_newtons": 0.0,
+        "arm_motion": true,
+        "inference_delay_steps": 0,
+        "metrics": {
+          "max_tilt_rad": 0.17997873911049997,
+          "max_drift_m": 0.05103163051655241,
+          "max_foot_lift_m": 0.02689138194303238,
+          "max_joint_limit_excess_rad": 0.0,
+          "max_abs_requested_torque_nm": 63.48833609130422,
+          "max_abs_applied_torque_nm": 63.48833609130421,
+          "min_pelvis_height_m": 0.7677275580919385,
+          "max_odometry_error_m": 0.0
+        },
+        "inference_ms_p50": 0.2854575000128534,
+        "inference_ms_max": 0.46725499942112947,
+        "screening_limits": {
+          "max_tilt_rad": 0.2,
+          "max_drift_m": 0.15,
+          "max_foot_lift_m": 0.03,
+          "max_joint_limit_excess_rad": 0.01
+        },
+        "violations": [],
+        "failure": null,
+        "passed": true,
+        "hardware_approved": false,
+        "limitations": [
+          "ideal initialized posture",
+          "no measured Dex1/mount calibration",
+          "world pose source: simulation_truth",
+          "Dex1 motor-to-slider mapping is uncalibrated affine surrogate in unified simulation",
+          "no camera/Quest concurrency",
+          "no hardware authority transition"
+        ],
+        "trace_path": ".local/unitree_g1/experiments/lower_body_compensated_matrix_010/compensated_load_0.0005.trace.jsonl",
+        "trace_sha256": "f67a2c3ab852057bf8414094db22c4a2448e0e478ad3c0b53512098bd5ff7044"
+      }
+    }
+  },
+  "raw_trace_storage": ".local/unitree_g1/experiments; ignored by Git, hashes in each case",
+  "final_code_sha256": {
+    "g1_sim_model.py": "f2306c8c948712b88028c7ba0408e39246848ad1f172df81646ca5fd4af691cd",
+    "sim_lower_body.py": "5ec44ffc2f4903552bf7d9983e51664d79d3871fbeb1fdd8191561bedcfdcef6",
+    "lower_body_policy.py": "0e212dc989361d3104f55e8c78faee5a69e92677b7a577c0b079abdabf7fc432",
+    "standing_reference.py": "04c6fd172d27a8ccc84e6505a53f340900c8c09ba87673532b758c026b793399",
+    "stance_odometry.py": "4f4672005e19ff93238efbb36c530336a07c4b93be42fd17bad87cbf5fd90575",
+    "upper_body_balance.py": "257cc2d492060908bdd8a4274ede69e0f688da155aa4191d0c3fc6bf8abbb787",
+    "whole_body_control.py": "2694a4e675aeeb4b95c54220151206356678ff61ff69f4b9a735949de424f047",
+    "whole_body_runtime.py": "e4d270fa8387c22546ed6149dbba5b668e93aa9c5958653d5672b5250a5d7ccb",
+    "validate_lower_body.py": "682a8623ca2d9eaf7893b0ac8234db3d28b37c301cc48981b44458b74a9aa016",
+    "convert_dataset.py": "011d45ec7857ba67c26096260dd99dcc3e3f8ba851daaa09ae909cf36c81995f"
+  }
+}
