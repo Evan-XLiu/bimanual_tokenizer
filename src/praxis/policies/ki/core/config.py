@@ -29,7 +29,9 @@ class PolicyConfig(ActionExpertPolicyConfig):
     PRETRAINED_RUNTIME_OVERRIDE_KEYS: ClassVar[frozenset[str]] = frozenset(
         {
             "block_ce_weighting",
+            "action_expert_detach_vlm",
             "ce_warmstart_steps",
+            "ki_end_step",
             "ce_loss_weight",
             "ce_vocab_scope",
             "default_instruction",
@@ -54,6 +56,9 @@ class PolicyConfig(ActionExpertPolicyConfig):
     action_embed_init: Literal["normal", "avg", "zero"] = "normal"
     ce_loss_weight: float = 1.0
     ce_warmstart_steps: int = 0
+    ki_end_step: int | None = None
+    # KI insulates the VLM from continuous-action gradients; CE still trains it.
+    action_expert_detach_vlm: bool = True
     block_ce_weighting: str = "block_mean"
     ce_vocab_scope: str = "action"
     ce_supervise_eos: bool = False
@@ -66,6 +71,10 @@ class PolicyConfig(ActionExpertPolicyConfig):
             "ce_warmstart_steps",
         )
         self.block_ce_weighting = validate_block_ce_weighting(self.block_ce_weighting)
+        if self.ki_end_step is not None:
+            self.ki_end_step = non_negative_int(self.ki_end_step, "ki_end_step")
+            if self.ki_end_step < self.ce_warmstart_steps:
+                raise ValueError("ki_end_step must be >= ce_warmstart_steps")
         self.ce_vocab_scope = validate_ce_vocab_scope(self.ce_vocab_scope)
         self.ce_supervise_eos = bool(self.ce_supervise_eos)
         if (

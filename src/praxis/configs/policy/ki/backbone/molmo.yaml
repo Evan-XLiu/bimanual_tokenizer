@@ -16,6 +16,7 @@ gradient_checkpointing: true
 
 # KI objectives
 ce_loss_weight: 1.0
+ce_warmstart_steps: 3000
 flow_loss_weight: 1.0
 
 # Action tokens in VLM vocabulary
@@ -40,7 +41,6 @@ flow_time_sampling: beta
 flow_beta_alpha: 1.5
 flow_beta_beta: 1.0
 flow_min_time: 0.001
-expert_hidden_size: null
 expert_hidden_size: 768
 expert_width_multiplier: 1.0
 expert_num_layers: 36
@@ -51,7 +51,7 @@ expert_ffn_multiple_of: 256
 expert_qk_norm: true
 expert_causal_attn: false
 expert_context_layer_norm: true
-action_expert_detach_vlm: false
+action_expert_detach_vlm: true
 expert_self_attn_every_n_layers: -1
 expert_dropout: 0.0
 expert_time_min_period: 0.004

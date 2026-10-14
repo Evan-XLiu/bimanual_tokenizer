@@ -1,0 +1,129 @@
+codec:
+  name: btt
+  kind: tokens
+  pretrained_path: null
+  action_dim: 14
+  arm_dim: 7
+  action_horizon: 32
+  latent_horizon_per_arm: 8
+  max_fit_chunks: 50000
+  model_dim: 256
+  num_heads: 8
+  decoder_nhead: 8
+  decoder_nlayer: 6
+  dropout: 0.1
+  use_causal_decoder: true
+  conv_kernel_sizes:
+  - 5
+  - 3
+  conv_strides:
+  - 2
+  - 2
+  latent_dim: 4
+  fsq_levels:
+  - 8
+  - 8
+  - 6
+  - 5
+  right_arm_sign:
+  - -1
+  - 1
+  - 1
+  - 1
+  - -1
+  - -1
+  - 1
+  shared_action_min:
+  - -0.7455939650535583
+  - -0.0036240178160369396
+  - 0.001716639962978661
+  - -1.5485999584197998
+  - -0.7570382356643677
+  - -1.2132829427719116
+  - 0.007295290008187294
+  shared_action_max:
+  - 0.84744793176651
+  - 2.1360723972320557
+  - 2.2520408630371094
+  - 1.58407723903656
+  - 1.2533378601074219
+  - 1.2350270748138428
+  - 1.0
+  clamp_normalized_actions: false
+dataset:
+  name: bicat_bottles
+  repo_id: local/bicat_bottles
+  root: /scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset/bottles
+  hf_datasets_cache: null
+  episodes: null
+  action_key: action_joint_angles
+  exclude_episodes_file: null
+  action_stats_file: null
+  observation_keys:
+  - observation.state_joint_angles
+  - observation.images.top
+  - observation.images.left
+  - observation.images.right
+  video_backend: pyav
+  bypass_force_cache_sync: true
+trainer:
+  max_steps: 50000
+  batch_size: 512
+  global_batch_size: null
+  num_workers: 4
+  prefetch_factor: 4
+  use_episode_aware_sampler: true
+  drop_n_first_frames: 0
+  drop_n_last_frames: 0
+  weight_decay: 0.0
+  betas:
+  - 0.9
+  - 0.95
+  eps: 1.0e-08
+  lr_scheduler: constant
+  warmup_steps: 200
+  min_lr_ratio: 0.1
+  use_ema: true
+  ema_decay: 0.995
+  mixed_precision: bf16
+  gradient_accumulation_steps: 1
+  find_unused_parameters: false
+  max_grad_norm: 1.0
+  distributed_strategy: ddp
+  fsdp_min_num_params: 100000000
+  fsdp_reshard_after_forward: true
+  fsdp_cpu_offload: false
+  log_every: 200
+  val_every: 1000
+  checkpoint_every: 5000
+  checkpoint_dir: /scratch/xuanweiliu/bimanual_tokenizer/outputs/tokenizer_bottles_btt_50k/manual/train/checkpoints
+  local_log_path: /scratch/xuanweiliu/bimanual_tokenizer/outputs/tokenizer_bottles_btt_50k/manual/train/train_metrics.jsonl
+  val_ratio: 0.0
+  split_seed: 42
+  val_batch_size: null
+  max_val_batches: 100
+  checkpoint_candidates:
+    best:
+      metric_key: val_reconst_loss
+      mode: min
+      k: 3
+    recent:
+      k: 2
+  use_wandb: false
+  wandb_project: BiCAT_RealWorld
+  wandb_entity: null
+  wandb_init_timeout: null
+  wandb_upload_eval_videos: true
+  wandb_max_eval_videos: 16
+  _trainer_type: codecs
+  lr: 5.0e-05
+  reconst_every: 1000
+  max_reconst_batches: 100
+  skip_codec_fit: false
+name: train_codecs
+seed: 42
+device: cuda
+run_name: tokenizer_bottles_btt_50k
+output_dir: /scratch/xuanweiliu/bimanual_tokenizer/outputs/tokenizer_bottles_btt_50k/manual/train
+run_mode: overwrite
+resume_checkpoint: null

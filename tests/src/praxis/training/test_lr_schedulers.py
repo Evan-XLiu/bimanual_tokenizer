@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 import torch
+from types import SimpleNamespace
 
 from praxis.training.core.lr_schedulers import (
     get_constant_warmup_scheduler,
@@ -18,6 +19,34 @@ from praxis.training.core.lr_schedulers import (
 def _make_optimizer(lr: float = 1e-3) -> torch.optim.Optimizer:
     model = torch.nn.Linear(4, 4)
     return torch.optim.SGD(model.parameters(), lr=lr)
+
+
+def test_trainer_family_warmup_and_configured_cosine_floor():
+    from praxis.training.core.trainer import DefaultTrainer
+
+    families = ["vlm", "bridge", "action_expert", "vision"]
+    peaks = [5e-5, 5e-5, 1e-4, 5e-5]
+    groups = [
+        {"params": [torch.nn.Parameter(torch.ones(1))], "family": family, "lr": peak}
+        for family, peak in zip(families, peaks)
+    ]
+    optimizer = torch.optim.SGD(groups)
+    trainer = SimpleNamespace(
+        tc=SimpleNamespace(
+            lr_scheduler="cosine", warmup_steps=500, max_steps=5000,
+            warmup_steps_by_family=dict(zip(families, [500, 500, 500, 1000])),
+            min_lr_ratio=0.1,
+        ),
+        _get_optim_params=lambda: groups,
+    )
+    scheduler = DefaultTrainer._build_scheduler(trainer, optimizer)
+    for index, warmup in enumerate([500, 500, 500, 1000]):
+        schedule = scheduler.lr_lambdas[index]
+        assert schedule(0) == 0
+        assert schedule(warmup // 2) == pytest.approx(0.5)
+        assert schedule(warmup) == pytest.approx(1.0)
+        assert schedule(5000) * peaks[index] == pytest.approx(peaks[index] * 0.1)
+        assert schedule(6000) == pytest.approx(0.1)
 
 
 def _step_optimizer_and_scheduler(

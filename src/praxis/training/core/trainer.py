@@ -506,7 +506,10 @@ class DefaultTrainer:
                     optimizer,
                     warmup_steps=group_warmups,
                     total_steps=self.tc.max_steps,
-                    min_lr_by_group=[1.0e-5] * len(optim_params),
+                    min_lr_by_group=[
+                        float(group["lr"]) * self.tc.min_lr_ratio
+                        for group in optimizer.param_groups
+                    ],
                 )
             return get_cosine_warmup_scheduler(
                 optimizer,

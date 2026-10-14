@@ -1,0 +1,56 @@
+{
+  "action_dim": 14,
+  "action_horizon": 32,
+  "arm_dim": 7,
+  "clamp_normalized_actions": false,
+  "conv_kernel_sizes": [
+    5,
+    3
+  ],
+  "conv_strides": [
+    2,
+    2
+  ],
+  "decoder_nhead": 8,
+  "decoder_nlayer": 6,
+  "dropout": 0.1,
+  "fsq_levels": [
+    8,
+    8,
+    6,
+    5
+  ],
+  "latent_dim": 4,
+  "latent_horizon_per_arm": 8,
+  "model_dim": 256,
+  "name": "btt",
+  "num_heads": 8,
+  "right_arm_sign": [
+    -1.0,
+    1.0,
+    1.0,
+    1.0,
+    -1.0,
+    -1.0,
+    1.0
+  ],
+  "shared_action_max": [
+    0.84744793176651,
+    2.3744945526123047,
+    2.2520408630371094,
+    1.58407723903656,
+    1.3433661460876465,
+    2.050621747970581,
+    1.0
+  ],
+  "shared_action_min": [
+    -0.7455939650535583,
+    -0.0036240178160369396,
+    0.001716639962978661,
+    -1.6111619472503662,
+    -0.7570382356643677,
+    -1.2132829427719116,
+    0.000721086747944355
+  ],
+  "use_causal_decoder": true
+}

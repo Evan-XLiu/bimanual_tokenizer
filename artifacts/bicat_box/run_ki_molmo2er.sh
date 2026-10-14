@@ -21,7 +21,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 CONFIG="${CONFIG_OVERRIDE:-$SOURCE_ROOT/artifacts/bicat_box/ki_molmo2er_fft.yaml}"
 cp "$CONFIG" "$OUT/submitted_config.yaml"
 nvidia-smi
-if [[ "$RUN_MODE" != train ]]; then
+if [[ "$RUN_MODE" != train || "${MONITOR_GPU_MEMORY:-0}" == 1 || "$CONFIG" == *ki_oat_molmo2er_fft.yaml ]]; then
   nvidia-smi --query-gpu=timestamp,index,uuid,name,memory.used,memory.total,utilization.gpu \
     --format=csv --loop-ms=1000 > "$OUT/gpu_memory.csv" 2> "$OUT/gpu_monitor.err" &
   GPU_MONITOR_PID=$!
@@ -35,7 +35,7 @@ elif [[ "$RUN_MODE" == "single-resize-test" ]]; then
   "$SOURCE_ROOT/.venv/bin/python" artifacts/bicat_box/test_ki_molmo2er_memory.py "$CONFIG" "$OUT" --smoke --single-resize
 elif [[ "$RUN_MODE" == "train" ]]; then
   "$SOURCE_ROOT/.venv/bin/python" -m praxis.scripts.train \
-    --config-path "$SOURCE_ROOT/artifacts/bicat_box" --config-name ki_molmo2er_fft \
+    --config-path "$(dirname "$CONFIG")" --config-name "$(basename "$CONFIG" .yaml)" \
     output_dir="$OUT/train"
 else
   echo "Unknown run mode: $RUN_MODE" >&2

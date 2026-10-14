@@ -586,6 +586,69 @@ class ActionExpertLayer(nn.Module):
         hidden = hidden + self.mlp(self.post_attention_layernorm(hidden))
         return hidden
 
+    def _to_query_heads(self, tensor: Tensor) -> Tensor:
+        batch_size, seq_len, _ = tensor.shape
+        return tensor.view(
+            batch_size,
+            seq_len,
+            self.num_attention_heads,
+            self.head_dim,
+        ).transpose(1, 2)
+
+    def _to_key_value_heads(self, tensor: Tensor) -> Tensor:
+        batch_size, seq_len, _ = tensor.shape
+        return tensor.view(
+            batch_size,
+            seq_len,
+            self.num_key_value_heads,
+            self.head_dim,
+        ).transpose(1, 2)
+
+    def _prefix_cache_to_kv_heads(
+        self, tensor: Tensor, *, device: torch.device
+    ) -> Tensor:
+        flat = flatten_cache_tensor(tensor).to(
+            device=device, dtype=self.q_proj.weight.dtype
+        )
+        self._validate_prefix_flat_dim(flat)
+        return self._to_key_value_heads(flat)
+
+    def _validate_prefix_flat_dim(self, tensor: Tensor) -> None:
+        if int(tensor.shape[-1]) != self.kv_dim:
+            raise ValueError(
+                "Flattened VLM cache dim must match VLM K/V geometry, got "
+                f"{int(tensor.shape[-1])} and expected {self.kv_dim}."
+            )
+
+    def _expand_key_value_heads(self, tensor: Tensor) -> Tensor:
+        if self.num_key_value_groups == 1:
+            return tensor
+        return tensor.repeat_interleave(self.num_key_value_groups, dim=1)
+
+    def _self_attention_mask(
+        self,
+        *,
+        prefix_mask: Tensor,
+        expert_pad_mask: Tensor,
+        expert_attention_mask: Tensor,
+    ) -> Tensor:
+        batch_size, query_len = expert_pad_mask.shape
+        prefix = prefix_mask.to(device=expert_pad_mask.device, dtype=torch.bool)[
+            :, None, :
+        ].expand(batch_size, query_len, -1)
+        suffix = _make_att_2d_masks(expert_pad_mask, expert_attention_mask)
+        return torch.cat([prefix, suffix], dim=2)[:, None, :, :]
+
+    @staticmethod
+    def _cross_attention_mask(*, prefix_mask: Tensor, query_len: int) -> Tensor:
+        batch_size = int(prefix_mask.shape[0])
+        return prefix_mask.to(dtype=torch.bool)[:, None, None, :].expand(
+            batch_size,
+            1,
+            int(query_len),
+            int(prefix_mask.shape[1]),
+        )
+
 
 class MolmoAct2ActionExpertLayer(nn.Module):
     """MolmoAct2 block: full non-causal self-attention followed by VLM cross-attention."""
@@ -685,69 +748,6 @@ class MolmoAct2ActionExpertLayer(nn.Module):
         cross_mask = prefix_mask.to(device=hidden.device, dtype=torch.bool)[:, None, None, :]
         hidden = hidden + self.dropout(self.cross_o_proj(self._attend(q, self._expand(k), self._expand(v), cross_mask)))
         return hidden + self.mlp(self.post_attention_layernorm(hidden))
-
-    def _to_query_heads(self, tensor: Tensor) -> Tensor:
-        batch_size, seq_len, _ = tensor.shape
-        return tensor.view(
-            batch_size,
-            seq_len,
-            self.num_attention_heads,
-            self.head_dim,
-        ).transpose(1, 2)
-
-    def _to_key_value_heads(self, tensor: Tensor) -> Tensor:
-        batch_size, seq_len, _ = tensor.shape
-        return tensor.view(
-            batch_size,
-            seq_len,
-            self.num_key_value_heads,
-            self.head_dim,
-        ).transpose(1, 2)
-
-    def _prefix_cache_to_kv_heads(
-        self, tensor: Tensor, *, device: torch.device
-    ) -> Tensor:
-        flat = flatten_cache_tensor(tensor).to(
-            device=device, dtype=self.q_proj.weight.dtype
-        )
-        self._validate_prefix_flat_dim(flat)
-        return self._to_key_value_heads(flat)
-
-    def _validate_prefix_flat_dim(self, tensor: Tensor) -> None:
-        if int(tensor.shape[-1]) != self.kv_dim:
-            raise ValueError(
-                "Flattened VLM cache dim must match VLM K/V geometry, got "
-                f"{int(tensor.shape[-1])} and expected {self.kv_dim}."
-            )
-
-    def _expand_key_value_heads(self, tensor: Tensor) -> Tensor:
-        if self.num_key_value_groups == 1:
-            return tensor
-        return tensor.repeat_interleave(self.num_key_value_groups, dim=1)
-
-    def _self_attention_mask(
-        self,
-        *,
-        prefix_mask: Tensor,
-        expert_pad_mask: Tensor,
-        expert_attention_mask: Tensor,
-    ) -> Tensor:
-        batch_size, query_len = expert_pad_mask.shape
-        prefix = prefix_mask.to(device=expert_pad_mask.device, dtype=torch.bool)[
-            :, None, :
-        ].expand(batch_size, query_len, -1)
-        suffix = _make_att_2d_masks(expert_pad_mask, expert_attention_mask)
-        return torch.cat([prefix, suffix], dim=2)[:, None, :, :]
-
-    @staticmethod
-    def _cross_attention_mask(*, prefix_mask: Tensor, query_len: int) -> Tensor:
-        batch_size = int(prefix_mask.shape[0])
-        return prefix_mask.to(dtype=torch.bool)[:, None, None, :].expand(
-            batch_size,
-            1,
-            int(query_len),
-            int(prefix_mask.shape[1]),
-        )
 
 
 def _make_att_2d_masks(pad_mask: Tensor, attention_mask: Tensor) -> Tensor:

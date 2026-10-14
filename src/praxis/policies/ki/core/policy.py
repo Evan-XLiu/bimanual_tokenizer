@@ -308,6 +308,12 @@ class PolicyBase(
             flow_weight = 0.0
         return ce_weight, flow_weight
 
+    def _detach_flow_context(self) -> bool:
+        end_step = getattr(self.config, "ki_end_step", None)
+        return bool(self.config.action_expert_detach_vlm) and (
+            end_step is None or int(self._training_context.global_step) < end_step
+        )
+
     def compute_ce_loss(
         self,
         batch: dict[str, Tensor],
@@ -406,7 +412,7 @@ class PolicyBase(
                     norm_batch,
                     actions=norm_actions,
                     vlm_inputs=vlm_inputs,
-                    detach_prefix=bool(self.config.action_expert_detach_vlm),
+                    detach_prefix=self._detach_flow_context(),
                 )
             total = flow_weight * flow_loss
             return total, {
@@ -447,7 +453,7 @@ class PolicyBase(
                     norm_batch,
                     actions=norm_actions,
                 ),
-                detach_expert_context=bool(self.config.action_expert_detach_vlm),
+                detach_expert_context=self._detach_flow_context(),
                 gradient_checkpointing=bool(self.config.gradient_checkpointing),
             )
             ce_loss = compute_prepared_action_token_ce_loss_from_hidden(

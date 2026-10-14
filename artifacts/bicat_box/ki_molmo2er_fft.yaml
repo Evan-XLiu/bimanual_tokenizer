@@ -43,7 +43,7 @@ policy:
   expert_qk_norm: true
   expert_causal_attn: false
   expert_context_layer_norm: true
-  action_expert_detach_vlm: false
+  action_expert_detach_vlm: true
   expert_self_attn_every_n_layers: -1
   expert_dropout: 0.0
   expert_time_min_period: 0.004
@@ -57,7 +57,7 @@ policy:
   block_ce_weighting: block_mean
   ce_vocab_scope: action
   name: ki_btt_molmo
-  ce_warmstart_steps: 0
+  ce_warmstart_steps: 1000
 dataset:
   name: bicat_box
   repo_id: local/bicat_box
@@ -76,7 +76,7 @@ dataset:
   bypass_force_cache_sync: true
 trainer:
   max_steps: 100000
-  batch_size: 48
+  batch_size: 96
   global_batch_size: null
   num_workers: 4
   prefetch_factor: 2
@@ -89,12 +89,12 @@ trainer:
   - 0.95
   eps: 1.0e-06
   lr_scheduler: cosine
-  warmup_steps: 1000
+  warmup_steps: 500
   warmup_steps_by_family:
-    vlm: 1000
-    bridge: 1000
-    action_expert: 1000
-    vision: 2000
+    vlm: 500
+    bridge: 500
+    action_expert: 500
+    vision: 1000
   min_lr_ratio: 0.1
   use_ema: false
   ema_decay: 0.995
@@ -107,11 +107,12 @@ trainer:
   fsdp_reshard_after_forward: true
   fsdp_cpu_offload: false
   log_every: 200
-  val_every: 1000
-  checkpoint_every: 5000
+  val_every: 0
+  checkpoint_every: 1000
+  checkpoint_start_step: 4000
   checkpoint_dir: ${output_dir}/checkpoints
   local_log_path: ${output_dir}/train_metrics.jsonl
-  val_ratio: 0.05
+  val_ratio: 0.0
   split_seed: ${seed}
   val_batch_size: null
   max_val_batches: 100
@@ -119,9 +120,9 @@ trainer:
     best:
       metric_key: val_reconst_loss
       mode: min
-      k: 2
+      k: 0
     recent:
-      k: 1
+      k: 5
   use_wandb: true
   wandb_project: BiCAT_RealWorld
   wandb_entity: null
@@ -130,11 +131,11 @@ trainer:
   wandb_max_eval_videos: 16
   _trainer_type: policy
   lrs:
-    vlm: 5.0e-05
-    vision: 5.0e-05
-    bridge: 5.0e-05
-    action_expert: 1.0e-04
-  reconst_every: 1000
+    vlm: 1.0e-04
+    vision: 1.0e-04
+    bridge: 1.0e-04
+    action_expert: 2.0e-04
+  reconst_every: 0
   max_reconst_batches: 100
   reconst_action_mode: policy
   sim_eval_every: null
@@ -149,7 +150,7 @@ trainer:
 name: train_policy
 seed: 42
 device: cuda
-run_name: BiCAT_box_molmo2ER_full_100k
+run_name: BiCAT_box_test_96bs
 output_dir: /scratch/xuanweiliu/bimanual_tokenizer/outputs/BiCAT_box_molmo2ER_train/manual/train
 run_mode: overwrite
 resume_checkpoint: null

@@ -740,7 +740,7 @@ def _image_only_io() -> PolicyIO:
             FeatureSpec(
                 key="observation.image",
                 type=FeatureType.IMAGE,
-                shape=(3, 4, 4),
+                shape=(3, 5, 5),
                 norm_mode=NormMode.MEAN_STD,
             )
         ],
@@ -758,6 +758,7 @@ def _image_only_io() -> PolicyIO:
 def _policy(
     *,
     state_prefix_encoding: str = "continuous_projection",
+    expert_architecture: str = "smolvla",
 ) -> _DummyPolicy:
     policy = _DummyPolicy(
         config=PolicyConfig(
@@ -767,6 +768,7 @@ def _policy(
             num_action_tokens=4,
             action_tokenizer={"name": "fake", "kind": "tokens"},
             expert_hidden_size=16,
+            expert_architecture=expert_architecture,
             state_prefix_encoding=state_prefix_encoding,
         ).to_dict()
     )
@@ -1200,7 +1202,7 @@ def test_pali_vlm_prompt_and_suffix_match_bar_without_state(monkeypatch) -> None
     # action-token suffix.
     bar_policy, ki_policy, bar_processor, ki_processor = _pali_policy_pair(monkeypatch)
     batch = {
-        "observation.image": torch.rand(1, 1, 3, 4, 4),
+        "observation.image": torch.rand(1, 1, 3, 5, 5),
         "action": torch.randn(1, 4, 3),
     }
     action_text = ki_policy._require_action_token_vocabulary().render_raw_ids(
@@ -1233,7 +1235,7 @@ def test_chat_vlm_prompt_and_suffix_match_bar_without_state(
         monkeypatch, family
     )
     batch = {
-        "observation.image": torch.rand(1, 1, 3, 4, 4),
+        "observation.image": torch.rand(1, 1, 3, 5, 5),
         "action": torch.randn(1, 4, 3),
     }
     action_text = ki_policy._require_action_token_vocabulary().render_raw_ids(
@@ -1277,7 +1279,7 @@ def test_one_forward_vlm_ce_matches_bar_without_state(
     bar_policy.config.ce_vocab_scope = ce_vocab_scope
     ki_policy.config.ce_vocab_scope = ce_vocab_scope
     batch = {
-        "observation.image": torch.rand(2, 1, 3, 4, 4),
+        "observation.image": torch.rand(2, 1, 3, 5, 5),
         "action": torch.randn(2, 4, 3),
     }
 
@@ -1309,7 +1311,7 @@ def test_bar_prefix_ce_projects_only_supervised_hidden_rows(
         )
     bar_policy.config.ce_vocab_scope = ce_vocab_scope
     batch = {
-        "observation.image": torch.rand(2, 1, 3, 4, 4),
+        "observation.image": torch.rand(2, 1, 3, 5, 5),
         "action": torch.randn(2, 4, 3),
     }
     prepared = prepare_action_token_ce(
@@ -1368,7 +1370,7 @@ def test_pali_vlm_action_labels_and_prefix_mask_match_bar(monkeypatch) -> None:
         monkeypatch
     )
     batch = {
-        "observation.image": torch.rand(1, 1, 3, 4, 4),
+        "observation.image": torch.rand(1, 1, 3, 5, 5),
         "action": torch.randn(1, 4, 3),
     }
     prepared = prepare_action_token_ce(
@@ -1423,7 +1425,7 @@ def test_pali_ce_attention_mask_uses_action_positions_before_processor_eos(
         monkeypatch
     )
     batch = {
-        "observation.image": torch.rand(1, 1, 3, 4, 4),
+        "observation.image": torch.rand(1, 1, 3, 5, 5),
         "action": torch.randn(1, 4, 3),
     }
 
@@ -1742,6 +1744,30 @@ def test_combined_loss_updates_vlm_and_expert(fake_codec: _FakeTokenCodec) -> No
     assert adapter.last_layer_attention_mask is not None
 
 
+@pytest.mark.parametrize("step", [999, 1000, 1999, 2000, 2001])
+def test_ce_ki_joint_schedule_flow_gradients(fake_codec, monkeypatch, step):
+    del fake_codec
+    policy = _policy(expert_architecture="molmoact2")
+    policy.config.ce_warmstart_steps = 1000
+    policy.config.ki_end_step = 2000
+    policy.set_training_context(TrainingContext(global_step=step))
+    loss, info = policy.forward(_batch())
+    loss.backward()
+    assert _has_nonzero_grad(policy.vlm)
+    assert (info["flow_loss"] > 0) == (step >= 1000)
+    assert _has_nonzero_grad(policy.action_expert) == (step >= 1000)
+    if step >= 1000:
+        monkeypatch.setattr(
+            policy_module, "compute_prepared_action_token_ce_loss_from_hidden",
+            lambda *args, **kwargs: kwargs["hidden"].sum() * 0,
+        )
+        policy.zero_grad(set_to_none=True)
+        loss, _ = policy.forward(_batch())
+        loss.backward()
+        assert _has_nonzero_grad(policy.vlm) == (step >= 2000)
+        assert _has_nonzero_grad(policy.action_expert)
+
+
 def test_ce_warmstart_steps_disable_flow_until_boundary(
     fake_codec: _FakeTokenCodec,
 ) -> None:
@@ -1769,6 +1795,47 @@ def test_ce_warmstart_steps_disable_flow_until_boundary(
     assert info["flow_loss"] > 0.0
     assert _has_nonzero_grad(policy.vlm)
     assert _has_nonzero_grad(policy.action_expert)
+
+
+@pytest.mark.parametrize("step", [0, 2999, 3000, 3001])
+@pytest.mark.parametrize("expert_architecture", ["smolvla", "molmoact2"])
+def test_ki_3000_step_schedule_and_flow_gradient_insulation(
+    fake_codec: _FakeTokenCodec, monkeypatch, step: int, expert_architecture: str
+) -> None:
+    del fake_codec
+    policy = _policy(expert_architecture=expert_architecture)
+    policy.config.ce_warmstart_steps = 3000
+    assert policy.config.action_expert_detach_vlm is True
+    policy.set_training_context(TrainingContext(global_step=step))
+    loss, info = policy.forward(_batch())
+    loss.backward()
+    assert info["ce_loss"] > 0
+    assert _has_nonzero_grad(policy.vlm)
+    assert policy.action_expert is not None
+    assert (info["flow_loss"] > 0) == (step >= 3000)
+    assert _has_nonzero_grad(policy.action_expert) == (step >= 3000)
+
+    if step >= 3000:
+        # Keep the joint forward path, but zero CE to isolate the flow graph.
+        # No VLM gradient may escape through shared per-layer KV conditioning.
+        monkeypatch.setattr(
+            policy_module, "compute_prepared_action_token_ce_loss_from_hidden",
+            lambda *args, **kwargs: kwargs["hidden"].sum() * 0,
+        )
+        policy.zero_grad(set_to_none=True)
+        loss, info = policy.forward(_batch())
+        loss.backward()
+        assert info["flow_loss"] > 0
+        assert not _has_nonzero_grad(policy.vlm)
+        assert _has_nonzero_grad(policy.action_expert)
+        assert policy.state_prefix_projector is not None
+        assert not _has_nonzero_grad(policy.state_prefix_projector)
+        if expert_architecture == "molmoact2":
+            assert any(
+                "cross_k_proj" in name and param.grad is not None
+                and param.grad.abs().sum() > 0
+                for name, param in policy.action_expert.named_parameters()
+            )
 
 
 @pytest.mark.parametrize(

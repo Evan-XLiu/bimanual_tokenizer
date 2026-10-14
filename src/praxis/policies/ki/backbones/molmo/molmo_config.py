@@ -19,6 +19,7 @@ class MolmoPolicyConfig(PolicyConfig):
     vlm_model_name: str = MOLMO2_ER_MODEL_NAME
     vlm_dtype: str = "bfloat16"
     gradient_checkpointing: bool = True
+    ce_warmstart_steps: int = 3000
     lora_target_modules: tuple[str, ...] = (
         "att_proj",
         "attn_out",

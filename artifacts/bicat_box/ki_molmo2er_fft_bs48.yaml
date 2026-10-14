@@ -49,7 +49,7 @@ policy:
   block_ce_weighting: block_mean
   ce_vocab_scope: action
   name: ki_btt_molmo
-  ce_warmstart_steps: 6000
+  ce_warmstart_steps: 3000
 dataset:
   name: bicat_box
   repo_id: local/bicat_box

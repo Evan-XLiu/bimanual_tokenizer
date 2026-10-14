@@ -1,0 +1,162 @@
+policy:
+  pretrained_path: null
+  vlm_model_name: /scratch/xuanweiliu/bimanual_tokenizer/.cache/models/Molmo2-ER
+  vlm_dtype: bfloat16
+  freeze_vision_encoder: false
+  use_lora: false
+  lora_r: 64
+  lora_alpha: 16
+  lora_target_modules:
+  - att_proj
+  - attn_out
+  - ff_proj
+  - ff_out
+  lora_dropout: 0.05
+  lora_modules_to_save:
+  - lm_head
+  - wte
+  gradient_checkpointing: true
+  ce_loss_weight: 1.0
+  flow_loss_weight: 1.0
+  num_action_tokens: null
+  action_token_template: <|action_{i}|>
+  action_mask_token_template: <|action_mask|>
+  action_embed_init: normal
+  action_dim: null
+  n_obs_steps: 1
+  action_horizon: 32
+  n_action_steps: 16
+  state_prefix_encoding: continuous_projection
+  state_prefix_num_bins: 256
+  flow_sampling_steps: 10
+  flow_time_sampling: beta
+  flow_beta_alpha: 1.5
+  flow_beta_beta: 1.0
+  flow_min_time: 0.001
+  expert_hidden_size: 768
+  expert_width_multiplier: 1.0
+  expert_num_layers: 36
+  expert_architecture: molmoact2
+  expert_num_attention_heads: 8
+  expert_mlp_ratio: 4.0
+  expert_ffn_multiple_of: 256
+  expert_qk_norm: true
+  expert_causal_attn: false
+  expert_context_layer_norm: true
+  action_expert_detach_vlm: true
+  expert_self_attn_every_n_layers: -1
+  expert_dropout: 0.0
+  expert_time_min_period: 0.004
+  expert_time_max_period: 4.0
+  default_instruction: Analyze the input image(s) and predict robot actions.
+  action_tokenizer:
+    name: btt
+    kind: tokens
+    pretrained_path: /scratch/xuanweiliu/bimanual_tokenizer/outputs/tokenizer_box_test/653918.hopper-m-02/train/checkpoints/best/step_50000/pretrained_model
+  freeze_action_tokenizer: true
+  block_ce_weighting: block_mean
+  ce_vocab_scope: action
+  name: ki_btt_molmo
+  ce_warmstart_steps: 1000
+  ki_end_step: 2000
+dataset:
+  name: bicat_box
+  repo_id: local/bicat_box
+  root: ${oc.env:BICAT_DATA_ROOT,/scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/box
+  hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
+  episodes: null
+  action_key: action_joint_angles
+  exclude_episodes_file: null
+  action_stats_file: null
+  observation_keys:
+  - observation.state_joint_angles
+  - observation.images.top
+  - observation.images.left
+  - observation.images.right
+  video_backend: pyav
+  bypass_force_cache_sync: true
+trainer:
+  max_steps: 100000
+  batch_size: 96
+  global_batch_size: null
+  num_workers: 4
+  prefetch_factor: 2
+  use_episode_aware_sampler: true
+  drop_n_first_frames: 0
+  drop_n_last_frames: 0
+  weight_decay: 1.0e-06
+  betas:
+  - 0.9
+  - 0.95
+  eps: 1.0e-06
+  lr_scheduler: cosine
+  warmup_steps: 500
+  warmup_steps_by_family:
+    vlm: 500
+    bridge: 500
+    action_expert: 500
+    vision: 1000
+  min_lr_ratio: 0.1
+  use_ema: false
+  ema_decay: 0.995
+  mixed_precision: bf16
+  gradient_accumulation_steps: 1
+  find_unused_parameters: true
+  max_grad_norm: 1.0
+  distributed_strategy: ddp
+  fsdp_min_num_params: 100000000
+  fsdp_reshard_after_forward: true
+  fsdp_cpu_offload: false
+  log_every: 200
+  val_every: 0
+  checkpoint_every: 1000
+  checkpoint_start_step: 4000
+  checkpoint_dir: ${output_dir}/checkpoints
+  local_log_path: ${output_dir}/train_metrics.jsonl
+  val_ratio: 0.0
+  split_seed: ${seed}
+  val_batch_size: null
+  max_val_batches: 100
+  checkpoint_candidates:
+    best:
+      metric_key: val_reconst_loss
+      mode: min
+      k: 0
+    recent:
+      k: 97
+  use_wandb: true
+  wandb_project: BiCAT_RealWorld
+  wandb_entity: null
+  wandb_init_timeout: null
+  wandb_upload_eval_videos: false
+  wandb_max_eval_videos: 16
+  _trainer_type: policy
+  lrs:
+    vlm: 1.0e-04
+    vision: 1.0e-04
+    bridge: 1.0e-04
+    action_expert: 2.0e-04
+  reconst_every: 0
+  max_reconst_batches: 100
+  reconst_action_mode: policy
+  sim_eval_every: null
+  sim_eval_start_after_step: 0
+  sim_eval:
+    num_eval_per_task: 20
+    num_parallel_env: 1
+    record_episodes_per_task: 0
+    step_timeout_sec: null
+    rollout_failure_retries: 1
+    policy_kwargs: {}
+name: train_policy
+seed: 42
+device: cuda
+run_name: BiCAT_box_BTT50k_CE_KI_joint
+output_dir: /scratch/xuanweiliu/bimanual_tokenizer/outputs/BiCAT_box_molmo2ER_train/manual/train
+run_mode: overwrite
+resume_checkpoint: null
+env:
+  type: null
+  task: null
+  task_ids: null
+  python_bin: null

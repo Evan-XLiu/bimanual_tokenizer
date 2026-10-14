@@ -21,6 +21,13 @@ from praxis.policies.backbones.molmo.vlm import (
 )
 
 
+def test_molmo_defaults_use_ce_warmstart_and_knowledge_insulation() -> None:
+    config = MolmoPolicyConfig()
+    assert config.ce_warmstart_steps == 3000
+    assert config.action_expert_detach_vlm is True
+    assert "action_expert_detach_vlm" in config.PRETRAINED_RUNTIME_OVERRIDE_KEYS
+
+
 def test_vision_checkpointing_preserves_gradients_and_recomputes() -> None:
     transformer = nn.Module()
     transformer.resblocks = nn.ModuleList([

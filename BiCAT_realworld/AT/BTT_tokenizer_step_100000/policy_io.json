@@ -1,0 +1,15 @@
+{
+  "obs_features": [],
+  "action_feature": {
+    "key": "action_joint_angles",
+    "type": "action",
+    "shape": [
+      14
+    ],
+    "norm_mode": "min_max"
+  },
+  "n_obs_steps": 0,
+  "n_action_steps": 32,
+  "fps": 30,
+  "language_key": null
+}
