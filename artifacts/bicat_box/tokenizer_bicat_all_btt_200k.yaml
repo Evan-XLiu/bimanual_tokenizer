@@ -1,0 +1,126 @@
+codec:
+  name: btt
+  kind: tokens
+  pretrained_path: null
+  action_dim: 14
+  arm_dim: 7
+  action_horizon: 32
+  latent_horizon_per_arm: 8
+  max_fit_chunks: 50000
+  model_dim: 256
+  num_heads: 8
+  decoder_nhead: 8
+  decoder_nlayer: 6
+  dropout: 0.1
+  use_causal_decoder: true
+  conv_kernel_sizes:
+  - 5
+  - 3
+  conv_strides:
+  - 2
+  - 2
+  latent_dim: 4
+  fsq_levels:
+  - 8
+  - 8
+  - 6
+  - 5
+  right_arm_sign:
+  - -1
+  - 1
+  - 1
+  - 1
+  - -1
+  - -1
+  - 1
+  shared_action_min:
+  - -0.7455939650535583
+  - -0.0036240178160369396
+  - 0.001716639962978661
+  - -1.6111619472503662
+  - -0.7570382356643677
+  - -1.2132829427719116
+  - 0.000721086747944355
+  shared_action_max:
+  - 0.84744793176651
+  - 2.3744945526123047
+  - 2.2520408630371094
+  - 1.58407723903656
+  - 1.3433661460876465
+  - 2.050621747970581
+  - 1.0
+  clamp_normalized_actions: false
+dataset:
+  name: bicat_joint_all
+  repo_id: local/bicat_yam_joint_all
+  root: /data/home/shailesh/Evan/bimanual_tokenizer/data/BiCAT-BimanualYAM-JointOnly
+  hf_datasets_cache: ${oc.env:HF_DATASETS_CACHE,null}
+  episodes: null
+  action_key: action_joint_angles
+  exclude_episodes_file: null
+  action_stats_file: null
+  observation_keys: []
+  video_backend: pyav
+  bypass_force_cache_sync: true
+trainer:
+  max_steps: 200000
+  batch_size: 128
+  global_batch_size: 512
+  num_workers: 4
+  prefetch_factor: 4
+  use_episode_aware_sampler: true
+  drop_n_first_frames: 0
+  drop_n_last_frames: 0
+  weight_decay: 0.0
+  betas:
+  - 0.9
+  - 0.95
+  eps: 1.0e-08
+  lr_scheduler: constant
+  warmup_steps: 200
+  min_lr_ratio: 0.1
+  use_ema: true
+  ema_decay: 0.995
+  mixed_precision: bf16
+  gradient_accumulation_steps: 1
+  find_unused_parameters: false
+  max_grad_norm: 1.0
+  distributed_strategy: ddp
+  fsdp_min_num_params: 100000000
+  fsdp_reshard_after_forward: true
+  fsdp_cpu_offload: false
+  log_every: 200
+  val_every: 0
+  checkpoint_every: 1000
+  checkpoint_dir: ${output_dir}/checkpoints
+  local_log_path: ${output_dir}/train_metrics.jsonl
+  val_ratio: 0.0
+  split_seed: ${seed}
+  val_batch_size: null
+  max_val_batches: 100
+  checkpoint_candidates:
+    best:
+      metric_key: val_reconst_loss
+      mode: min
+      k: 0
+    recent:
+      k: 5
+  use_wandb: true
+  wandb_project: BiCAT_realworld
+  wandb_entity: evan_lxw-harbin-institute-of-technology
+  wandb_required: true
+  wandb_init_timeout: null
+  wandb_upload_eval_videos: true
+  wandb_max_eval_videos: 16
+  _trainer_type: codecs
+  lr: 5.0e-05
+  reconst_every: 1000
+  max_reconst_batches: 100
+  skip_codec_fit: false
+name: train_codecs
+seed: 42
+device: cuda
+run_name: BiCAT_all_BTT_14joint_200k
+output_dir: outputs/BiCAT_all_BTT_200k/manual/train
+run_mode: overwrite
+resume_checkpoint: null

@@ -28,6 +28,7 @@ class Logger:
         local_log_path: str | None = None,
         resume_id: str | None = None,
         wandb_init_timeout: float | None = None,
+        wandb_required: bool = False,
     ) -> None:
         self.use_wandb = use_wandb
         self._wandb_run = None
@@ -72,6 +73,8 @@ class Logger:
             except (
                 Exception
             ) as exc:  # pragma: no cover - depends on external package/runtime
+                if wandb_required:
+                    raise RuntimeError(f"Required W&B initialization failed: {exc}") from exc
                 self.use_wandb = False
                 logger.warning(
                     "W&B disabled due to initialization failure (%s). Falling back to local logging only.",

@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar
 
+from praxis.policies.bar.backbones.molmo.molmo_base import MolmoPolicyBase
+from praxis.policies.bar.backbones.molmo.molmo_config import MolmoPolicyConfig
 from praxis.policies.bar.backbones.pali.pali_base import PaliPolicyBase
 from praxis.policies.bar.backbones.pali.pali_config import (
     PaliPolicyConfig,
@@ -29,6 +31,20 @@ from praxis.policies.bar.codecs.fast.config import (
 from praxis.policies.bar.codecs.fast.vlm import FastVlmPolicyMixin
 from praxis.policies.bar.core.stop import DecodeStopMode
 from praxis.policies.core.action_tokens import action_tokenizer_config_factory
+
+
+@dataclass
+class BTTMolmoPolicyConfig(MolmoPolicyConfig):
+    """BTT BAR with Molmo2-ER and discrete-text proprioception."""
+
+    name: str = "bar_btt_molmo"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("btt")
+    )
+
+
+class BTTMolmoPolicy(MolmoPolicyBase):
+    CONFIG_CLASS = BTTMolmoPolicyConfig
 
 
 @dataclass

@@ -296,6 +296,7 @@ class DefaultTrainer:
             wandb_init_timeout=OmegaConf.select(
                 self.tc, "wandb_init_timeout", default=None
             ),
+            wandb_required=bool(OmegaConf.select(self.tc, "wandb_required", default=False)),
         )
 
         self.train_metrics = self._build_train_metrics()

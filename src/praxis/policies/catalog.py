@@ -111,6 +111,7 @@ POLICY_FAMILIES_BY_METHOD: dict[str, PolicyFamily] = {
     family.method: family for family in POLICY_FAMILIES
 }
 EXTRA_POLICY_SPECS: tuple[PolicySpec, ...] = (
+    PolicySpec(method="bar", codec="btt", backbone="molmo"),
     PolicySpec(method="ki", codec="xtokenizer", backbone="qwen"),
     PolicySpec(method="fm", codec=None, backbone="molmo"),
     PolicySpec(method="ki", codec="oat", backbone="molmo"),

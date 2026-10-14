@@ -26,6 +26,10 @@ from praxis.data.lerobot_adapter import (
     LeRobotDatasetAdapter,
     ensure_lerobot_dataset_available,
 )
+from praxis.data.multi_source_lerobot import (
+    MultiSourceLeRobotDatasetAdapter,
+    source_episode_counts,
+)
 from praxis.data.utils import stats_to_tensors
 from praxis.policies.core import BasePolicy
 from praxis.policies.core.vlm.dtypes import parse_vlm_dtype
@@ -285,17 +289,33 @@ class PolicyTrainer(DefaultTrainer):
         self.filtered_action_stats = (
             None if stats_payload is None else stats_to_tensors(stats_payload)
         )
-        ensure_lerobot_dataset_available(
-            repo_id=dc.repo_id,
-            runtime=self.runtime,
-            root=dc.root,
-            episodes=dc.episodes,
-            download_videos=True,
-            bypass_force_cache_sync=bool(getattr(dc, "bypass_force_cache_sync", False)),
-        )
+        sources = list(getattr(dc, "sources", []) or [])
+        if sources:
+            for source in sources:
+                ensure_lerobot_dataset_available(
+                    repo_id=source.repo_id,
+                    runtime=self.runtime,
+                    root=source.root,
+                    episodes=None,
+                    download_videos=True,
+                    bypass_force_cache_sync=bool(
+                        getattr(dc, "bypass_force_cache_sync", False)
+                    ),
+                )
+        else:
+            ensure_lerobot_dataset_available(
+                repo_id=dc.repo_id,
+                runtime=self.runtime,
+                root=dc.root,
+                episodes=dc.episodes,
+                download_videos=True,
+                bypass_force_cache_sync=bool(getattr(dc, "bypass_force_cache_sync", False)),
+            )
         with self._dataset_init_context():
             temp_meta = LeRobotDataset(
-                repo_id=dc.repo_id, root=dc.root, episodes=dc.episodes
+                repo_id=sources[0].repo_id if sources else dc.repo_id,
+                root=sources[0].root if sources else dc.root,
+                episodes=dc.episodes if not sources else None,
             )
             observation_keys = getattr(dc, "observation_keys", None)
             self.io = make_io_from_metadata(
@@ -312,9 +332,12 @@ class PolicyTrainer(DefaultTrainer):
                 )
             self.action_key = self.io.action_feature.key
             self.io.fps = temp_meta.fps
-            configured_episodes = list(
-                dc.episodes or range(temp_meta.meta.total_episodes)
+            total_episodes = (
+                sum(source_episode_counts(sources))
+                if sources
+                else int(temp_meta.meta.total_episodes)
             )
+            configured_episodes = list(dc.episodes or range(total_episodes))
             all_episodes = filter_episode_pool(configured_episodes, excluded_episodes)
             if excluded_episodes and self.runtime.is_main_process:
                 print(
@@ -325,13 +348,21 @@ class PolicyTrainer(DefaultTrainer):
 
             train_episodes, val_episodes = self._split_episodes(all_episodes)
 
-            self.dataset = LeRobotDatasetAdapter(
-                repo_id=dc.repo_id,
-                io=self.io,
-                root=dc.root,
-                episodes=train_episodes,
-                video_backend=dc.video_backend,
-            )
+            if sources:
+                self.dataset = MultiSourceLeRobotDatasetAdapter(
+                    sources=sources,
+                    io=self.io,
+                    episodes=train_episodes,
+                    video_backend=dc.video_backend,
+                )
+            else:
+                self.dataset = LeRobotDatasetAdapter(
+                    repo_id=dc.repo_id,
+                    io=self.io,
+                    root=dc.root,
+                    episodes=train_episodes,
+                    video_backend=dc.video_backend,
+                )
             self.dataset = self._attach_action_token_cache(
                 self.dataset,
                 cache_root=getattr(dc, "action_token_cache", None),
@@ -368,13 +399,21 @@ class PolicyTrainer(DefaultTrainer):
 
         if val_episodes:
             with self._dataset_init_context():
-                self.val_dataset = LeRobotDatasetAdapter(
-                    repo_id=dc.repo_id,
-                    io=self.io,
-                    root=dc.root,
-                    episodes=val_episodes,
-                    video_backend=dc.video_backend,
-                )
+                if sources:
+                    self.val_dataset = MultiSourceLeRobotDatasetAdapter(
+                        sources=sources,
+                        io=self.io,
+                        episodes=val_episodes,
+                        video_backend=dc.video_backend,
+                    )
+                else:
+                    self.val_dataset = LeRobotDatasetAdapter(
+                        repo_id=dc.repo_id,
+                        io=self.io,
+                        root=dc.root,
+                        episodes=val_episodes,
+                        video_backend=dc.video_backend,
+                    )
             self.val_dataset = self._attach_action_token_cache(
                 self.val_dataset,
                 cache_root=getattr(dc, "val_action_token_cache", None),

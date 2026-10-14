@@ -1,0 +1,60 @@
+defaults:
+  - /policy: bar_btt_molmo
+  - /dataset: bicat_all
+  - /trainer: policy
+  - /train_recipe/policy@_global_: bar
+  - _self_
+
+name: train_policy
+seed: 1000
+device: cuda
+run_name: BiCAT_all_BAR_BTT_Molmo2ER_30k
+output_dir: outputs/BiCAT_all_BAR_BTT_Molmo2ER_30k
+run_mode: overwrite
+resume_checkpoint: null
+env:
+  type: null
+  task: null
+  task_ids: null
+  python_bin: null
+
+policy:
+  vlm_model_name: /data/home/shailesh/checkpoints/Molmo2-ER
+  action_tokenizer:
+    pretrained_path: /data/home/shailesh/Evan/bimanual_tokenizer/outputs/BiCAT_all_BTT_200k/67292/train/checkpoints/protected/step_150000/pretrained_model
+  freeze_action_tokenizer: true
+  use_lora: false
+  freeze_vision_encoder: false
+  n_obs_steps: 1
+  action_horizon: 32
+  n_action_steps: 16
+
+trainer:
+  max_steps: 30000
+  batch_size: 64
+  global_batch_size: 384
+  gradient_accumulation_steps: 1
+  distributed_strategy: fsdp
+  fsdp_reshard_after_forward: true
+  fsdp_cpu_offload: false
+  num_workers: 4
+  prefetch_factor: 2
+  val_ratio: 0.0
+  val_every: 0
+  reconst_every: 0
+  checkpoint_start_step: 2000
+  checkpoint_every: 1000
+  checkpoint_candidates:
+    best:
+      k: 0
+    recent:
+      k: 29
+  log_every: 100
+  use_wandb: true
+  wandb_project: BiCAT_realworld
+  wandb_entity: evan_lxw-harbin-institute-of-technology
+  wandb_required: true
+
+hydra:
+  run:
+    dir: ${output_dir}

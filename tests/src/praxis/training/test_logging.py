@@ -10,6 +10,8 @@ import json
 import sys
 import types
 
+import pytest
+
 from praxis.training.core.logging import Logger
 
 
@@ -42,6 +44,15 @@ class TestLogger:
         record = json.loads(log_path.read_text().strip())
         assert record["step"] == 1
         assert record["loss"] == 0.5
+
+    def test_required_wandb_init_failure_stops_training(self, monkeypatch):
+        fake_wandb = types.SimpleNamespace(
+            init=lambda **kwargs: (_ for _ in ()).throw(RuntimeError("bad entity")),
+        )
+        monkeypatch.setitem(sys.modules, "wandb", fake_wandb)
+
+        with pytest.raises(RuntimeError, match="Required W&B initialization failed: bad entity"):
+            Logger(use_wandb=True, wandb_required=True)
 
     def test_log_videos_noop_without_wandb(self, tmp_path):
         logger = Logger(use_wandb=False, local_log_path=str(tmp_path / "m.jsonl"))

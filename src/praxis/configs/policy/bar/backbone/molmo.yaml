@@ -1,0 +1,21 @@
+pretrained_path: null
+vlm_model_name: allenai/Molmo2-ER
+vlm_dtype: bfloat16
+freeze_vision_encoder: false
+use_lora: false
+lora_r: 64
+lora_alpha: 16
+lora_target_modules: [att_proj, attn_out, ff_proj, ff_out]
+lora_dropout: 0.05
+lora_modules_to_save: [lm_head, wte]
+gradient_checkpointing: true
+action_token_template: "<|action_{i}|>"
+action_mask_token_template: "<|action_mask|>"
+action_embed_init: normal
+state_prefix_encoding: discrete_text
+state_prefix_num_bins: 256
+default_instruction: "Analyze the input image(s) and predict robot actions."
+action_dim: null
+n_obs_steps: 1
+action_horizon: 32
+n_action_steps: 16

@@ -1,0 +1,27 @@
+name: bicat_all
+repo_id: local/bicat_box
+root: ${oc.env:BICAT_DATA_ROOT,/data/home/shailesh/Evan/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/box
+sources:
+  - name: box
+    repo_id: local/bicat_box
+    root: ${oc.env:BICAT_DATA_ROOT,/data/home/shailesh/Evan/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/box
+  - name: bottles
+    repo_id: local/bicat_bottles
+    root: ${oc.env:BICAT_DATA_ROOT,/data/home/shailesh/Evan/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/bottles
+  - name: pen
+    repo_id: local/bicat_pen
+    root: ${oc.env:BICAT_DATA_ROOT,/data/home/shailesh/Evan/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/pen
+  - name: plate
+    repo_id: local/bicat_plate
+    root: ${oc.env:BICAT_DATA_ROOT,/data/home/shailesh/Evan/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset}/plate
+episodes: null
+action_key: action_joint_angles
+exclude_episodes_file: null
+action_stats_file: null
+observation_keys:
+  - observation.state_joint_angles
+  - observation.images.top
+  - observation.images.left
+  - observation.images.right
+video_backend: pyav
+bypass_force_cache_sync: true
