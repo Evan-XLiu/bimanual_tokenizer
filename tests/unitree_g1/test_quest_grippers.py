@@ -29,7 +29,9 @@ class GripperQuestTests(unittest.TestCase):
             'rightState':{'triggerValue':.8}},official_head_yaw={'triggerValue':8})),(.2,.8))
         for value in (float('nan'),-1.,1.1,True):
             with self.assertRaises(ValueError):raw_triggers(dict(raw={'leftState':{'triggerValue':value},'rightState':{'triggerValue':0}}))
-        with self.assertRaises(KeyError):raw_triggers(dict(raw={'leftState':{},'rightState':{}}))
+        for raw in ({}, None, b'bad', {'leftState':{},'rightState':{}}):
+            with self.assertRaisesRegex(ValueError,'Missing'):
+                raw_triggers(dict(raw=raw))
 
     def test_automatic_control_linear_mapping_and_ramp_hold(self):
         packet=self.f.step(replace(self.cmd,phase='ENGAGING'),telemetry(self.start,.01),.01,80.)
@@ -74,11 +76,11 @@ class GripperQuestTests(unittest.TestCase):
         self.assertEqual(packet['q'],self.start);self.assertEqual(packet['kp'],[0.,0.])
 
     def test_stale_input_and_invalid_start(self):
-        with self.assertRaises(ValueError):self.f.update([0.,0.],0.,.21)
+        with self.assertRaises(ValueError):self.f.update([0.,0.],0.,1.001)
         self.f.step(self.cmd,telemetry(self.start,.01),.01,80.)
         # Even with fresh feedback, absent trigger packets expire.
         with self.assertRaises(ValueError):
-            for i in range(2,25):self.f.step(self.cmd,telemetry(self.start,i*.01),i*.01,80.)
+            for i in range(2,105):self.f.step(self.cmd,telemetry(self.start,i*.01),i*.01,80.)
         with self.assertRaises(ValueError):GripperFollower(gripper_settings()).initialize(telemetry((-5.5,-5.5),0.),0.)
 
     def test_full_open_and_close_within_session_at_increased_speed(self):
@@ -110,7 +112,7 @@ class GripperQuestTests(unittest.TestCase):
             def sleep(self,dt):self.t+=dt
             def observation(self):return Observation((0.,)*14,self.t,round(self.t*10000)+1,5)
             def write(self,c):
-                q=f.q if self.t<3 else (f.q[0]+.31,f.q[1])
+                q=f.q if self.t<3 else (f.q[0]+.51,f.q[1])
                 g=f.step(c,telemetry(q,self.t),self.t,80.)
                 self.sent.append((c,g));return True
         io=IO()
@@ -169,7 +171,7 @@ class GripperQuestTests(unittest.TestCase):
         # More-open input works even while the original positive error persists.
         t+=.01
         self.f.update([0.,1.],t,t)
-        packet=self.f.step(self.cmd,telemetry((held-.31,actual[1]),t),t,80.)
+        packet=self.f.step(self.cmd,telemetry((held-.51,actual[1]),t),t,80.)
         self.assertLess(packet['q'][0],held)
         self.assertEqual(packet['states'][0],'OPENING')
         self.assertIsNone(self.f.fault)
@@ -183,25 +185,25 @@ class GripperQuestTests(unittest.TestCase):
             self.setUp()
             now,actual,packet=self.blocked_closure()
             with self.subTest(failure=failure),self.assertRaises(ValueError):
-                for k in range(1,30):
+                for k in range(1,110):
                     t=now+k*.01
                     if failure!='input':self.f.update([1.,1.],t,t)
-                    q=(packet['q'][0]+.301,actual[1]) if failure=='opening_error' else actual
+                    q=(packet['q'][0]+.501,actual[1]) if failure=='opening_error' else actual
                     packet=self.f.step(self.cmd,telemetry(q,now if failure=='feedback' else t),t,80.)
                     actual=(-2.5,packet['q'][1])
             packet=self.f.step(replace(self.cmd,phase='RELEASED',kp=(0.,)*14),None,t+.01,80.)
             self.assertEqual(packet['kp'],[0.,0.])
             self.assertEqual(packet['states'],['FAULT','FAULT'])
 
-    def test_tracking_error_threshold_point_three(self):
-        self.assertEqual(self.f.c['tracking_error'],.30)
+    def test_tracking_error_threshold_point_five(self):
+        self.assertEqual(self.f.c['tracking_error'],.50)
         self.f.initialize(telemetry((-3.,-3.),0.),0.)
         self.f.update([.5,.5],.01,.01)
-        self.f.step(self.cmd,telemetry((-3.29,-3.),.01),.01,80.)
+        self.f.step(self.cmd,telemetry((-3.49,-3.),.01),.01,80.)
         self.assertIsNone(self.f.fault)
         self.f.update([.5,.5],.02,.02)
         with self.assertRaisesRegex(ValueError,'tracking_error'):
-            self.f.step(self.cmd,telemetry((self.f.q[0]+.301,self.f.q[1]),.02),.02,80.)
+            self.f.step(self.cmd,telemetry((self.f.q[0]+.501,self.f.q[1]),.02),.02,80.)
 
     def test_status_file_reports_position_control_countdown_and_unload(self):
         import tempfile

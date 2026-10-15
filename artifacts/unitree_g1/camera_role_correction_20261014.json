@@ -1,0 +1,98 @@
+{
+  "created_at_utc": "2026-10-14T06:52:47.220627+00:00",
+  "session": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_003",
+  "summary": {
+    "error": null,
+    "elapsed_s": 12.384320277999905,
+    "latest": {
+      "left_wrist": 4127.908946573,
+      "right_wrist": 4127.924529465,
+      "head": 4127.915848241
+    }
+  },
+  "streams": {
+    "head": {
+      "frames": 148,
+      "fps": 15.376397910892578,
+      "decode_failures": [],
+      "preview": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_003/previews/head.jpg",
+      "timing": "v4l2_read_completion_not_exposure"
+    },
+    "left_wrist": {
+      "frames": 287,
+      "fps": 29.93444586933354,
+      "decode_failures": [],
+      "preview": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_003/previews/left_wrist.jpg",
+      "timing": "ros_callback_receipt_not_exposure"
+    },
+    "right_wrist": {
+      "frames": 278,
+      "fps": 28.94698220709302,
+      "decode_failures": [],
+      "preview": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_003/previews/right_wrist.jpg",
+      "timing": "v4l2_read_completion_not_exposure"
+    }
+  },
+  "profile": {
+    "schema_version": 1,
+    "verified_host": "192.168.123.164",
+    "role_confirmation": "2026-10-14 operator corrected swapped previews: D405 254723073485 is LEFT wrist; USB path 2.2.3 is RIGHT wrist. Existing ROS topic name right_wrist is historical and does not define the physical role.",
+    "cameras": {
+      "head": {
+        "backend": "v4l2",
+        "device": "/dev/v4l/by-id/usb-STYT_241029_K_USB_Camera_01.00.00-video-index0",
+        "fourcc": "MJPG",
+        "fps": 15,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "rotation_degrees": 0
+      },
+      "left_wrist": {
+        "backend": "ros_compressed",
+        "topic": "/camera/right_wrist/image/compressed",
+        "expected_serial": "254723073485",
+        "fps": 30,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "rotation_degrees": 0,
+        "note": "Subscribe to existing publisher; never open its occupied V4L2 device or restart its service. Serial is operator/inventory evidence, not encoded in ROS messages."
+      },
+      "right_wrist": {
+        "backend": "v4l2",
+        "device": "/dev/v4l/by-path/platform-3610000.xhci-usb-0:2.2.3:1.0-video-index4",
+        "fourcc": "YUYV",
+        "fps": 30,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "rotation_degrees": 0,
+        "note": "USB2 D405 does not expose serial via sysfs; keep verified USB port, reconfirm role after rewiring"
+      }
+    },
+    "ros": {
+      "setup": [
+        "/opt/ros/foxy/setup.bash",
+        "/home/unitree/cyclonedds_ws/install/setup.bash"
+      ],
+      "cyclonedds_uri": "/home/unitree/cyclonedds_ws/cyclonedds.xml"
+    },
+    "timing": "V4L2 read completion and ROS callback receipt are different proxies, neither is exposure time; local receipt remains causal alignment basis"
+  },
+  "old_sessions": "Wrist labels swapped in 001/002; originals preserved with role_correction.json sidecars.",
+  "robot_motion_commands_sent": false,
+  "robot_services_changed": false,
+  "tests": {
+    "run": 11,
+    "passed": 10,
+    "skipped": 1,
+    "skip_reason": "LeRobot round trip belongs to data environment; exporter code unchanged"
+  }
+}

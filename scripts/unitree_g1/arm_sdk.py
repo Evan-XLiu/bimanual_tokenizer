@@ -19,7 +19,7 @@ from hold_arms import DDSHoldIO, OwnershipLost
 STANDING = dict(service='ai', fsm_id=500, allowed_fsm_ids=(500, 501), preflight_tilt_rad=.15,
                 preflight_gyro_rad_s=.2, preflight_leg_speed_rad_s=.15,
                 active_tilt_rad=.30, active_gyro_rad_s=.5,
-                waist_tracking_error_rad=.20, waist_kp=60., waist_kd=1.5)
+                waist_tracking_error_rad=.50, waist_kp=60., waist_kd=1.5)
 # Waist gains follow the official arm7 example, not the debug profile.
 
 
@@ -122,9 +122,11 @@ class ArmSDKIO(DDSHoldIO):
                 raise OwnershipLost('Official FSM changed during upper-body ownership')
 
     def check_readiness(self):
+        self.observation()  # Surface rejected feedback before a generic freshness error.
         check_body(self.telemetry(), time.monotonic(), self.config.state_timeout, preflight=True)
 
     def check_active_body(self):
+        self.observation()
         check_body(self.telemetry(), time.monotonic(), self.config.state_timeout, waist_q=self.waist_q)
 
     def open_writer(self):

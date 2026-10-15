@@ -1,0 +1,303 @@
+{
+  "created_at_utc": "2026-10-14T06:18:14.849435+00:00",
+  "status": "offline_environment_restored_and_verified",
+  "scope": "Environment recovery and offline validation only; no robot connection, motion, service switching, lower-body development or startup.",
+  "workspace": "/home/humanoid01/bimanual_tokenizer",
+  "host": {
+    "os": "Ubuntu 22.04.5 LTS",
+    "kernel": "6.8.0-40-generic",
+    "architecture": "x86_64",
+    "cpu": "Intel Core 7 240H",
+    "observed_wifi_interface": "wlo1",
+    "observed_wifi_ipv4": "172.25.108.117/20",
+    "wired_interface": "enp3s0",
+    "wired_state": "DOWN"
+  },
+  "repository": {
+    "branch": "UnitreeG1",
+    "commit": "e3b37ca4b4681ebbdef2af92420dd585e4ff10ce",
+    "initial_branch": "main",
+    "initial_commit": "deadb52",
+    "initial_worktree_clean": true,
+    "local_changes_discarded": false,
+    "remote": "https://github.com/Evan-XLiu/bimanual_tokenizer.git",
+    "note": "Existing HTTPS remote for the requested repository retained; fetched UnitreeG1 and created tracking branch. No existing SSH credential copied."
+  },
+  "environments": {
+    "xr": {
+      "path": "/home/humanoid01/bimanual_tokenizer/.venv-g1-xr",
+      "python": "3.10.22",
+      "pip": "26.2.1",
+      "conda_builds_matched": 79,
+      "bootstrap": "micromamba 2.3.2 (only installation tool; exact explicit Conda lock used)",
+      "pip_check": "passed"
+    },
+    "sdk": {
+      "path": "/home/humanoid01/bimanual_tokenizer/.venv-g1",
+      "python": "3.10.22",
+      "pip": "26.2.1",
+      "note": "venv inherits locked XR packages including SDK and matching native CRC; depends on .venv-g1-xr, not a standalone SDK distribution",
+      "pip_check": "passed"
+    },
+    "data": {
+      "path": "/home/humanoid01/bimanual_tokenizer/.venv-g1-data",
+      "python": "3.10.22",
+      "pip": "26.2.1",
+      "lerobot": "0.4.4",
+      "all_data_lock_versions_match": true,
+      "include_system_site_packages": false,
+      "note": "Uses XR Python runtime but isolates Python packages; do not remove XR environment",
+      "pip_check": "passed"
+    }
+  },
+  "adjustments": [
+    {
+      "issue": "Original XR pip lock omits argparse distribution required by params-proto 2.13.2; first baseline pip check failed",
+      "resolution": "Installed supplemental argparse==1.4.0; repository lock files unchanged; baseline re-run passed"
+    },
+    {
+      "issue": "Documented data venv --system-site-packages inherits XR packages conflicting with locked NumPy 2.2.6 and Torch 2.10.0+cpu",
+      "resolution": "Changed data pyvenv.cfg include-system-site-packages to false; installed scipy==1.15.2 from data lock locally; retained all locked data versions; pip check passed"
+    },
+    {
+      "issue": "No Conda/uv present and no system pip",
+      "resolution": "Bootstrapped fixed micromamba 2.3.2 locally; used explicit URL/MD5 Conda lock; created venvs with locked Python; pip installed exact versions with --no-deps"
+    },
+    {
+      "issue": "SDK wheel omits CRC native library",
+      "resolution": "Copied crc_amd64.so from pinned SDK source to XR package, SHA256 b136a91a7e99c5cf914f465e131f63c897a17107939184a6f85d1a57cf315ade; SDK venv resolves same file"
+    }
+  ],
+  "verification": {
+    "baseline": {
+      "status": "passed",
+      "scope": "offline software only",
+      "hardware_motion_tested": false,
+      "checks": [
+        "lock files and 69 G1 asset hashes",
+        "source xr_teleoperate 817fb00c63cd",
+        "source televuer 766de45e7437",
+        "source teleimager 57cf2a405722",
+        "source dex-retargeting d7753d38c9ff",
+        "source unitree_sdk2_python 814556d15970",
+        "source unitree_lerobot 41c2805742de",
+        "source lerobot a5b29d430105",
+        "No broken requirements found.",
+        "SDK native CRC library matches pinned source",
+        "import televuer",
+        "import teleimager.image_client",
+        "import teleimager.image_server",
+        "import dex_retargeting",
+        "import teleop.robot_control.robot_arm",
+        "import teleop.robot_control.robot_hand_unitree",
+        "import teleop.robot_control.robot_arm_ik",
+        "import teleop.utils.episode_writer",
+        "import teleop.teleop_hand_and_arm"
+      ],
+      "verified_at_utc": "2026-10-14T06:15:33.078166+00:00",
+      "baseline_sha256": "2666a0a1cf53c0c7f980603f65ba051d5904df4357bc115408959ca84f7ad15d",
+      "ik": {
+        "model_nq": 14,
+        "solver_success": true,
+        "position_error_m": 3.041812057472914e-07
+      }
+    },
+    "control": {
+      "tests_run": 156,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [
+        [
+          "test_two_episodes_videos_parquet_and_official_reader (test_record_dataset.LeRobotRoundTripTests)",
+          "Use .venv-g1-data for real writer test"
+        ]
+      ],
+      "selected": [
+        "test_arm_execution.py",
+        "test_arm_sdk.py",
+        "test_export_kinematics.py",
+        "test_external_dex1.py",
+        "test_gripper_cycle.py",
+        "test_gripper_probe.py",
+        "test_hold_arms.py",
+        "test_probe_arm_sdk_dex1.py",
+        "test_quest_bridge.py",
+        "test_quest_grippers.py",
+        "test_quest_preopen.py",
+        "test_read_state.py",
+        "test_record_dataset.py",
+        "test_runtime_timeouts.py",
+        "test_televuer_input.py",
+        "test_vertical_probe.py",
+        "test_virtual_arms.py"
+      ],
+      "excluded_frozen_route": [
+        "test_g1_sim_model.py",
+        "test_lower_body_policy.py",
+        "test_shadow_lower_body.py",
+        "test_whole_body_control.py"
+      ],
+      "success": true,
+      "hardware_motion_enabled": false
+    },
+    "sdk": {
+      "status": "passed",
+      "python": "3.10.22 | packaged by conda-forge | (main, Oct  6 2026, 23:02:24) [GCC 14.4.0]",
+      "sdk_path": "/home/humanoid01/bimanual_tokenizer/.venv-g1-xr/lib/python3.10/site-packages/unitree_sdk2py",
+      "crc_sha256": "b136a91a7e99c5cf914f465e131f63c897a17107939184a6f85d1a57cf315ade",
+      "network_forbidden": true,
+      "dds_initialized": false
+    },
+    "data": {
+      "tests_run": 10,
+      "passed": 10,
+      "skipped": 0,
+      "real_round_trip": {
+        "episodes": 2,
+        "frames": 8,
+        "format": "LeRobot v3.0, Parquet and 3 AV1 MP4 files",
+        "fps": 30,
+        "top_shape": [
+          360,
+          640
+        ],
+        "left_right_shape": [
+          480,
+          640
+        ],
+        "official_reader": "All 8 frames read and asserted; actions, EEF, flags, episode boundaries, image colors and sizes",
+        "input": "Synthetic fixtures only; temporary data removed by unittest",
+        "hardware_demonstration": false
+      }
+    }
+  },
+  "local_logs": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/restore-20261014",
+  "tls": {
+    "certificate": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/tls/thinkcentre-20261014/cert.pem",
+    "private_key": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/tls/thinkcentre-20261014/key.pem",
+    "sans": [
+      "172.25.108.117",
+      "127.0.0.1",
+      "localhost"
+    ],
+    "expires_utc": "2026-11-13T06:12:33Z",
+    "permissions": "directory 0700; private key 0600",
+    "server_started": false,
+    "note": "Regenerate after IP change; headset trust/reachability not tested."
+  },
+  "ssh": {
+    "private_key": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/ssh/id_ed25519",
+    "public_key": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/ssh/id_ed25519.pub",
+    "fingerprint": "SHA256:7ETsInEJoj2YmPUNfPpYLyq34glvD1xujafQjpB5mbk",
+    "remote_authorization": "pending",
+    "note": "Fresh workstation-local key; no historical host/IP assumed, no SSH connection made, no remote account authorized."
+  },
+  "missing_original_data": {
+    "scope": "Raw experiment/dataset path references extracted from tracked JSON reports; not recovered; list may not exhaust historical data",
+    "missing_paths": [
+      ".local/unitree_g1/datasets/quest_record_live_20261012_005_bicat",
+      ".local/unitree_g1/experiments/arm_sdk_dex1_position_20261013_001",
+      ".local/unitree_g1/experiments/arm_sdk_dex1_pulse_20261013_001",
+      ".local/unitree_g1/experiments/arm_sdk_live_20261013_002",
+      ".local/unitree_g1/experiments/debug_readonly_20261008/state.jsonl",
+      ".local/unitree_g1/experiments/dex1_interface_audit_20261009_001",
+      ".local/unitree_g1/experiments/g1_camera_postfocus_20261009_001",
+      ".local/unitree_g1/experiments/g1_head_3840x1200_20261009.jpg",
+      ".local/unitree_g1/experiments/g1_head_checker_20261009_001",
+      ".local/unitree_g1/experiments/g1_right_camera_unrotated_20261009_001",
+      ".local/unitree_g1/experiments/gripper_absolute_open_live_20261009_001",
+      ".local/unitree_g1/experiments/gripper_cycle_live_20261009_001",
+      ".local/unitree_g1/experiments/gripper_negative_open_live_20261009_001",
+      ".local/unitree_g1/experiments/gripper_probe_live_20261009_001",
+      ".local/unitree_g1/experiments/gripper_probe_live_20261009_002",
+      ".local/unitree_g1/experiments/gripper_probe_live_20261009_003",
+      ".local/unitree_g1/experiments/gripper_probe_live_20261009_004",
+      ".local/unitree_g1/experiments/hold_candidate_live_20261008_001",
+      ".local/unitree_g1/experiments/hold_candidate_live_20261008_002",
+      ".local/unitree_g1/experiments/hold_candidate_live_20261008_003",
+      ".local/unitree_g1/experiments/hold_shadow_20261008_final",
+      ".local/unitree_g1/experiments/left_elbow_probe_live_20261008_001",
+      ".local/unitree_g1/experiments/lower_body_12dof_002.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_29dof_002.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_29dof_dt0.0005_003.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_29dof_dt0.001_003.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_compensated_matrix_010/compensated_load_0.0005.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_compensated_matrix_010/compensated_load_0.001.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/camera_failure.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/dex1_hold_0.0005.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/dex1_hold_0.001.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/dex1_hold_0.002.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/explicit_29dof.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/implicit_zero_0.0005.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/implicit_zero_0.001.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/implicit_zero_0.002.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/inference_delay_20ms.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/inference_delay_60ms.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/input_timeout.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/left_payload_500g.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/mount_200g.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/mount_and_payload.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/push_10N.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/push_20N.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/unified_180s_kinematic.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_matrix_007/unified_180s_simulation_truth.trace.jsonl",
+      ".local/unitree_g1/experiments/lower_body_shadow_20261013_001/shadow.jsonl",
+      ".local/unitree_g1/experiments/quest_20261007",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_001",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_002",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_003",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_004",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_005",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_006",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_007",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261008_008",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261009_001",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261009_002",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261009_003",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261009_004",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261009_005",
+      ".local/unitree_g1/experiments/quest_bridge_live_20261009_006",
+      ".local/unitree_g1/experiments/quest_bridge_preflight_20261009_001",
+      ".local/unitree_g1/experiments/quest_bridge_shadow_20261008_003",
+      ".local/unitree_g1/experiments/quest_external_live_20261013_001",
+      ".local/unitree_g1/experiments/quest_external_live_20261013_002",
+      ".local/unitree_g1/experiments/quest_external_live_20261013_003",
+      ".local/unitree_g1/experiments/quest_external_live_20261013_004",
+      ".local/unitree_g1/experiments/quest_external_live_20261013_005",
+      ".local/unitree_g1/experiments/quest_grippers_live_20261009_002",
+      ".local/unitree_g1/experiments/quest_grippers_live_20261009_003",
+      ".local/unitree_g1/experiments/quest_grippers_live_20261009_004",
+      ".local/unitree_g1/experiments/quest_grippers_live_20261009_005",
+      ".local/unitree_g1/experiments/quest_grippers_live_20261012_002",
+      ".local/unitree_g1/experiments/quest_grippers_live_20261012_003",
+      ".local/unitree_g1/experiments/quest_grippers_live_20261012_007",
+      ".local/unitree_g1/experiments/quest_record_live_20261012_001",
+      ".local/unitree_g1/experiments/quest_record_live_20261012_005",
+      ".local/unitree_g1/experiments/quest_record_live_20261013_001",
+      ".local/unitree_g1/experiments/quest_record_live_20261013_002",
+      ".local/unitree_g1/experiments/recording_offline_20261010_001",
+      ".local/unitree_g1/experiments/recording_offline_20261010_001/lerobot_demo",
+      ".local/unitree_g1/experiments/right_camera_rotated_20261009_001/g1_right_camera_rotated_20261009_001",
+      ".local/unitree_g1/experiments/table_pose_readonly_20261008_001.jsonl",
+      ".local/unitree_g1/experiments/three_camera_record_smoke_20261010_001",
+      ".local/unitree_g1/experiments/vertical_probe_live_20261009_001",
+      ".local/unitree_g1/experiments/vertical_probe_preflight_20261009_001",
+      ".local/unitree_g1/experiments/virtual_live_20261008",
+      ".local/unitree_g1/experiments/virtual_live_20261008/snapshot-001"
+    ]
+  },
+  "manual_followup": [
+    "Confirm actual robot/camera host, SSH username and server host-key fingerprint; authorize the NEW public key and add verified known_hosts entry. Pass explicit --camera-host and --camera-ssh-key because code still contains historical defaults.",
+    "GitHub SSH authentication is not configured; existing HTTPS repository access worked. Configure a GitHub-authorized key only if SSH transport is required.",
+    "Confirm current Quest LAN reachability and trust the new TLS certificate; regenerate on address change/expiry. No input service was started.",
+    "Confirm physical network/interface, camera identities and remote camera dependencies before any separately authorized hardware session; no camera drivers or robot-side services changed.",
+    "Recover missing historical raw sessions/dataset from independent backups if available; tracked reports do not restore their contents.",
+    "arm_sdk + external Dex1 recordings remain raw diagnostic sessions: current converter rejects all arm_sdk sessions. Passing legacy synthetic export tests does not enable or validate export of current arm_sdk motion semantics.",
+    "No live arm_sdk, external Dex1, Quest, camera, 180-second recording, or physical release acceptance performed. Frozen lower-body route remains excluded."
+  ],
+  "reproduce": {
+    "baseline": "env -u PYTHONPATH PYTHONNOUSERSITE=1 .venv-g1-xr/bin/python scripts/unitree_g1/verify_xr_baseline.py --ik",
+    "control": "env -u PYTHONPATH PYTHONNOUSERSITE=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 .venv-g1-xr/bin/python .local/unitree_g1/restore-20261014/run_control_tests.py",
+    "data": "env -u PYTHONPATH PYTHONNOUSERSITE=1 HF_HOME=/tmp/g1-dataset-hf HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 .venv-g1-data/bin/python -m unittest discover -s tests/unitree_g1 -p test_record_dataset.py -v"
+  }
+}

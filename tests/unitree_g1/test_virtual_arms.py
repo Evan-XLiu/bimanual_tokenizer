@@ -17,7 +17,7 @@ def event(t, grip=1., x=0., session='a'):
     return {'kind': 'CONTROLLER_MOVE', 'session': session,
             'host_receive_monotonic_s': t, 'valid': True,
             'raw': {s: pose.flatten(order='F').tolist() for s in ('left', 'right')} |
-                   {s+'State': {'squeezeValue': grip} for s in ('left', 'right')}}
+                   {s+'State': {'squeezeValue': grip, 'triggerValue': 0.} for s in ('left', 'right')}}
 
 
 class ClutchTests(unittest.TestCase):
@@ -91,6 +91,33 @@ class ClutchTests(unittest.TestCase):
         e['raw']['left'] = pose.flatten(order='F').tolist()
         target = self.c.accept(e, 1.06, self.robot)
         np.testing.assert_allclose(target[0][:3, :3], m.XR_TO_ROBOT @ rotation @ m.XR_TO_ROBOT.T, atol=1e-8)
+
+    def test_relative_rotation_nonidentity_references_and_independent_sides(self):
+        from scipy.spatial.transform import Rotation
+        initial = [Rotation.from_euler('xyz', [.2, -.3, .4]).as_matrix(),
+                   Rotation.from_euler('xyz', [-.1, .4, -.2]).as_matrix()]
+        for i, robot in enumerate(self.robot):
+            robot[:3, :3] = Rotation.from_euler('xyz', [.3, .2, .1*(i+1)]).as_matrix()
+        def rotated_event(t, rotations, grip=1.):
+            e = event(t, grip=grip)
+            for side, rotation in zip(('left', 'right'), rotations):
+                pose = np.eye(4)
+                pose[:3, :3] = rotation
+                e['raw'][side] = pose.flatten(order='F').tolist()
+            return e
+        self.c.accept(rotated_event(1., initial, 0.), 1., self.robot)
+        self.assertIsNone(self.c.accept(rotated_event(1.03, initial), 1.03, self.robot))
+        delta = Rotation.from_rotvec([.1, -.15, .2]).as_matrix()
+        current = [delta @ initial[0], initial[1]]
+        targets = self.c.accept(rotated_event(1.06, current), 1.06, self.robot)
+        np.testing.assert_allclose(targets[0][:3, :3],
+            m.XR_TO_ROBOT @ delta @ m.XR_TO_ROBOT.T @ self.robot[0][:3, :3], atol=1e-14)
+        np.testing.assert_allclose(targets[1], self.robot[1], atol=1e-14)
+        # Release and re-engage at a rotated controller pose resets rotation zero.
+        self.c.accept(rotated_event(1.09, current, 0.), 1.09, self.robot)
+        self.assertIsNone(self.c.accept(rotated_event(1.12, current), 1.12, self.robot))
+        targets = self.c.accept(rotated_event(1.15, current), 1.15, self.robot)
+        np.testing.assert_allclose(targets, self.robot, atol=1e-14)
 
     def test_partial_line(self):
         with tempfile.TemporaryFile(mode='w+') as stream:

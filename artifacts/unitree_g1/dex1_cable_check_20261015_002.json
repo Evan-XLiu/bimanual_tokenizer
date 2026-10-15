@@ -1,0 +1,39 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "preflight_passed": false,
+  "error": "OwnershipLost: Official ai/FSM=(500, 501) not confirmed or query stale: {'service_code': 0, 'service': {'form': '0', 'name': 'ai'}, 'fsm_code': 0, 'fsm_id': 0}",
+  "mode": {
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": "ai"
+    },
+    "fsm_code": 0,
+    "fsm_id": 0
+  },
+  "external_feedback": [
+    {
+      "index": 0,
+      "q": 5.354628086090088,
+      "dq": 0.0009817477548494935,
+      "tau_est": -0.02929687686264515,
+      "motorstate": 0,
+      "received": 3401.032382014,
+      "status_limitation": "Service may not populate motor fault fields"
+    },
+    {
+      "index": 1,
+      "q": 5.364583969116211,
+      "dq": -0.0009817477548494935,
+      "tau_est": 0.02929687686264515,
+      "motorstate": 0,
+      "received": 3401.03285653,
+      "status_limitation": "Service may not populate motor fault fields"
+    }
+  ],
+  "external_counts": [
+    396,
+    390
+  ]
+}

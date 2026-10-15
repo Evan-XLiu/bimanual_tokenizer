@@ -1,0 +1,45 @@
+{
+  "cameras": {
+    "usb_camera": {
+      "device": "/dev/video0",
+      "frames": 0,
+      "opened": false
+    },
+    "d405": {
+      "device": "/dev/video6",
+      "frames": 134,
+      "opened": true,
+      "reported_fps": 30.0,
+      "elapsed_s": 5.0019526080000105,
+      "observed_fps": 30.0555290950391,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "pixel_std": 57.44762211684333,
+      "sample_path": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_connectivity_20261014_001/d405.jpg"
+    }
+  },
+  "realsense": [],
+  "realsense_query": "separate SDK query timed out at 25 seconds; serial unverified",
+  "capture_threads_still_running": false,
+  "verified_at_utc": "2026-10-14T06:29:16.664877+00:00",
+  "host": "unitree@192.168.123.164",
+  "status": "three_camera_connectivity_not_passed",
+  "physical_role_mapping": "D405 left/right unknown; ordinary USB camera is head candidate, not physically confirmed",
+  "observations": [
+    "Only one D405 physical USB device enumerated; video2..video7 are interfaces of the same device, not multiple cameras.",
+    "Ordinary USB camera 1bcf:0b15 initially enumerated as video0/video1, disappeared before capture and remained absent in final USB enumeration.",
+    "Existing head/left_wrist/right_wrist camera_publisher processes observed, but process presence does not establish frames. No processes stopped or services changed.",
+    "D405 sysfs USB path is on USB 2.0 bus; serial absent in sysfs. pyrealsense2 enumeration attempt timed out after 25 s.",
+    "Kernel log unavailable to account: dmesg permission denied."
+  ],
+  "robot_motion_commands_sent": false,
+  "services_changed": false,
+  "manual_followup": [
+    "Check head camera and second wrist camera USB cables, power and hub connections.",
+    "Identify whether the working D405 is left or right through its sample image or physical inspection.",
+    "Recheck enumeration and simultaneous three-camera capture after connection repair; historical serial-based recorder configuration does not match current enumeration."
+  ]
+}

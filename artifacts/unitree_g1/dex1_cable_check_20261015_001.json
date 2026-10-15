@@ -1,0 +1,6 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "preflight_passed": false,
+  "error": "Exception: channel factory init error."
+}

@@ -24,8 +24,8 @@ def gripper_settings():
             open_report.get('full_open_visually_confirmed') is not True):
         raise ValueError('Missing successful visually confirmed full-open trial')
     return dict(indices=[31,33],closed=closed,opened=[-5.4,-5.4],
-                kp=5.,kd=.05,velocity=2.4,acceleration=1.2,tracking_error=.30,
-                timeout=.2, servo_timeout=.1,
+                kp=5.,kd=.05,velocity=2.4,acceleration=1.2,tracking_error=.50,
+                timeout=.2, input_timeout=1.0, servo_timeout=.1,
                 position_tolerance=.01,control_mode='trigger_position',
                 mapping='Fresh ACTIVE trigger 0..1 maps open..closed; excessive closing error freezes that side until a more-open request',
                 reference=str(path.relative_to(ROOT)),open_reference=str(open_path.relative_to(ROOT)))
@@ -41,15 +41,24 @@ def trigger_pair(values):
 
 
 def raw_triggers(event):
-    return trigger_pair([event['raw'][side+'State']['triggerValue'] for side in ('left','right')])
+    try:
+        values = [event['raw'][side+'State']['triggerValue'] for side in ('left','right')]
+    except (KeyError, TypeError) as exc:
+        raise ValueError('Missing left/right trigger values') from exc
+    return trigger_pair(values)
 
 
 class GripperFollower:
     def __init__(self,settings):
         self.c=dict(settings)
-        for name in ('position_tolerance','velocity','acceleration','tracking_error','timeout','servo_timeout'):
+        self.c.setdefault('input_timeout', self.c['timeout'])
+        self.c.setdefault('closing_error', self.c['tracking_error'])
+        for name in ('position_tolerance','velocity','acceleration','closing_error','timeout','input_timeout','servo_timeout'):
             if not math.isfinite(self.c[name]) or self.c[name]<=0:
                 raise ValueError('Invalid gripper setting: '+name)
+        if self.c['tracking_error'] is not None and (
+                not math.isfinite(self.c['tracking_error']) or self.c['tracking_error']<=0):
+            raise ValueError('Invalid gripper setting: tracking_error')
         self.initialized=False
         self.fault=None
         self.last_sent=None
@@ -84,7 +93,7 @@ class GripperFollower:
 
     def update(self,triggers,stamp,now):
         values=trigger_pair(triggers)
-        if not math.isfinite(stamp) or not 0<=now-stamp<=self.c['timeout']:
+        if not math.isfinite(stamp) or not 0<=now-stamp<=self.c['input_timeout']:
             raise ValueError('Stale gripper input')
         if self.input_time is not None and stamp<=self.input_time:
             raise ValueError('Nonmonotonic gripper input')
@@ -106,7 +115,7 @@ class GripperFollower:
                 return q,0.  # Protective stop: no further closing or automatic re-squeeze.
             # Allow a more-open trigger request to reduce the existing positive
             # error without immediately faulting on the obstruction that caused it.
-            if q-feedback<=self.c['tracking_error']:
+            if q-feedback<=self.c['closing_error']:
                 self.closing_blocked[i]=False
         qn,vn=bounded_joint_step(q,t,v,self.c['velocity'],self.c['acceleration'],
                                  self.lower[i],self.upper[i],dt)
@@ -124,23 +133,24 @@ class GripperFollower:
         if self.fault is None:
             try:
                 feedback,speeds=self.feedback(telemetry,now)
+                fault_limit=self.c['tracking_error']
                 for i,(q,f) in enumerate(zip(self.q,feedback)):
                     error=q-f
-                    if error < -self.c['tracking_error']:
+                    if fault_limit is not None and error < -fault_limit:
                         raise ValueError('Gripper tracking_error')
-                    if error > self.c['tracking_error'] and not self.closing_blocked[i]:
+                    if error > self.c['closing_error'] and not self.closing_blocked[i]:
                         if (command.phase=='ACTIVE' and self.picked_up[i]
                                 and self.target[i]>=q and self.v[i]>=0):
                             self.closing_blocked[i]=True
                             self.v=tuple(0. if j==i else v for j,v in enumerate(self.v))
-                        else:
+                        elif fault_limit is not None and error > fault_limit:
                             raise ValueError('Gripper tracking_error')
                 dt=now-self.last_time
                 if not 0<=dt<=self.c['servo_timeout']:raise ValueError('Gripper servo deadline')
                 if command.phase=='ACTIVE':
                     if self.active_since is None:self.active_since=now
                     stamp=self.input_time if self.input_time is not None else self.active_since
-                    if now-stamp>self.c['timeout']:raise ValueError('Stale gripper target')
+                    if now-stamp>self.c['input_timeout']:raise ValueError('Stale gripper target')
                     if dt>0:
                         steps=[self.motion_step(i,feedback[i],speeds[i],now,dt) for i in range(2)]
                         self.q=tuple(s[0] for s in steps)

@@ -21,8 +21,9 @@ SIDES = ('left', 'right')
 
 def external_settings():
     return dict(indices=[0, 1], opened=[-5.4, -5.4], closed=[0., 0.],
-                kp=5., kd=.05, velocity=5.0, acceleration=5.0, tracking_error=.30,
-                timeout=.2, servo_timeout=.1, position_tolerance=.01,
+                kp=5., kd=.05, velocity=5.0, acceleration=5.0,
+                tracking_error=None, closing_error=.50,
+                timeout=.2, input_timeout=1.0, servo_timeout=.1, position_tolerance=.01,
                 backend='external-dex1', internal_coordinate='negative of service q',
                 physical_opened=[5.4, 5.4], physical_closed=[0., 0.],
                 reference='https://github.com/unitreerobotics/dex1_1_service',
@@ -250,6 +251,13 @@ class ExternalDex1ArmSDKIO(ArmSDKIO):
         return dict(super().command_metadata(), external_gripper_feedback=self.external.latest,
                     external_gripper_submitted=self.external.last_submitted)
 
+    def telemetry(self):
+        telemetry = super().telemetry()
+        if telemetry is not None and self.external is not None:
+            with self.external.state_lock:
+                telemetry = dict(telemetry, external_grippers=list(self.external.latest))
+        return telemetry
+
     decorate_log = QuestGripperIO.decorate_log
 
     def close(self):
@@ -275,6 +283,7 @@ def preopen_external(interface, output, stop):
     output.mkdir(parents=True, exist_ok=False)
     io = None
     result = dict(error='initialization_failed', command_frames=0, opening_complete=False)
+    writer_open_attempted = False
 
     class OpenSource:
         complete = False
@@ -301,6 +310,7 @@ def preopen_external(interface, output, stop):
         io.preflight()
         if stop.is_set():
             raise RuntimeError('Stopped before external preopen')
+        writer_open_attempted = True
         io.open_writer()
         with (output/'commands.jsonl').open('x', buffering=1) as log:
             result = run_hold(io, config, profile, stop.is_set,
@@ -318,7 +328,8 @@ def preopen_external(interface, output, stop):
             result.update(external_gripper_zero_submitted=list(io.external.zero_submitted),
                           external_gripper_cleanup_error=io.external_cleanup_error)
             result['error'] = result.get('error') or io.external_cleanup_error
-        result.update(unload_submitted=False, physical_gripper_release_verified=False,
+        result.update(control_publish_not_started=not writer_open_attempted,
+                      unload_submitted=False, physical_gripper_release_verified=False,
                       physical_handover_verified=False, backend='external-dex1')
         (output/'summary.json').write_text(json.dumps(result, indent=2)+'\n')
     if result['error']:

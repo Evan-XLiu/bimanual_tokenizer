@@ -1,0 +1,82 @@
+{
+  "verified_at_utc": "2026-10-14T06:39:10.857866+00:00",
+  "host": "192.168.123.164",
+  "direct_capture": {
+    "cameras": {
+      "head_candidate": {
+        "device": "/dev/video1",
+        "frames": 76,
+        "opened": true,
+        "reported_fps": 30.0,
+        "elapsed_s": 5.064875327999971,
+        "observed_fps": 15.556479308976591,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "pixel_std": 62.45152567435722,
+        "sample_path": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_connectivity_20261014_002/head_candidate.jpg"
+      },
+      "d405_254723073485": {
+        "device": "/dev/video6",
+        "frames": 0,
+        "opened": false
+      },
+      "d405_usb_1_2_2_3": {
+        "device": "/dev/video13",
+        "frames": 130,
+        "opened": true,
+        "reported_fps": 30.0,
+        "elapsed_s": 5.002311168000006,
+        "observed_fps": 29.138136741472128,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "pixel_std": 51.88630947708614,
+        "sample_path": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_connectivity_20261014_002/d405_usb_1_2_2_3.jpg"
+      }
+    },
+    "realsense": [],
+    "realsense_query": "not attempted; current sysfs identifies two physical D405 devices",
+    "capture_threads_still_running": false
+  },
+  "existing_ros_streams": {
+    "head": {
+      "frames": 0,
+      "decode_failures": 0
+    },
+    "left_wrist": {
+      "frames": 0,
+      "decode_failures": 0
+    },
+    "right_wrist": {
+      "frames": 235,
+      "decode_failures": 0,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "observed_fps": 29.29412245571355,
+      "sample_path": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_connectivity_20261014_002/ros_right_wrist.jpg"
+    }
+  },
+  "observations": [
+    "Three physical USB cameras currently enumerated: USB camera, D405 serial 254723073485 on USB 3 at 2-2.2.2, D405 without sysfs serial on USB 2 at 1-2.2.3.",
+    "D405 /dev/video6 occupied by PID 11551 camera_publisher --section right_wrist; process was not stopped.",
+    "On-disk camera_config.ini lists left 409122272614 and right 352122272935, inconsistent with observed USB serial; physical left/right mapping needs confirmation.",
+    "Short camera readback does not validate continuous 180-second capture or exposure synchronization."
+  ],
+  "robot_motion_commands_sent": false,
+  "services_changed": false,
+  "subsequent_role_correction": {
+    "reason": "Operator reviewed previews and corrected swapped wrist labels",
+    "old_left_wrist_is": "physical right wrist",
+    "old_right_wrist_is": "physical left wrist",
+    "raw_files_relabelled": false,
+    "do_not_use_old_role_labels_for_training": true
+  }
+}

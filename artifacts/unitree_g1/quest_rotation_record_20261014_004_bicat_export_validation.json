@@ -1,0 +1,185 @@
+{
+  "dataset": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/quest_rotation_record_20261014_004/lerobot",
+  "format": "BiCAT-G1 / LeRobot v3.0",
+  "reference_url": "https://huggingface.co/datasets/Evanxw0715/BiCAT-BimanualYAM-Dataset/blob/main/bottles/meta/info.json",
+  "reference_info_sha256": "560001fd1e4ee33b989e4a88bb2edeb37c33892b1e8c36c53ee4f79eb91d21bd",
+  "missing_reference_fields": [],
+  "intentional_g1_joint_adaptations": {
+    "action_joint_angles": {
+      "shape": [
+        [
+          14
+        ],
+        [
+          16
+        ]
+      ],
+      "names": [
+        [
+          "left_joint_0.pos",
+          "left_joint_1.pos",
+          "left_joint_2.pos",
+          "left_joint_3.pos",
+          "left_joint_4.pos",
+          "left_joint_5.pos",
+          "left_gripper.pos",
+          "right_joint_0.pos",
+          "right_joint_1.pos",
+          "right_joint_2.pos",
+          "right_joint_3.pos",
+          "right_joint_4.pos",
+          "right_joint_5.pos",
+          "right_gripper.pos"
+        ],
+        [
+          "left_shoulder_pitch_joint",
+          "left_shoulder_roll_joint",
+          "left_shoulder_yaw_joint",
+          "left_elbow_joint",
+          "left_wrist_roll_joint",
+          "left_wrist_pitch_joint",
+          "left_wrist_yaw_joint",
+          "left_gripper_motor",
+          "right_shoulder_pitch_joint",
+          "right_shoulder_roll_joint",
+          "right_shoulder_yaw_joint",
+          "right_elbow_joint",
+          "right_wrist_roll_joint",
+          "right_wrist_pitch_joint",
+          "right_wrist_yaw_joint",
+          "right_gripper_motor"
+        ]
+      ]
+    },
+    "observation.state_joint_angles": {
+      "shape": [
+        [
+          14
+        ],
+        [
+          16
+        ]
+      ],
+      "names": [
+        [
+          "left_joint_0.pos",
+          "left_joint_1.pos",
+          "left_joint_2.pos",
+          "left_joint_3.pos",
+          "left_joint_4.pos",
+          "left_joint_5.pos",
+          "left_gripper.pos",
+          "right_joint_0.pos",
+          "right_joint_1.pos",
+          "right_joint_2.pos",
+          "right_joint_3.pos",
+          "right_joint_4.pos",
+          "right_joint_5.pos",
+          "right_gripper.pos"
+        ],
+        [
+          "left_shoulder_pitch_joint",
+          "left_shoulder_roll_joint",
+          "left_shoulder_yaw_joint",
+          "left_elbow_joint",
+          "left_wrist_roll_joint",
+          "left_wrist_pitch_joint",
+          "left_wrist_yaw_joint",
+          "left_gripper_motor",
+          "right_shoulder_pitch_joint",
+          "right_shoulder_roll_joint",
+          "right_shoulder_yaw_joint",
+          "right_elbow_joint",
+          "right_wrist_roll_joint",
+          "right_wrist_pitch_joint",
+          "right_wrist_yaw_joint",
+          "right_gripper_motor"
+        ]
+      ]
+    }
+  },
+  "frames": 1168,
+  "all_numeric_rows_match_causal_source": true,
+  "all_video_frames_decoded": true,
+  "videos": {
+    "observation.images.left": {
+      "frames": 1168,
+      "codec": "av1",
+      "fps": 30,
+      "shape": [
+        480,
+        640,
+        3
+      ]
+    },
+    "observation.images.right": {
+      "frames": 1168,
+      "codec": "av1",
+      "fps": 30,
+      "shape": [
+        480,
+        640,
+        3
+      ]
+    },
+    "observation.images.top": {
+      "frames": 1168,
+      "codec": "av1",
+      "fps": 30,
+      "shape": [
+        360,
+        640,
+        3
+      ]
+    }
+  },
+  "outcome": "success",
+  "outcome_source": "Operator statement preserved in artifacts/unitree_g1/quest_rotation_record_20261014_004.json",
+  "quality": {
+    "frames": 1168,
+    "fps": 30,
+    "task": "双臂同步转动与外接夹爪遥控测试",
+    "failed_session": true,
+    "release_only_fault": true,
+    "control_mode": "arm_sdk",
+    "gripper_backend": "external-dex1",
+    "gripper_observation_source": "causal external service feedback",
+    "max_gripper_age_s": 0.01924857499943755,
+    "excluded_active_commands_before_dual_pickup": 16,
+    "configured_max_age_s": 0.2,
+    "hardware_motion_enabled": true,
+    "active_duration_s": 38.91928853900026,
+    "max_camera_age_s": 0.0704349009993166,
+    "camera_age_p95_s": [
+      0.06304916560020501,
+      0.021784375350398462,
+      0.03107579404950229
+    ],
+    "max_intercamera_receipt_skew_s": 0.06594329699873924,
+    "max_command_grid_jitter_s": 0.016065677666119882,
+    "over_one_period_camera_samples": 590,
+    "duplicate_camera_samples": {
+      "head": 565,
+      "left_wrist": 0,
+      "right_wrist": 94
+    },
+    "alignment": "causal host receipt; remote OpenCV read-completion estimate is diagnostic only",
+    "exposure_synchronization_verified": false,
+    "source_session": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/quest_rotation_record_20261014_004",
+    "source_nonce": "7a014fd2c61a45c9a9b771b273054475",
+    "source_hashes": {
+      "session.json": "b47cfce64ef97687ef195fb9eee53295b87c4a128cf4c9d9cc862fdde25428ac",
+      "summary.json": "0ee9dc71c43463e953f6aeda51deb6969a3013c88a105fb9c391404e0d66adc4",
+      "commands.jsonl": "bdea26139b533ec3377f9ace96bcb70d8befe507e5cdd967317246f35408951b",
+      "cameras/frames.jsonl": "094c4c8ab0b314c30e747039ac627e7535cfa08c28a01a6d5cc7f8cb5a4e1aa4",
+      "cameras/metadata.json": "5ad8533fd5d87fcdb0cfb2d4eb31f4734ff25cefd80113a6c034d572d4ed94ad"
+    }
+  },
+  "metadata_description_correction": "Clarified SDK action FK uses submitted waist; numeric data unchanged",
+  "tests": {
+    "data_environment": "14 passed including official LeRobot video/parquet round trip",
+    "targeted_control": "68 tests: 67 passed, 1 skipped (LeRobot unavailable in XR env)",
+    "full_suite_limitations": "13 errors from missing MuJoCo/RL assets; 2 pre-existing timeout assertions expect 0.2 instead of current 0.5"
+  },
+  "hardware_started": false
+}

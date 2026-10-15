@@ -1,0 +1,462 @@
+{
+  "session": ".local/unitree_g1/experiments/quest_rotation_record_20261014_004",
+  "reference_url": "https://huggingface.co/datasets/Evanxw0715/BiCAT-BimanualYAM-Dataset/blob/main/bottles/meta/info.json",
+  "matches_reference_format": false,
+  "phases": {
+    "ENGAGING": 157,
+    "ACTIVE": 3058,
+    "RELEASING": 166,
+    "RELEASED": 25
+  },
+  "active_duration_s": 39.12026082699958,
+  "active_keys": [
+    "type",
+    "time",
+    "feedback",
+    "command_send_started",
+    "command_send_finished",
+    "observation_before_command",
+    "executor_feedback",
+    "release_reason",
+    "telemetry",
+    "first_fault",
+    "q",
+    "kp",
+    "kd",
+    "mode_machine",
+    "phase",
+    "reason",
+    "arm_sdk_request",
+    "external_gripper_feedback",
+    "external_gripper_submitted",
+    "gripper_command",
+    "gripper_fault"
+  ],
+  "camera_checks": {
+    "head": {
+      "frames": 2537,
+      "decoded_shapes": {
+        "(480, 640, 3)": 2537
+      },
+      "errors": [],
+      "receipt_fps": 15.466624330931422,
+      "monotonic": true
+    },
+    "left_wrist": {
+      "frames": 4917,
+      "decoded_shapes": {
+        "(480, 640, 3)": 4917
+      },
+      "errors": [],
+      "receipt_fps": 29.97676140331725,
+      "monotonic": true
+    },
+    "right_wrist": {
+      "frames": 4906,
+      "decoded_shapes": {
+        "(480, 640, 3)": 4906
+      },
+      "errors": [],
+      "receipt_fps": 29.90670151143765,
+      "monotonic": true
+    }
+  },
+  "legacy_gripper_slot_q_ranges": {
+    "31": [
+      0.0,
+      0.0
+    ],
+    "33": [
+      0.0,
+      0.0
+    ]
+  },
+  "external_gripper_feedback_after_arm_send_rows": 1073,
+  "export_preflight_error": "arm_sdk recordings are raw-only: no verified internal Dex1 action or motor-command semantics",
+  "summary": {
+    "unload_submitted": false,
+    "physical_unload_verified": false,
+    "error": "tracking_error",
+    "command_frames": 3406,
+    "phase": "FAULT",
+    "elapsed_s": 43.42749292699955,
+    "release_reason": "operator_release",
+    "first_fault": {
+      "reason": "tracking_error",
+      "phase": "RELEASING",
+      "last_step_time": 8939.647348663,
+      "gain_scale": 0.4679560560007303,
+      "feedback_received": 8939.646378965,
+      "tracking_error_rad": [
+        0.045352256468345065,
+        0.2006043115992927,
+        0.08480715481907275,
+        0.45501005389730054,
+        0.20477881387056657,
+        0.02296767702183146,
+        0.11822405759235,
+        0.031021841602463962,
+        0.03477620861347987,
+        0.07362493711954139,
+        0.5023556312253207,
+        0.01868885069861656,
+        0.0600035912651468,
+        0.0014549865125274564
+      ],
+      "tracking_exceeded_arm_indices": [
+        25
+      ]
+    },
+    "camera_recorder_returncode": 0,
+    "gripper_fault": null,
+    "last_gripper_command": {
+      "q": [
+        5.4,
+        5.4
+      ],
+      "kp": [
+        0.0,
+        0.0
+      ],
+      "kd": [
+        0.0,
+        0.0
+      ],
+      "states": [
+        "RELEASED",
+        "RELEASED"
+      ],
+      "phase": "RELEASED",
+      "backend": "external-dex1",
+      "coordinate": "external_service_q"
+    },
+    "external_gripper_zero_submitted": [
+      true,
+      true
+    ],
+    "external_gripper_cleanup_error": null,
+    "physical_gripper_release_verified": false,
+    "arm_sdk_release_submitted": true,
+    "physical_handover_verified": false,
+    "last_arm_sdk_request": {
+      "topic": "rt/arm_sdk",
+      "weight": 0.0,
+      "joint_indices": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28
+      ],
+      "q": [
+        0.000897257006727159,
+        0.00314917229115963,
+        -0.018413130193948746,
+        0.3877894939694895,
+        0.5732418218989753,
+        -0.23809738187462237,
+        0.12707573435266895,
+        -0.28418628975929566,
+        0.10607827773174662,
+        0.22577049139876937,
+        0.361714550094743,
+        -0.12206134417239355,
+        -0.11347248617058776,
+        0.04829556143977938,
+        -0.20587045758738762,
+        -0.08440347344762571,
+        0.040739275395736685
+      ],
+      "kp": [
+        60.0,
+        60.0,
+        60.0,
+        80.0,
+        80.0,
+        80.0,
+        80.0,
+        40.0,
+        40.0,
+        40.0,
+        80.0,
+        80.0,
+        80.0,
+        80.0,
+        40.0,
+        40.0,
+        40.0
+      ],
+      "kd": [
+        1.5,
+        1.5,
+        1.5,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        1.5,
+        1.5,
+        1.5,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        1.5,
+        1.5,
+        1.5
+      ]
+    },
+    "control_mode": "arm_sdk",
+    "hardware_motion_enabled": true
+  },
+  "reference_info": {
+    "codebase_version": "v3.0",
+    "robot_type": "bi_yam_follower",
+    "total_episodes": 100,
+    "total_frames": 123558,
+    "total_tasks": 1,
+    "chunks_size": 1000,
+    "data_files_size_in_mb": 100,
+    "video_files_size_in_mb": 500,
+    "fps": 30,
+    "splits": {
+      "train": "0:100"
+    },
+    "data_path": "data/chunk-{chunk_index:03d}/file-{file_index:03d}.parquet",
+    "video_path": "videos/{video_key}/chunk-{chunk_index:03d}/file-{file_index:03d}.mp4",
+    "features": {
+      "observation.images.right": {
+        "dtype": "video",
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "names": [
+          "height",
+          "width",
+          "channels"
+        ],
+        "info": {
+          "video.height": 480,
+          "video.width": 640,
+          "video.codec": "av1",
+          "video.pix_fmt": "yuv420p",
+          "video.is_depth_map": false,
+          "video.fps": 30,
+          "video.channels": 3,
+          "has_audio": false
+        }
+      },
+      "observation.images.left": {
+        "dtype": "video",
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "names": [
+          "height",
+          "width",
+          "channels"
+        ],
+        "info": {
+          "video.height": 480,
+          "video.width": 640,
+          "video.codec": "av1",
+          "video.pix_fmt": "yuv420p",
+          "video.is_depth_map": false,
+          "video.fps": 30,
+          "video.channels": 3,
+          "has_audio": false
+        }
+      },
+      "observation.images.top": {
+        "dtype": "video",
+        "shape": [
+          360,
+          640,
+          3
+        ],
+        "names": [
+          "height",
+          "width",
+          "channels"
+        ],
+        "info": {
+          "video.height": 360,
+          "video.width": 640,
+          "video.codec": "av1",
+          "video.pix_fmt": "yuv420p",
+          "video.is_depth_map": false,
+          "video.fps": 30,
+          "video.channels": 3,
+          "has_audio": false
+        }
+      },
+      "observation.state_eef_absolute": {
+        "dtype": "float32",
+        "names": [
+          "left_eef.x",
+          "left_eef.y",
+          "left_eef.z",
+          "left_eef.qw",
+          "left_eef.qx",
+          "left_eef.qy",
+          "left_eef.qz",
+          "left_eef.gripper",
+          "right_eef.x",
+          "right_eef.y",
+          "right_eef.z",
+          "right_eef.qw",
+          "right_eef.qx",
+          "right_eef.qy",
+          "right_eef.qz",
+          "right_eef.gripper"
+        ],
+        "shape": [
+          16
+        ]
+      },
+      "action_eef_absolute": {
+        "dtype": "float32",
+        "names": [
+          "left_eef.x",
+          "left_eef.y",
+          "left_eef.z",
+          "left_eef.qw",
+          "left_eef.qx",
+          "left_eef.qy",
+          "left_eef.qz",
+          "left_eef.gripper",
+          "right_eef.x",
+          "right_eef.y",
+          "right_eef.z",
+          "right_eef.qw",
+          "right_eef.qx",
+          "right_eef.qy",
+          "right_eef.qz",
+          "right_eef.gripper"
+        ],
+        "shape": [
+          16
+        ]
+      },
+      "action_eef_delta": {
+        "dtype": "float32",
+        "names": [
+          "left_eef_delta.x",
+          "left_eef_delta.y",
+          "left_eef_delta.z",
+          "left_eef_delta.qw",
+          "left_eef_delta.qx",
+          "left_eef_delta.qy",
+          "left_eef_delta.qz",
+          "left_eef_delta.gripper",
+          "right_eef_delta.x",
+          "right_eef_delta.y",
+          "right_eef_delta.z",
+          "right_eef_delta.qw",
+          "right_eef_delta.qx",
+          "right_eef_delta.qy",
+          "right_eef_delta.qz",
+          "right_eef_delta.gripper"
+        ],
+        "shape": [
+          16
+        ]
+      },
+      "action_joint_angles": {
+        "dtype": "float32",
+        "names": [
+          "left_joint_0.pos",
+          "left_joint_1.pos",
+          "left_joint_2.pos",
+          "left_joint_3.pos",
+          "left_joint_4.pos",
+          "left_joint_5.pos",
+          "left_gripper.pos",
+          "right_joint_0.pos",
+          "right_joint_1.pos",
+          "right_joint_2.pos",
+          "right_joint_3.pos",
+          "right_joint_4.pos",
+          "right_joint_5.pos",
+          "right_gripper.pos"
+        ],
+        "shape": [
+          14
+        ]
+      },
+      "observation.state_joint_angles": {
+        "dtype": "float32",
+        "names": [
+          "left_joint_0.pos",
+          "left_joint_1.pos",
+          "left_joint_2.pos",
+          "left_joint_3.pos",
+          "left_joint_4.pos",
+          "left_joint_5.pos",
+          "left_gripper.pos",
+          "right_joint_0.pos",
+          "right_joint_1.pos",
+          "right_joint_2.pos",
+          "right_joint_3.pos",
+          "right_joint_4.pos",
+          "right_joint_5.pos",
+          "right_gripper.pos"
+        ],
+        "shape": [
+          14
+        ]
+      },
+      "timestamp": {
+        "dtype": "float32",
+        "shape": [
+          1
+        ],
+        "names": null
+      },
+      "frame_index": {
+        "dtype": "int64",
+        "shape": [
+          1
+        ],
+        "names": null
+      },
+      "episode_index": {
+        "dtype": "int64",
+        "shape": [
+          1
+        ],
+        "names": null
+      },
+      "index": {
+        "dtype": "int64",
+        "shape": [
+          1
+        ],
+        "names": null
+      },
+      "task_index": {
+        "dtype": "int64",
+        "shape": [
+          1
+        ],
+        "names": null
+      }
+    }
+  }
+}

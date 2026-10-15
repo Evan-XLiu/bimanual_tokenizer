@@ -65,8 +65,8 @@ class QuestTests(unittest.TestCase):
                         ex.release_control()
                     ex.observe(Observation((error,)+(0.,)*13, .01, 2, 5))
                     ex.step(.01)
-                    self.assertEqual(ex.fault, trips)
-                    if trips:
+                    self.assertEqual(ex.fault, trips and phase=='ACTIVE')
+                    if trips and phase=='ACTIVE':
                         self.assertEqual(ex.first_fault.reason, 'tracking_error')
                         for step in range(2, 205):
                             now = step*.01
@@ -89,6 +89,15 @@ class QuestTests(unittest.TestCase):
         self.assertIn('camera',self.executor.reason.lower())
         for _ in range(20):self.step(state='operator_release')
         self.assertEqual(self.sent[-1].kp,(0.,)*14)
+
+    def test_persistent_input_service_failure_releases(self):
+        from unittest.mock import patch
+        self.engage()
+        self.source.input_service=self.output/'vr'
+        with patch('continuous_input.check_service',side_effect=RuntimeError('input queue dropped events')):
+            self.step()
+        self.assertTrue(self.executor.fault)
+        self.assertIn('queue dropped',self.executor.reason)
 
     def test_measured_start_model_bounds_and_rate_limits(self):
         self.assertEqual(self.sent[0].q, (.4,)*14)
@@ -151,6 +160,20 @@ class QuestTests(unittest.TestCase):
         self.assertTrue(self.executor.fault)
         self.assertIn('trigger',self.executor.reason)
 
+    def test_invalid_packet_stops_active_without_gripper_target_or_rearm(self):
+        from types import SimpleNamespace
+        self.engage()
+        calls=[]
+        self.source.gripper_io=SimpleNamespace(set_gripper_targets=lambda *args:calls.append(args))
+        self.step(state='invalid_input',triggers=None)
+        self.assertTrue(self.executor.fault)
+        self.assertIn('invalid_input',self.executor.first_fault.reason)
+        self.assertEqual(calls,[])
+        for _ in range(20):
+            self.step(state='invalid_input',triggers=None)
+        self.assertEqual(self.sent[-1].kp,(0.,)*14)
+        self.assertEqual(calls,[])
+
     def test_model_joint_limit_rejection(self):
         self.engage()
         self.step(q=[hi+.01 for hi in self.executor.c.upper])
@@ -165,8 +188,31 @@ class QuestTests(unittest.TestCase):
         self.assertTrue(self.executor.fault)
         self.assertIn('joint constraints', self.executor.first_fault.reason)
 
+    def test_one_second_input_budget_keeps_feedback_timeout_separate(self):
+        from quest_bridge import load_quest_profile
+        from quest_grippers import gripper_settings
+        from external_dex1 import external_settings
+        _, cfg = load_quest_profile()
+        self.assertEqual(LIMITS['input_timeout_s'], 1.0)
+        self.assertEqual(cfg.target_timeout, 1.0)
+        self.assertEqual(cfg.state_timeout, .2)
+        for settings in (gripper_settings(), external_settings()):
+            self.assertEqual(settings['input_timeout'], 1.0)
+            self.assertEqual(settings['timeout'], .2)
+        for key in ('input_time', 'computed_time'):
+            for age in (.2021361169990996, .501, .597222955, .999, 1., 1.001, -.001):
+                self.packet(input_time=1., computed_time=1.)
+                value=json.loads((self.output/'target.json').read_text())
+                value[key]=1.-age
+                write_json(self.output/'target.json',value)
+                if 0 <= age <= 1.:
+                    read_packet(self.output/'target.json','new',1.)
+                else:
+                    with self.assertRaisesRegex(ValueError,'Stale or future'):
+                        read_packet(self.output/'target.json','new',1.)
+
     def test_packet_freshness_nonce_and_finite(self):
-        for override in ({'nonce': 'old'}, {'input_time': -1.}, {'computed_time': 1.}):
+        for override in ({'nonce': 'old'}, {'input_time': -1.001}, {'computed_time': 1.}):
             self.packet(**override)
             with self.assertRaises(ValueError):
                 read_packet(self.output/'target.json', 'new', 0.)
@@ -183,7 +229,7 @@ class QuestTests(unittest.TestCase):
 
 
 class BoundaryTests(unittest.TestCase):
-    def test_free_rotation_is_diagnostic_but_invalid_fk_still_faults(self):
+    def test_rotation_residual_is_diagnostic_but_invalid_fk_still_faults(self):
         import numpy as np
         from types import SimpleNamespace
         from quest_bridge import bounded_ik
@@ -201,12 +247,57 @@ class BoundaryTests(unittest.TestCase):
         bounded_ik(robot, reference, reference, reference,
                    dict(q=[0.]*14, initial_q=[0.]*14), evidence)
         self.assertEqual(evidence['accepted_fraction'], 1.)
-        self.assertEqual(evidence['orientation_mode'], 'free')
+        self.assertEqual(evidence['orientation_mode'], 'relative')
         self.assertGreater(min(evidence['ik_rotation_change_rad']), 1.)
+        self.assertGreater(min(evidence['ik_rotation_error_rad']), 1.)
         rotated[0, 0] = float('nan')
         with self.assertRaisesRegex(ValueError, 'Nonfinite IK'):
             bounded_ik(robot, reference, reference, reference,
                        dict(q=[0.]*14, initial_q=[0.]*14), {})
+
+    def test_rotation_preserved_and_backtracked_on_shortest_arc(self):
+        import numpy as np
+        from scipy.spatial.transform import Rotation
+        from types import SimpleNamespace
+        from quest_bridge import bounded_ik
+        reference = [np.eye(4), np.eye(4)]
+        previous = [t.copy() for t in reference]
+        requested = [t.copy() for t in reference]
+        for t in previous:
+            t[:3, :3] = Rotation.from_euler('z', 170, degrees=True).as_matrix()
+        for t in requested:
+            t[0, 3] = .6
+            t[:3, :3] = Rotation.from_euler('z', -170, degrees=True).as_matrix()
+        robot = SimpleNamespace(model=SimpleNamespace(
+            lowerPositionLimit=np.full(14, -1.), upperPositionLimit=np.full(14, 1.)))
+        calls = []
+        def solve(left, right, *args):
+            calls.append([left.copy(), right.copy()])
+            robot.achieved = [left.copy(), right.copy()]
+            if len(calls) <= rejects:
+                robot.achieved[0][0, 3] += .1
+            return np.zeros(14), None
+        robot.ik = SimpleNamespace(smooth_filter=SimpleNamespace(_data_queue=[]),
+            opti=SimpleNamespace(stats=lambda: {'success': True}), solve_ik=solve)
+        robot.forward = lambda: robot.achieved
+        for rejects in (0, 1, 4):
+            calls.clear()
+            evidence = {}
+            _, _, accepted = bounded_ik(robot, requested, reference, previous,
+                                       dict(q=[0.]*14), evidence)
+            fraction = (1., .5, 0.)[(0, 1, 4).index(rejects)]
+            self.assertEqual(evidence['accepted_fraction'], fraction)
+            self.assertEqual(evidence['accepted_fractions'], [fraction, 1.])
+            for i,t in enumerate(accepted):
+                fraction = evidence['accepted_fractions'][i]
+                expected = Rotation.from_euler('z', 170 + fraction*20, degrees=True).as_matrix()
+                np.testing.assert_allclose(t[:3, :3], expected, atol=1e-14)
+                self.assertAlmostEqual(t[0, 3], .5*fraction)
+                np.testing.assert_allclose(evidence['workspace_target'][i],
+                    np.column_stack((requested[i][:, :3], [.5, 0., 0., 1.])))
+                np.testing.assert_allclose(requested[i][:3, :3],
+                    Rotation.from_euler('z', -170, degrees=True).as_matrix())
+            self.assertLess(max(evidence['ik_rotation_error_rad']), 1e-14)
 
     def test_workspace_projection_backtracking_return_and_faults(self):
         import numpy as np
@@ -222,9 +313,9 @@ class BoundaryTests(unittest.TestCase):
             opti=SimpleNamespace(set_value=lambda *args: None, stats=lambda: {'success': True}))
         def solve(left, right, *args):
             robot.achieved = [left.copy(), right.copy()]
-            # Toy arm is reachable only up to 4 cm; solver obeys joint bounds.
+            # Toy arm is reachable only up to 6 cm; solver obeys joint bounds.
             for t in robot.achieved:
-                t[0, 3] = min(t[0, 3], .04)
+                t[0, 3] = min(t[0, 3], .06)
             return np.zeros(14), None
         robot.ik.solve_ik = solve
         robot.forward = lambda: robot.achieved
@@ -233,11 +324,11 @@ class BoundaryTests(unittest.TestCase):
         evidence = {}
         q, errors, accepted = bounded_ik(robot, requested, references, references, feedback, evidence)
         self.assertEqual(evidence['workspace_limited'], [True, False])
-        self.assertAlmostEqual(evidence['workspace_target'][0][0][3], .3)
-        self.assertAlmostEqual(evidence['workspace_target'][0][1][3], -.3)
-        self.assertAlmostEqual(evidence['workspace_target'][0][2][3], .3)
+        self.assertAlmostEqual(evidence['workspace_target'][0][0][3], .5)
+        self.assertAlmostEqual(evidence['workspace_target'][0][1][3], -.5)
+        self.assertAlmostEqual(evidence['workspace_target'][0][2][3], .5)
         self.assertTrue(evidence['ik_limited'])
-        self.assertLessEqual(max(errors), .015)
+        self.assertLessEqual(max(errors), .03)
         self.assertGreater(accepted[0][0, 3], 0.)
         self.assertAlmostEqual(requested[0][0, 3], .6)  # raw input preserved
         returned = {}
@@ -248,8 +339,8 @@ class BoundaryTests(unittest.TestCase):
         below[0][2, 3] = -.1
         floor_evidence = {}
         bounded_ik(robot, below, references, references, feedback, floor_evidence)
-        self.assertTrue(floor_evidence['workspace_limited'][0])
-        self.assertEqual(floor_evidence['workspace_target'][0][2][3], 0.)
+        self.assertFalse(floor_evidence['workspace_limited'][0])
+        self.assertEqual(floor_evidence['workspace_target'][0][2][3], -.1)
         robot.ik.opti.stats = lambda: {'success': False}
         with self.assertRaisesRegex(ValueError, 'IK failed'):
             bounded_ik(robot, requested, references, accepted, feedback, {})
@@ -257,6 +348,82 @@ class BoundaryTests(unittest.TestCase):
         robot.ik.solve_ik = lambda *args: (np.full(14, 1.01), None)
         with self.assertRaisesRegex(ValueError, 'joint constraints'):
             bounded_ik(robot, requested, references, accepted, feedback, {})
+
+    def test_workspace_fifty_cm_both_signs_all_axes_relative_to_each_hand(self):
+        import numpy as np
+        from types import SimpleNamespace
+        from quest_bridge import bounded_ik
+        references = [np.eye(4), np.eye(4)]
+        references[0][:3, 3] = [.2, .3, .8]
+        references[1][:3, 3] = [-.1, -.4, .6]
+        robot = SimpleNamespace(q=np.zeros(14), model=SimpleNamespace(
+            lowerPositionLimit=np.full(14, -1.), upperPositionLimit=np.full(14, 1.)))
+        def solve(left, right, *args):
+            robot.achieved = [left.copy(), right.copy()]
+            return np.zeros(14), None
+        robot.ik = SimpleNamespace(smooth_filter=SimpleNamespace(_data_queue=[]),
+            opti=SimpleNamespace(stats=lambda: {'success': True}), solve_ik=solve)
+        robot.forward = lambda: robot.achieved
+        for axis in range(3):
+            for sign in (-1, 1):
+                for distance in (.49, .51):
+                    with self.subTest(axis=axis, sign=sign, distance=distance):
+                        requested = [t.copy() for t in references]
+                        for target in requested:
+                            target[axis, 3] += sign * distance
+                        evidence = {}
+                        _, _, targets = bounded_ik(robot, requested, references, references,
+                            dict(q=[0.]*14, initial_q=[0.]*14), evidence)
+                        self.assertEqual(evidence['workspace_limited'], [distance > .5]*2)
+                        for target, reference in zip(targets, references):
+                            expected = np.zeros(3)
+                            expected[axis] = sign * min(distance, .5)
+                            np.testing.assert_allclose(target[:3, 3]-reference[:3, 3], expected)
+
+    def test_independent_sides_threshold_and_alternating_failures(self):
+        import numpy as np
+        from types import SimpleNamespace
+        from quest_bridge import bounded_ik, LIMITS
+        self.assertEqual(LIMITS['ik_position_error_m'], .03)
+        references = [np.eye(4), np.eye(4)]
+        requested = [t.copy() for t in references]
+        for t in requested:
+            t[0, 3] = .4
+        robot = SimpleNamespace(model=SimpleNamespace(
+            lowerPositionLimit=np.full(14, -1.), upperPositionLimit=np.full(14, 1.)))
+        calls = []
+        def solve(left, right, *args):
+            calls.append([left.copy(), right.copy()])
+            robot.achieved = [left.copy(), right.copy()]
+            for i, error in enumerate(residuals[min(len(calls)-1, len(residuals)-1)]):
+                robot.achieved[i][1, 3] += error
+            return np.zeros(14), None
+        robot.ik = SimpleNamespace(smooth_filter=SimpleNamespace(_data_queue=[]),
+            opti=SimpleNamespace(stats=lambda: {'success': True}), solve_ik=solve)
+        robot.forward = lambda: robot.achieved
+        cases = [
+            ([(.03, .029)], [1., 1.], 1),
+            ([(.0, .031), (.0, .0)], [1., .5], 2),
+            ([(.031, .0), (.0, .0)], [.5, 1.], 2),
+            ([(.031, .031), (.0, .0)], [.5, .5], 2),
+            ([(.031, .0), (.0, .031)]*4 + [(.0, .0)], [0., 0.], 9),
+        ]
+        for residuals, fractions, count in cases:
+            with self.subTest(fractions=fractions, count=count):
+                calls.clear()
+                evidence = {}
+                _, errors, accepted = bounded_ik(robot, requested, references, references,
+                                                dict(q=[0.]*14), evidence)
+                self.assertEqual(len(calls), count)
+                self.assertEqual(evidence['accepted_fractions'], fractions)
+                self.assertEqual(evidence['ik_limited_sides'], [f < 1. for f in fractions])
+                self.assertLessEqual(max(errors), .03)
+                for i, target in enumerate(accepted):
+                    self.assertAlmostEqual(target[0, 3], .4*fractions[i])
+                if count == 2 and fractions[0] != fractions[1]:
+                    unaffected = fractions.index(1.)
+                    for trial in calls:
+                        np.testing.assert_allclose(trial[unaffected], requested[unaffected])
 
     def test_no_valid_fallback_is_fault(self):
         import numpy as np
@@ -280,41 +447,36 @@ class BoundaryTests(unittest.TestCase):
 
 
 class IKWorkerTests(unittest.TestCase):
-    def test_position_only_five_cm_lift_and_controller_rotation_independence(self):
+    def test_controller_rotation_changes_ik_with_fixed_position(self):
         code = r'''
 import tempfile
 from pathlib import Path
 import numpy as np
+from scipy.spatial.transform import Rotation
 from virtual_arms import VirtualRobot
 from quest_bridge import configure_measured_pose_ik, bounded_ik
-# Recorded preflight posture that could not satisfy the fixed-direction task.
-initial=np.array([-.0695804134,.1462914348,-.0770226121,.7641501427,-.231343478,
-                  -.68005687,-.0306436643,-.0190549176,-.086837694,.0838536248,
-                  .6517500877,.2000047415,-.60613817,-.0661529228])
+initial=np.array([.05,.04,.2,1.25,.1,.04,0.,-.05,.04,.1,1.25,.1,.04,-.1])
 with tempfile.TemporaryDirectory() as tmp:
     robot=VirtualRobot(Path(tmp),False)
     configure_measured_pose_ik(robot)
     robot.q=initial.copy()
     references=robot.forward()
-    previous=references
-    seed=initial.copy()
-    for height in np.linspace(.0025,.05,20):
-        targets=[x.copy() for x in references]
-        for t in targets: t[2,3]+=height
-        feedback=dict(q=seed.tolist(),initial_q=initial.tolist())
-        evidence={}
-        q,errors,accepted=bounded_ik(robot,targets,references,previous,feedback,evidence)
-        assert evidence['accepted_fraction']==1., evidence
-        assert max(errors)<.003, errors
-        assert np.all(np.asarray(q)>=robot.model.lowerPositionLimit)
-        assert np.all(np.asarray(q)<=robot.model.upperPositionLimit)
-        rotated=[x.copy() for x in targets]
-        for t in rotated:
-            t[:3,:3]=np.array([[0.,-1.,0.],[1.,0.,0.],[0.,0.,1.]]) @ t[:3,:3]
-        q_rot,_,_=bounded_ik(robot,rotated,references,previous,feedback,{})
-        assert np.max(np.abs(np.asarray(q)-q_rot))<1e-5
-        seed=np.asarray(q); previous=accepted
-    assert min(evidence['ik_rotation_change_rad'])>.1
+    for axis in np.eye(3):
+        for sign in (-1, 1):
+            targets=[x.copy() for x in references]
+            for i,t in enumerate(targets):
+                t[:3,:3]=Rotation.from_rotvec(sign * (-1)**i * .15 * axis).as_matrix() @ t[:3,:3]
+            evidence={}
+            q,errors,accepted=bounded_ik(robot,targets,references,references,
+                                        dict(q=initial.tolist()),evidence)
+            assert evidence['accepted_fraction']==1., evidence
+            assert max(errors)<.003, errors
+            assert max(evidence['ik_rotation_error_rad'])<.05, evidence
+            assert np.max(np.abs(np.asarray(q)-initial))>.02
+            for target, actual in zip(targets, accepted):
+                np.testing.assert_allclose(target,actual)
+            assert np.all(np.asarray(q)>=robot.model.lowerPositionLimit)
+            assert np.all(np.asarray(q)<=robot.model.upperPositionLimit)
 '''
         subprocess.run([sys.executable, '-c', code],
                        cwd=Path(__file__).resolve().parents[2]/'scripts/unitree_g1', check=True, timeout=30)
@@ -355,6 +517,8 @@ with tempfile.TemporaryDirectory() as tmp:
         # Separate process preserves the existing SDK import-isolation tests.
         code = r'''
 import json, multiprocessing, tempfile, time
+import numpy as np
+from scipy.spatial.transform import Rotation
 from pathlib import Path
 from quest_bridge import worker, write_json
 
@@ -376,11 +540,17 @@ with tempfile.TemporaryDirectory() as tmp:
         def feedback():
             write_json(output/'feedback.json', dict(nonce='test', time=time.monotonic(),
                 q=q, command_q=q, initial_q=q, phase=phase))
-        def event(grip, x=0.):
+        def event(grip, x=0., angle=0., malformed=False):
             now = time.monotonic()
             pose = [1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.,0.,0.,x,1.]
+            matrix = np.asarray(pose).reshape(4, 4, order='F').copy()
+            matrix[:3, :3] = Rotation.from_euler('y', angle).as_matrix()
+            pose = matrix.flatten(order='F').tolist()
             data = dict(kind='CONTROLLER_MOVE',session='head',valid=True,host_receive_monotonic_s=now,
                 raw={'left':pose,'right':pose,'leftState':{'squeezeValue':grip,'triggerValue':.2},'rightState':{'squeezeValue':grip,'triggerValue':.8}})
+            if malformed:
+                data['raw'] = {}
+                data['valid'] = False
             feedback()
             with (output/'input/events.jsonl').open('a') as f:
                 f.write(json.dumps(data)+'\n')
@@ -394,6 +564,10 @@ with tempfile.TemporaryDirectory() as tmp:
                         return packet
                 time.sleep(.002)
             raise AssertionError('worker did not respond')
+        invalid = event(1., malformed=True)
+        assert invalid['state'] == 'invalid_input', invalid
+        assert invalid['triggers'] is None
+        assert event(1.)['state'] != 'following'
         assert event(0.)['state'] == 'ready'
         assert event(1.)['state'] == 'following'
         phase = 'ENGAGING'
@@ -403,22 +577,26 @@ with tempfile.TemporaryDirectory() as tmp:
         neutral = event(1.)
         assert neutral['triggers']==[.2,.8], neutral
         assert max(abs(a-b) for a,b in zip(neutral['q'],q)) < 1e-4, neutral
+        rotated = event(1., angle=.15)
+        assert max(abs(a-b) for a,b in zip(rotated['q'],q)) > .02, rotated
+        assert max(rotated['ik_evidence']['ik_rotation_error_rad']) < .05, rotated
         moved = event(1., -.01)
         assert max(abs(a-b) for a,b in zip(moved['q'],q)) > .001, moved
-        assert max(moved['ik_position_error_m']) < .015
+        assert max(moved['ik_position_error_m']) < .03
         limited = False
         for x in [-.05*i for i in range(1, 13)]:
             packet = event(1., x)
             assert packet['state'] == 'following', packet
-            assert max(packet['ik_position_error_m']) <= .015, packet
+            assert max(packet['ik_position_error_m']) <= .03, packet
             limited |= any(packet['ik_evidence']['workspace_limited'])
         assert limited
         for x in [-.05*i for i in range(11, -1, -1)]:
             packet = event(1., x)
             assert packet['state'] == 'following'
         assert not any(packet['ik_evidence']['workspace_limited'])
-        stopped = event(0.)
-        assert stopped['state'] == 'ready'
+        stopped = event(1., malformed=True)
+        assert stopped['state'] == 'invalid_input'
+        assert stopped['triggers'] is None
         before = (output/'target.json').read_bytes()
         time.sleep(.05)
         assert (output/'target.json').read_bytes() == before

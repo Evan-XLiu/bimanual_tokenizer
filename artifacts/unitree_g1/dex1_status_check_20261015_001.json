@@ -1,0 +1,39 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "preflight_passed": false,
+  "error": "ValueError: Missing or stale external Dex1 left/right state",
+  "mode": {
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": "ai"
+    },
+    "fsm_code": 0,
+    "fsm_id": 501
+  },
+  "external_feedback": [
+    {
+      "index": 0,
+      "q": 5.356016635894775,
+      "dq": 0.0,
+      "tau_est": 0.17578125,
+      "motorstate": 0,
+      "received": 1813.996760213,
+      "status_limitation": "Service may not populate motor fault fields"
+    },
+    {
+      "index": 1,
+      "q": 5.366018295288086,
+      "dq": -0.012762720696628094,
+      "tau_est": 0.126953125,
+      "motorstate": 0,
+      "received": 1813.999311793,
+      "status_limitation": "Service may not populate motor fault fields"
+    }
+  ],
+  "external_counts": [
+    114,
+    114
+  ]
+}

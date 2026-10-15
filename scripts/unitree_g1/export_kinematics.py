@@ -36,17 +36,19 @@ def forward(full_body_q):
     return poses
 
 
-def eef_features(full_body_q, arm_action, gripper_action):
-    """Action FK holds measured waist fixed; delta is target vs current state."""
+def eef_features(full_body_q, arm_action, gripper_action, *, gripper_state=None, waist_action=None):
+    """Action FK uses submitted waist if provided; delta is target vs state."""
     state_q = np.asarray(full_body_q,dtype=float)
     target_q = state_q.copy()
     target_q[15:29] = arm_action
+    if waist_action is not None:
+        target_q[12:15] = waist_action
     state, target = forward(state_q), forward(target_q)
     observed, absolute, delta = [], [], []
     for i,motor in enumerate((31,33)):
         p,r = state[i]
         tp,tr = target[i]
-        observed.extend([*p,*quaternion(r),state_q[motor]])
+        observed.extend([*p,*quaternion(r),state_q[motor] if gripper_state is None else gripper_state[i]])
         absolute.extend([*tp,*quaternion(tr),gripper_action[i]])
         delta.extend([*(tp-p),*quaternion(tr*r.inv()),gripper_action[i]])
     return {key:np.asarray(value,dtype=np.float32) for key,value in (
@@ -60,7 +62,7 @@ def conventions():
         pose_order='left then right; x,y,z,qw,qx,qy,qz,gripper',
         position_units='m',quaternion='unit wxyz; first nonzero component positive',
         observation='FK of pre-command measured arm and waist positions',
-        action='FK of submitted arm targets with the same measured waist positions',
+        action='FK of submitted arm targets; waist is measured for debug, submitted for arm_sdk',
         delta_translation='target minus measured position, expressed in pelvis frame',
         delta_rotation='q_target * inverse(q_measured), Hamilton product, pelvis frame',
         delta_gripper='absolute submitted target in native motor position units',

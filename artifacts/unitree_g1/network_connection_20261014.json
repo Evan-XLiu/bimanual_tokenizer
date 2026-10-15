@@ -1,0 +1,28 @@
+{
+  "verified_at_utc": "2026-10-14T06:23:00.879948+00:00",
+  "authorization": "User requested reuse of historical robot IP",
+  "robot_address": "192.168.123.164",
+  "local_interface": "enp3s0",
+  "local_address": "192.168.123.223/24",
+  "networkmanager_connection": "g1-direct-thinkcentre",
+  "connection_uuid": "8e2a3763-b771-4fca-acab-65bb9ab979b9",
+  "configuration": "temporary (save no), autoconnect no, IPv4 duplicate address detection timeout 3000 ms, never-default yes",
+  "original_connection_preserved": "有线连接 1 / 96f59798-552b-3313-bfd9-b7312e3e934f",
+  "wifi_default_route_preserved": true,
+  "robot_motion_commands_sent": false,
+  "robot_services_changed": false,
+  "ssh_authenticated": true,
+  "rollback": "nmcli connection up uuid 96f59798-552b-3313-bfd9-b7312e3e934f",
+  "ssh_verification": {
+    "verified_at_utc": "2026-10-14T06:25:13.745442+00:00",
+    "host": "192.168.123.164",
+    "hostname": "ubuntu",
+    "username": "unitree",
+    "batch_mode": true,
+    "strict_host_key_checking": true,
+    "identities_only": true,
+    "identity_file": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/ssh/id_ed25519",
+    "remote_command": "hostname; whoami",
+    "exit_code": 0
+  }
+}

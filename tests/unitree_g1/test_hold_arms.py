@@ -114,7 +114,7 @@ class HoldTests(unittest.TestCase):
         self.assertTrue(result['unload_submitted'])
         self.assertIsNotNone(result['error'])
 
-    def test_release_fault_evidence_survives_passive_tail(self):
+    def test_release_deviation_completes_passive_tail_without_fault(self):
         original = self.io.observation
         def observation():
             state = original()
@@ -124,14 +124,13 @@ class HoldTests(unittest.TestCase):
         self.io.observation = observation
         rows = []
         result = self.run_case(log=rows.append)
-        self.assertEqual(result['error'], 'tracking_error')
+        self.assertIsNone(result['error'])
         self.assertEqual(result['release_reason'], 'operator_release')
-        self.assertEqual(result['first_fault']['phase'], 'RELEASING')
+        self.assertIsNone(result['first_fault'])
         self.assertTrue(result['unload_submitted'])
         self.assertEqual(rows[-1]['phase'], 'RELEASED')
         self.assertEqual(rows[-1]['first_fault'], result['first_fault'])
-        fault_row = next(r for r in rows if r['first_fault'])
-        self.assertEqual(fault_row['executor_feedback']['q'][0], .8)
+        self.assertTrue(any(r['executor_feedback']['q'][0] == .8 for r in rows))
 
     def test_logging_failure_still_completes_unload(self):
         def log(row):

@@ -1,0 +1,95 @@
+{
+  "read_only": true,
+  "robot_motion_started": false,
+  "summary": {
+    "error": null,
+    "elapsed_s": 13.289283227997657,
+    "latest": {
+      "left_wrist": 23221.716799622,
+      "right_wrist": 23221.719132374,
+      "head": 23221.719754305
+    }
+  },
+  "cameras": {
+    "head": {
+      "decoded_frames": 304,
+      "dimensions": [
+        [
+          1280,
+          480
+        ]
+      ]
+    },
+    "left_wrist": {
+      "decoded_frames": 303,
+      "dimensions": [
+        [
+          640,
+          480
+        ]
+      ]
+    },
+    "right_wrist": {
+      "decoded_frames": 304,
+      "dimensions": [
+        [
+          640,
+          480
+        ]
+      ]
+    }
+  },
+  "profile": {
+    "schema_version": 1,
+    "verified_host": "192.168.123.164",
+    "role_confirmation": "2026-10-14 replacement cameras: operator confirmed preview A (260323072820, USB 2.2.2, Quest visible) is physical RIGHT; preview B (255323071511, USB 2.2.3, yellow bottle visible) is physical LEFT. Both use stable serial-number V4L2 paths. Head remains full 1280x480.",
+    "cameras": {
+      "head": {
+        "backend": "ros_compressed",
+        "topic": "/camera/head/image/compressed",
+        "fps": 30,
+        "shape": [
+          480,
+          1280,
+          3
+        ],
+        "rotation_degrees": 0
+      },
+      "left_wrist": {
+        "backend": "v4l2",
+        "device": "/dev/v4l/by-id/usb-Intel_R__RealSense_TM__Depth_Camera_405_Intel_R__RealSense_TM__Depth_Camera_405_255323071511-video-index4",
+        "expected_serial": "255323071511",
+        "fourcc": "YUYV",
+        "fps": 30,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "rotation_degrees": 0
+      },
+      "right_wrist": {
+        "backend": "v4l2",
+        "device": "/dev/v4l/by-id/usb-Intel_R__RealSense_TM__Depth_Camera_405_Intel_R__RealSense_TM__Depth_Camera_405_260323072820-video-index4",
+        "expected_serial": "260323072820",
+        "fourcc": "YUYV",
+        "fps": 30,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "rotation_degrees": 0
+      }
+    },
+    "ros": {
+      "setup": [
+        "/opt/ros/foxy/setup.bash",
+        "/home/unitree/cyclonedds_ws/install/setup.bash"
+      ],
+      "cyclonedds_uri": "/home/unitree/cyclonedds_ws/cyclonedds.xml"
+    },
+    "timing": "V4L2 read completion and ROS callback receipt are different proxies, neither is exposure time; local receipt remains causal alignment basis"
+  },
+  "source": ".local/unitree_g1/camera_replacement_confirmed_20261014"
+}

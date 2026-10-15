@@ -197,8 +197,7 @@ class ArmExecution:
             self.release_reason = reason
         self.fault |= fault
         # Preserve the first fault even if feedback later expires or an operator
-        # requests release. An unloading deviation remains a latched fault;
-        # its phase evidence distinguishes it from an ACTIVE tracking failure.
+        # requests release. Existing faults remain latched throughout unloading.
         self.reason = self.first_fault.reason if self.first_fault else reason
         if self.phase in ('ENGAGING', 'ACTIVE', 'RELEASING'):
             self.phase = 'RELEASING'
@@ -241,7 +240,8 @@ class ArmExecution:
             self._stop('stale_state', True)
         elif self.observation.mode_machine != self.mode_machine:
             self._stop('mode_machine_changed', True)
-        elif any(abs(a-b) > limit for a, b, limit in zip(self.q, self.observation.q, self.c.tracking_error)):
+        elif self.phase in ('ENGAGING', 'ACTIVE') and any(
+                abs(a-b) > limit for a, b, limit in zip(self.q, self.observation.q, self.c.tracking_error)):
             self._stop('tracking_error', True)
         if self.phase == 'ENGAGING':
             self.scale = min(1., self.scale + dt/self.c.ramp_seconds)

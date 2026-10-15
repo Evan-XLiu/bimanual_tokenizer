@@ -1,0 +1,23 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "preflight_passed": false,
+  "error": "ValueError: Missing or stale external Dex1 left/right state",
+  "mode": {
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": "ai"
+    },
+    "fsm_code": 0,
+    "fsm_id": 501
+  },
+  "external_feedback": [
+    null,
+    null
+  ],
+  "external_counts": [
+    0,
+    0
+  ]
+}

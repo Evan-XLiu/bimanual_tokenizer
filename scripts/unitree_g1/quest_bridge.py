@@ -25,15 +25,15 @@ from arm_execution import vector
 from arm_sdk import ArmSDKIO, STANDING
 from hold_arms import DDSHoldIO, load_profile, run_hold
 from quest_grippers import QuestGripperIO, gripper_settings, raw_triggers, trigger_pair
-from record_cameras import check_camera_status
+from record_cameras import check_camera_status, load_config
 
 ROOT = Path(__file__).resolve().parents[2]
-LIMITS = dict(active_s=180., input_timeout_s=.2, feedback_timeout_s=.2,
+LIMITS = dict(active_s=180., input_timeout_s=1.0, feedback_timeout_s=.2,
               joint_limits='urdf', velocity_rad_s=1.5, acceleration_rad_s2=3.0,
-              translation_scale=1., workspace_m=.30, ik_position_error_m=.015,
-              tracking_error_rad=.50, workspace_shape='box_above_start',
-              orientation_mode='free', side_grip_threshold=.5)
-IK_COST = dict(translation=500., rotation=0., smooth=.1)
+              translation_scale=1., workspace_m=.50, ik_position_error_m=.03,
+              tracking_error_rad=.50, workspace_shape='box_centered_on_start',
+              orientation_mode='relative', side_grip_threshold=.5)
+IK_COST = dict(translation=500., rotation=1., smooth=.1)
 
 
 def load_quest_profile():
@@ -69,46 +69,62 @@ def configure_measured_pose_ik(robot):
     # Keep upstream kinematics and solver, but remove its absolute-zero bias.
     # With targets at measured FK, all remaining costs have a zero minimum at
     # the measured joint pose. Scope is this worker only, not the virtual demo.
+    import casadi
     ik = robot.ik
-    # Position-only task: omit the rotation expression entirely (not 0*cost),
-    # so its derivatives cannot constrain motion or introduce rotation NaNs.
+    # Squared matrix distance is smooth even at zero rotation error. Upstream's
+    # symbolic log3 produced NaN derivatives in axis-aligned rotation tests.
+    # Half the Frobenius norm squared is 4*sin(theta/2)^2, locally theta^2.
+    orientation_cost = casadi.Function('quest_orientation_cost',
+        [ik.cq, ik.cTf_l, ik.cTf_r],
+        [sum(.5 * casadi.sumsqr(ik.cdata.oMf[frame].rotation - target[:3, :3])
+             for frame, target in ((ik.L_hand_id, ik.cTf_l), (ik.R_hand_id, ik.cTf_r)))])
+    ik.rotation_cost = orientation_cost(ik.var_q, ik.param_tf_l, ik.param_tf_r)
     ik.opti.minimize(IK_COST['translation'] * ik.translational_cost +
+                     IK_COST['rotation'] * ik.rotation_cost +
                      IK_COST['smooth'] * ik.smooth_cost)
     # Keep the upstream URDF bounds; no engagement-relative joint envelope.
 
 
 def bounded_ik(robot, requested, references, previous, feedback, evidence):
-    """Project position requests, with orientation freely chosen by the IK.
+    """Project position requests while preserving controller-relative orientation.
 
-    Backtracking is bounded to five fresh solves, including revalidation of the
-    last accepted target. Input timestamps are preserved through all attempts.
+    Each arm backtracks independently, with at most nine fresh paired solves.
+    Both arms are revalidated on every solve, including at the previous pose.
+    Input timestamps are preserved through all attempts.
     """
     import numpy as np
+    from scipy.spatial.transform import Rotation
     targets = [t.copy() for t in requested]
     limited = []
     for target, reference in zip(targets, references):
         delta = target[:3, 3] - reference[:3, 3]
-        # Model-frame box relative to engagement: preserve horizontal bounds,
-        # allow combined lift/lateral motion, and do not request below start.
+        # Model-frame box centered on engagement, symmetric on all three axes.
         radius = LIMITS['workspace_m']
-        bounded = np.clip(delta, [-radius, -radius, 0.], [radius, radius, radius])
+        bounded = np.clip(delta, -radius, radius)
         limited.append(bool(np.any(delta != bounded)))
         target[:3, 3] = reference[:3, 3] + bounded
-        # Upstream takes SE(3) inputs; rotation here is just a neutral placeholder.
-        # The position-only objective does not use it or controller rotation.
-        target[:3, :3] = reference[:3, :3]
     evidence.update(requested_target=[t.tolist() for t in requested],
                     workspace_target=[t.tolist() for t in targets],
-                    workspace_limited=limited, orientation_mode='free', attempts=[])
+                    workspace_limited=limited, orientation_mode='relative', attempts=[])
     seed = np.asarray(vector(feedback['q']))
-    for fraction in (1., .5, .25, .125, 0.):
+    ladder = (1., .5, .25, .125, 0.)
+    levels = [0, 0]  # left, right
+    for _ in range(9):
+        fractions = [ladder[level] for level in levels]
         trial = [t.copy() for t in targets]
-        for t, base in zip(trial, previous):
+        for t, base, fraction in zip(trial, previous, fractions):
             t[:3, 3] = base[:3, 3] + fraction * (t[:3, 3]-base[:3, 3])
+            # Shortest SO(3) arc; zero revalidates the entire previous pose.
+            if fraction == 0.:
+                t[:3, :3] = base[:3, :3]
+            elif fraction != 1.:
+                delta = Rotation.from_matrix(t[:3, :3] @ base[:3, :3].T)
+                t[:3, :3] = Rotation.from_rotvec(fraction * delta.as_rotvec()).as_matrix() @ base[:3, :3]
         robot.ik.smooth_filter._data_queue = []
         candidate, _ = robot.ik.solve_ik(*trial, seed.copy(), np.zeros(14))
         q = vector(candidate)
-        attempt = dict(fraction=fraction, candidate_q=q)
+        # Legacy scalar is diagnostic only: the minimum of the two fractions.
+        attempt = dict(fraction=min(fractions), fractions=fractions, candidate_q=q)
         evidence['attempts'].append(attempt)
         if not robot.ik.opti.stats().get('success'):
             raise ValueError('IK failed')
@@ -121,15 +137,27 @@ def bounded_ik(robot, requested, references, previous, feedback, evidence):
         if not all(np.isfinite(a).all() for a in achieved):
             raise ValueError('Nonfinite IK forward kinematics')
         errors = [float(np.linalg.norm(a[:3, 3]-b[:3, 3])) for a,b in zip(achieved, trial)]
-        # Diagnostic change from engagement orientation, not an acceptance error.
+        # Soft orientation objective; residuals are diagnostic, not a hard gate.
+        rotation_errors = [float(Rotation.from_matrix(a[:3, :3] @ b[:3, :3].T).magnitude())
+                           for a,b in zip(achieved, trial)]
         angles = [math.acos(float(np.clip((np.trace(a[:3, :3] @ b[:3, :3].T)-1)/2, -1, 1)))
                   for a,b in zip(achieved, references)]
-        attempt.update(ik_position_error_m=errors, ik_rotation_change_rad=angles)
+        attempt.update(ik_position_error_m=errors, ik_rotation_change_rad=angles,
+                       ik_rotation_error_rad=rotation_errors)
         if max(errors) <= LIMITS['ik_position_error_m']:
             evidence.update(target=[t.tolist() for t in trial], candidate_q=q,
                             ik_position_error_m=errors, ik_rotation_change_rad=angles,
-                            ik_limited=fraction < 1., accepted_fraction=fraction)
+                            ik_rotation_error_rad=rotation_errors,
+                            ik_limited=any(f < 1. for f in fractions),
+                            ik_limited_sides=[f < 1. for f in fractions],
+                            accepted_fraction=min(fractions), accepted_fractions=fractions)
             return q, errors, trial
+        failing = [i for i, error in enumerate(errors)
+                   if error > LIMITS['ik_position_error_m']]
+        if any(levels[i] == len(ladder)-1 for i in failing):
+            break
+        for i in failing:
+            levels[i] += 1
     raise ValueError('IK cannot revalidate bounded target')
 
 
@@ -143,6 +171,7 @@ class QuestSource:
         self.gripper_io = gripper_io
         self.camera_status = None
         self.body_checker = None
+        self.input_service = None
 
     def snapshot(self, io, phase, q=None):
         state = io.observation()
@@ -171,6 +200,9 @@ class QuestSource:
             time=state.received, q=list(state.q), command_q=list(executor.q),
             phase=executor.phase, initial_q=self.initial))
         try:
+            if self.input_service is not None:
+                from continuous_input import check_service
+                check_service(self.input_service)
             if self.body_checker is not None:
                 self.body_checker()
             if self.camera_status is not None:
@@ -199,7 +231,7 @@ class QuestSource:
                 if self.gripper_io is not None:
                     self.gripper_io.set_gripper_targets(packet.get('triggers'),packet['input_time'],self.clock())
                 executor.send_targets(q, packet['input_time'], self.clock())
-        except (ValueError, KeyError, TypeError, OSError) as exc:
+        except (ValueError, KeyError, TypeError, OSError, RuntimeError) as exc:
             executor._stop('quest_input: '+str(exc), True)
 
 
@@ -285,7 +317,9 @@ def worker(output, nonce, done, with_grippers=False, trial_limits=None):
                             input_time=event['host_receive_monotonic_s'], computed_time=time.monotonic(),
                             phase=phase, state=state, q=q, ik_position_error_m=errors)
                         if with_grippers:
-                            packet['triggers']=raw_triggers(event)
+                            # Invalid/released input has already stopped the clutch.
+                            # Do not dereference missing fields or invent open commands.
+                            packet['triggers'] = raw_triggers(event) if state == 'following' else None
                         if errors is not None:
                             packet['ik_evidence'] = evidence
                         log.write(json.dumps(packet, allow_nan=False)+'\n')
@@ -348,8 +382,13 @@ def main():
     parser.add_argument('--wait-seconds', type=float, default=300.)
     parser.add_argument('--record', action='store_true', help='Record three RGB cameras and causal state/action logs')
     parser.add_argument('--task', help='Task instruction recorded with this episode')
+    parser.add_argument('--outcome', choices=('unknown','success','failure'), default='unknown',
+                        help='Operator task label for automatic BiCAT/G1 export; default unknown')
     parser.add_argument('--camera-host', default='unitree@192.168.123.164')
     parser.add_argument('--camera-ssh-key', type=Path, default=Path.home()/'.ssh/g1_camera_ed25519')
+    parser.add_argument('--camera-config', type=Path, default=ROOT/'artifacts/unitree_g1/camera_capture_profile.json')
+    parser.add_argument('--shared-input',type=Path,help='Persistent VR service owned by collect_episodes.py')
+    parser.add_argument('--defer-export',action='store_true',help='Leave raw attempt pending operator s/f decision')
     args = parser.parse_args()
     if not math.isfinite(args.active_seconds) or not 0 < args.active_seconds <= 180:
         parser.error('--active-seconds must be in (0, 180]')
@@ -359,8 +398,8 @@ def main():
         parser.error('external-dex1 requires --grippers --control-mode arm_sdk')
     if args.control_mode == 'arm_sdk' and args.grippers and not external_grippers:
         parser.error('arm_sdk cannot control internal Dex1; --grippers is supported only in --control-mode debug')
-    if args.record and (not (args.task or '').strip() or (args.control_mode == 'debug' and not args.grippers)):
-        parser.error('--record requires a nonempty --task; debug recording also requires --grippers')
+    if args.record and (not (args.task or '').strip() or not args.grippers):
+        parser.error('--record requires a nonempty --task and --grippers for BiCAT/G1 export')
     if not math.isfinite(args.wait_seconds) or not 0 < args.wait_seconds <= 600:
         parser.error('wait-seconds must be in (0, 600]')
     if args.execute and not (args.scene_confirmation or '').strip():
@@ -377,7 +416,7 @@ def main():
     nonce = uuid.uuid4().hex
     (output/'source').mkdir()
     source_hashes = {}
-    for name in ('quest_bridge.py', 'arm_sdk.py', 'external_dex1.py', 'quest_grippers.py', 'gripper_cycle.py', 'gripper_probe.py', 'arm_execution.py', 'hold_arms.py', 'virtual_arms.py', 'televuer_input.py', 'record_cameras.py'):
+    for name in ('quest_bridge.py', 'arm_sdk.py', 'external_dex1.py', 'quest_grippers.py', 'gripper_cycle.py', 'gripper_probe.py', 'arm_execution.py', 'hold_arms.py', 'virtual_arms.py', 'televuer_input.py', 'record_cameras.py', 'convert_dataset.py', 'export_recording.py', 'export_kinematics.py', 'continuous_input.py', 'collect_episodes.py'):
         data = (ROOT/'scripts/unitree_g1'/name).read_bytes()
         (output/'source'/name).write_bytes(data)
         source_hashes[name] = hashlib.sha256(data).hexdigest()
@@ -387,15 +426,18 @@ def main():
         standing_gate=STANDING if args.control_mode == 'arm_sdk' else None,
         grippers=grip_settings, preopen_required=bool(args.execute and args.grippers),
         gripper_backend=args.gripper_backend if args.grippers else None,
-        recording=dict(enabled=args.record, task=args.task, fps=30, shape=[480,640,3],
+        recording=dict(enabled=args.record, task=args.task, fps=30,
+                       shapes=({r: spec['shape'] for r,spec in load_config(args.camera_config)['cameras'].items()} if args.record else {}),
                        cameras=['head','left_wrist','right_wrist'],
                        action_semantics=('arm_sdk_requested_absolute_position' if args.control_mode == 'arm_sdk'
                                          else 'submitted_absolute_position'),
-                       export_supported=args.control_mode == 'debug' and args.grippers),
+                       export_supported=bool(args.grippers and (args.control_mode == 'debug' or external_grippers)),
+                       dataset_format='BiCAT-G1 / LeRobot v3.0', auto_export=not args.defer_export,
+                       joint_dimensions=16, outcome=args.outcome),
         hardware_motion_enabled=args.execute, scene_confirmation=args.scene_confirmation,
         interface=args.interface, host_address=args.host_address,
         source_sha256=source_hashes,
-        scope='candidate translation-only trial; arm_sdk recordings are raw-only; external Dex1 actions use independent service coordinates; no hardware acceptance'))
+        scope='candidate relative-pose trial; BiCAT/G1 export uses SDK requests and external service coordinates; no hardware acceptance'))
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())
@@ -403,11 +445,28 @@ def main():
     done = context.Event()
     io = input_proc = ik_proc = input_log = None
     camera_proc = camera_log = None
+    external_preopen_started = False
     result = dict(error='initialization_failed', command_frames=0, unload_submitted=False)
     source = QuestSource(output, nonce)
+    source.input_service = args.shared_input
     try:
+        if args.record:
+            camera_log=(output/'cameras.log').open('x')
+            camera_proc=subprocess.Popen([sys.executable,str(ROOT/'scripts/unitree_g1/record_cameras.py'),
+                '--output',str(output/'cameras'),'--host',args.camera_host,
+                '--ssh-key',str(args.camera_ssh_key),'--config',str(args.camera_config)],stdout=camera_log,stderr=subprocess.STDOUT)
+            source.camera_status=output/'cameras/status.json'
+            camera_deadline=time.monotonic()+30
+            while True:
+                if stop.is_set() or camera_proc.poll() is not None or time.monotonic()>camera_deadline:
+                    raise RuntimeError('Camera recording failed before engagement; inspect cameras.log')
+                try:
+                    check_camera_status(source.camera_status,time.monotonic())
+                    break
+                except (OSError,ValueError,KeyError,TypeError):time.sleep(.05)
         if args.execute and args.grippers:
             if external_grippers:
+                external_preopen_started = True
                 preopen_external(args.interface, output/'preopen', stop)
             else:
                 open_grippers_before_teleoperation(args,output,stop)
@@ -423,30 +482,31 @@ def main():
         if args.grippers:io.status_path=output/'gripper_status.json'
         io.record_observation=args.record
         io.preflight()
-        if args.record:
-            camera_log=(output/'cameras.log').open('x')
-            camera_proc=subprocess.Popen([sys.executable,str(ROOT/'scripts/unitree_g1/record_cameras.py'),
-                '--output',str(output/'cameras'),'--host',args.camera_host,
-                '--ssh-key',str(args.camera_ssh_key)],stdout=camera_log,stderr=subprocess.STDOUT)
-            source.camera_status=output/'cameras/status.json'
-            camera_deadline=time.monotonic()+30
-            while True:
-                if stop.is_set() or camera_proc.poll() is not None or time.monotonic()>camera_deadline:
-                    raise RuntimeError('Camera recording failed before engagement; inspect cameras.log')
-                try:
-                    check_camera_status(source.camera_status,time.monotonic())
-                    break
-                except (OSError,ValueError,KeyError,TypeError):time.sleep(.05)
         source.snapshot(io, 'WAITING')
-        input_log = (output/'input.log').open('x')
-        input_proc = subprocess.Popen([sys.executable, str(ROOT/'scripts/unitree_g1/televuer_input.py'),
-            '--cert', str(args.cert.resolve()), '--key', str(args.key.resolve()),
-            '--output', str(output/'input'), '--host-address', args.host_address,
-            '--timeout', str(LIMITS['input_timeout_s'])]+
-            (['--gripper-status',str(output/'gripper_status.json')] if args.grippers else []),
-            stdout=input_log, stderr=subprocess.STDOUT)
+        if args.shared_input:
+            from continuous_input import check_service
+            check_service(args.shared_input)
+        else:
+            input_log = (output/'input.log').open('x')
+            input_proc = subprocess.Popen([sys.executable, str(ROOT/'scripts/unitree_g1/televuer_input.py'),
+                '--cert', str(args.cert.resolve()), '--key', str(args.key.resolve()),
+                '--output', str(output/'input'), '--host-address', args.host_address,
+                '--timeout', str(LIMITS['input_timeout_s'])]+
+                (['--gripper-status',str(output/'gripper_status.json')] if args.grippers else []),
+                stdout=input_log, stderr=subprocess.STDOUT)
         ik_proc = context.Process(target=worker, args=(output, nonce, done, args.grippers, dict(LIMITS)))
         ik_proc.start()
+        if args.shared_input:
+            # Do not accumulate headset events while the IK model is loading.
+            deadline = time.monotonic()+60
+            while not (output/'ik_ready.json').exists():
+                if stop.is_set() or not ik_proc.is_alive() or (output/'worker_error.json').exists() or time.monotonic()>deadline:
+                    raise RuntimeError('IK initialization failed before routing VR input')
+                source.snapshot(io,'WAITING')
+                time.sleep(.02)
+            from continuous_input import set_route
+            set_route(args.shared_input,output/'input',nonce)
+            write_json(output/'collection_ready.json',dict(nonce=nonce,time=time.monotonic()))
         print(f'Quest: https://{args.host_address}:8012/?ws=wss://{args.host_address}:8012', flush=True)
         print('MODE: '+('LIVE CANDIDATE' if args.execute else 'SHADOW: NO MOTOR PUBLISHER'), flush=True)
         print(f'Transport: {args.control_mode}; '+
@@ -454,9 +514,9 @@ def main():
                + ('external Dex1 topics enabled; ' if external_grippers else 'no Dex1 commands; ') +
                'exit returns upper-body authority, not whole-body unload.' if args.control_mode == 'arm_sdk'
                else 'debug lowcmd: legs/body passive.'), flush=True)
-        print('Release both grips, then hold both. Keep still for 2s ramp; small translations only. '
-              'Position control; end-effector orientation free (controller rotation is not a target). '
-              f'Workspace: forward/lateral +/-{LIMITS["workspace_m"]*100:g} cm, up 0..{LIMITS["workspace_m"]*100:g} cm; URDF joint limits. '
+        print('Release both grips, then hold both. Keep still for 2s ramp; small translations and rotations. '
+              'Position and controller-relative orientation control (soft IK orientation objective). '
+              f'Workspace: forward/lateral/vertical +/-{LIMITS["workspace_m"]*100:g} cm from engagement; URDF joint limits. '
               'Release either grip to end this run. No automatic rearm.', flush=True)
         if args.grippers:
             print('Dex1: after ramp, control starts with fresh ACTIVE input; '
@@ -473,7 +533,10 @@ def main():
             io.check()
             if args.record:
                 check_camera_status(source.camera_status,now)
-            if input_proc.poll() is not None or not ik_proc.is_alive():
+            if args.shared_input:
+                from continuous_input import check_service
+                check_service(args.shared_input)
+            if (input_proc is not None and input_proc.poll() is not None) or not ik_proc.is_alive():
                 raise RuntimeError('Input or IK process exited; inspect session logs')
             source.snapshot(io, 'WAITING')
             try:
@@ -504,6 +567,13 @@ def main():
         result['error'] = f'{type(exc).__name__}: {exc}'
     finally:
         done.set()
+        if args.shared_input:
+            try:
+                from continuous_input import set_route
+                set_route(args.shared_input)
+            except Exception as exc:
+                result['input_route_cleanup_error'] = str(exc)
+                result['error'] = result.get('error') or str(exc)
         if camera_proc:
             if camera_proc.poll() is None:
                 camera_proc.terminate()
@@ -545,12 +615,29 @@ def main():
             result['physical_handover_verified'] = False
             result['last_arm_sdk_request'] = io.last_sdk if io else None
         result['control_mode'] = args.control_mode
+        if external_preopen_started and io is None:
+            # Explicit preopen evidence only; zero command_frames alone cannot
+            # establish that a partially opened writer never sent a command.
+            try:
+                preopen = json.loads((output/'preopen/summary.json').read_text())
+                if (preopen.get('control_publish_not_started') is True
+                        and not preopen.get('external_gripper_cleanup_error')):
+                    result['control_publish_not_started'] = True
+            except (OSError, ValueError):
+                pass
         result.update(hardware_motion_enabled=args.execute, physical_unload_verified=False)
         if not args.execute:
             result['unload_submitted'] = False
         write_json(output/'summary.json', result)
         print(json.dumps(result, indent=2), flush=True)
-    return 1 if result['error'] else 0
+    export_failed = False
+    if args.record and not args.defer_export:
+        from export_recording import export_recording
+        print('Recording closed. Exporting BiCAT/G1 LeRobot dataset offline...',flush=True)
+        export_status = export_recording(output,outcome=args.outcome,allow_shadow=not args.execute)
+        export_failed = not export_status['exported']
+        print(json.dumps(export_status,indent=2),flush=True)
+    return 1 if result['error'] or export_failed else 0
 
 
 if __name__ == '__main__':

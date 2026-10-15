@@ -1,0 +1,88 @@
+{
+  "episode_000000": {
+    "samples": 1541,
+    "workspace_limited": [
+      0,
+      0
+    ],
+    "ik_limited": 0,
+    "fractions": {
+      "1.0": 1541
+    },
+    "longest_zero_fraction_runs": [],
+    "max_ik_compute_s": 0.06722730999899795
+  },
+  "attempt_000002": {
+    "samples": 2305,
+    "workspace_limited": [
+      59,
+      17
+    ],
+    "ik_limited": 896,
+    "fractions": {
+      "1.0": 1409,
+      "0.25": 8,
+      "0.125": 11,
+      "0.0": 872,
+      "0.5": 5
+    },
+    "longest_zero_fraction_runs": [
+      [
+        18.974,
+        41.15,
+        22.176
+      ],
+      [
+        43.625,
+        46.331,
+        2.706
+      ],
+      [
+        69.762,
+        70.56,
+        0.798
+      ],
+      [
+        42.998,
+        43.572,
+        0.574
+      ],
+      [
+        50.719,
+        51.182,
+        0.463
+      ],
+      [
+        42.536,
+        42.932,
+        0.396
+      ],
+      [
+        17.029,
+        17.423,
+        0.394
+      ],
+      [
+        70.619,
+        70.915,
+        0.297
+      ]
+    ],
+    "max_ik_compute_s": 0.08835759300200152,
+    "rejected_full_target_error_over_0_015m": [
+      0,
+      896
+    ],
+    "cause": "Shared backtracking fraction for both arms; right-arm IK position residual rejects new target and can hold both previous poses. Not gripper closing-blocked.",
+    "final_fault": {
+      "reason": "quest_input: Stale or future Quest target",
+      "controller_gap_s": 0.5972229550025077,
+      "last_before_gap": 25801.696579383,
+      "next_after_gap": 25802.293802338,
+      "input_timeout_s": 0.5,
+      "network_vs_browser_cause": "Not distinguishable from host-receipt logs",
+      "camera_recorder_returncode": 0,
+      "gripper_fault": null
+    }
+  }
+}

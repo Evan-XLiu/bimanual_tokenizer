@@ -1,0 +1,144 @@
+{
+  "verified_at_utc": "2026-10-14T06:48:00.381157+00:00",
+  "status": "short_three_camera_capture_passed",
+  "profile": "artifacts/unitree_g1/camera_capture_profile.json",
+  "profile_sha256": "cdae1bc9c9fbc8a4cda64b761f340320e06e28067774e233428f626b3ec8d3a0",
+  "session": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_002",
+  "validation": {
+    "summary": {
+      "error": null,
+      "elapsed_s": 20.393105193999872,
+      "latest": {
+        "left_wrist": 3728.626628253,
+        "head": 3728.624235813,
+        "right_wrist": 3728.642935655
+      }
+    },
+    "streams": {
+      "head": {
+        "frames": 272,
+        "received_span_s": 17.525089768999806,
+        "received_fps": 15.463544185626533,
+        "max_receive_gap_s": 0.09053425100000823,
+        "p95_receive_gap_s": 0.0718113559998983,
+        "skipped_source_frames": 0,
+        "decode_failures": [],
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "sample": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_002/previews/head.jpg",
+        "timing": "v4l2_read_completion_not_exposure"
+      },
+      "left_wrist": {
+        "frames": 511,
+        "received_span_s": 17.527921100000185,
+        "received_fps": 29.096434031757173,
+        "max_receive_gap_s": 0.07469312300008824,
+        "p95_receive_gap_s": 0.04491042319973526,
+        "skipped_source_frames": 0,
+        "decode_failures": [],
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "sample": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_002/previews/left_wrist.jpg",
+        "timing": "v4l2_read_completion_not_exposure"
+      },
+      "right_wrist": {
+        "frames": 529,
+        "received_span_s": 17.543505700000424,
+        "received_fps": 30.096607202059236,
+        "max_receive_gap_s": 0.062114609999753156,
+        "p95_receive_gap_s": 0.03941139160010607,
+        "skipped_source_frames": 0,
+        "decode_failures": [],
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "sample": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_002/previews/right_wrist.jpg",
+        "timing": "ros_callback_receipt_not_exposure",
+        "source_timestamps_strictly_increasing": true
+      }
+    },
+    "total_decoded_frames": 1312,
+    "all_frames_decoded": true,
+    "simultaneous_overlap_s": 17.524805858000036
+  },
+  "role_mapping": "Operator confirmed serial 254723073485 right wrist, other D405 left wrist",
+  "camera_services_modified": false,
+  "robot_motion_commands_sent": false,
+  "first_attempt": {
+    "session": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/experiments/camera_capture_20261014_001",
+    "status": "failed",
+    "reason": "ROS Foxy spin_once used default executor with custom Context; fixed using SingleThreadedExecutor(context=context). Original failure logs retained."
+  },
+  "control_tests": {
+    "tests_run": 157,
+    "failures": 0,
+    "errors": 0,
+    "skipped": [
+      [
+        "test_two_episodes_videos_parquet_and_official_reader (test_record_dataset.LeRobotRoundTripTests)",
+        "Use .venv-g1-data for real writer test"
+      ]
+    ],
+    "selected": [
+      "test_arm_execution.py",
+      "test_arm_sdk.py",
+      "test_export_kinematics.py",
+      "test_external_dex1.py",
+      "test_gripper_cycle.py",
+      "test_gripper_probe.py",
+      "test_hold_arms.py",
+      "test_probe_arm_sdk_dex1.py",
+      "test_quest_bridge.py",
+      "test_quest_grippers.py",
+      "test_quest_preopen.py",
+      "test_read_state.py",
+      "test_record_dataset.py",
+      "test_runtime_timeouts.py",
+      "test_televuer_input.py",
+      "test_vertical_probe.py",
+      "test_virtual_arms.py"
+    ],
+    "excluded_frozen_route": [
+      "test_g1_sim_model.py",
+      "test_lower_body_policy.py",
+      "test_shadow_lower_body.py",
+      "test_whole_body_control.py"
+    ],
+    "success": true,
+    "hardware_motion_enabled": false
+  },
+  "data_tests": {
+    "tests_run": 11,
+    "passed": 11,
+    "skipped": 0,
+    "log": "/home/humanoid01/bimanual_tokenizer/.local/unitree_g1/restore-20261014/data-tests-camera-update.log"
+  },
+  "limitations": [
+    "Camera-only recording, no joint/action data; not a training demonstration.",
+    "No 180-second stability or exposure synchronization acceptance.",
+    "Head requested 15 FPS, driver reports 30 FPS, observed ~15.46 FPS.",
+    "Left wrist USB-port mapping must be reconfirmed after reconnecting to a different port.",
+    "Right wrist relies on existing ROS publisher and its JPEG compression; callback receipt is not exposure time and source serial is not authenticated by ROS message.",
+    "Existing robot camera_config.ini is unchanged; local recorder uses direct head/left and existing right ROS stream.",
+    "arm_sdk session export remains unsupported."
+  ],
+  "code_sha256": {
+    "scripts/unitree_g1/record_cameras.py": "7f08c97cebfe637047f8406babd5d7ecb8deddbca357ec1ece34a80f6bc5c8a5",
+    "scripts/unitree_g1/quest_bridge.py": "0d655f776de4cb542fccd7456c6c97505fe2d24622a321692e70fbd7ad93f9f4"
+  },
+  "subsequent_role_correction": {
+    "reason": "Operator reviewed previews and corrected swapped wrist labels",
+    "old_left_wrist_is": "physical right wrist",
+    "old_right_wrist_is": "physical left wrist",
+    "raw_files_relabelled": false,
+    "do_not_use_old_role_labels_for_training": true
+  }
+}

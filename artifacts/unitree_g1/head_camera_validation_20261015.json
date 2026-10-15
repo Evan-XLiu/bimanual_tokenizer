@@ -1,0 +1,121 @@
+{
+  "verified_at_utc": "2026-10-15T05:39:25.000199+00:00",
+  "host": "192.168.123.164",
+  "head_model": "Intel RealSense D435i",
+  "head_serial": "253843064640",
+  "summary": {
+    "error": null,
+    "elapsed_s": 21.908813416000044,
+    "latest": {
+      "head": 655.418779744,
+      "left_wrist": 655.430584274,
+      "right_wrist": 655.42747297
+    }
+  },
+  "cameras": {
+    "head": {
+      "frames": 587,
+      "observed_fps": 29.23200616803008,
+      "max_receive_gap_s": 0.08348742099997253,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "decode_failures": [],
+      "preview": ".local/unitree_g1/experiments/head_camera_check_20261015/rgb_capture/head/00000303.jpg"
+    },
+    "left_wrist": {
+      "frames": 603,
+      "observed_fps": 30.013831765681193,
+      "max_receive_gap_s": 0.04438178399993831,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "decode_failures": [],
+      "preview": ".local/unitree_g1/experiments/head_camera_check_20261015/rgb_capture/left_wrist/00000303.jpg"
+    },
+    "right_wrist": {
+      "frames": 603,
+      "observed_fps": 30.019196952323433,
+      "max_receive_gap_s": 0.04997246699997504,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "decode_failures": [],
+      "preview": ".local/unitree_g1/experiments/head_camera_check_20261015/rgb_capture/right_wrist/00000303.jpg"
+    }
+  },
+  "robot_motion_commands_sent": false,
+  "robot_services_changed": false,
+  "network": {
+    "temporary_connection": "g1-camera-check-20261015",
+    "local_address": "192.168.123.223/24",
+    "interface": "enp3s0"
+  },
+  "limitations": [
+    "20 second RGB capture only; depth and IMU not tested; no 180 second validation"
+  ],
+  "candidate_profile": ".local/unitree_g1/experiments/head_camera_check_20261015/candidate_profile.json",
+  "initial_infrared_test": {
+    "summary": {
+      "error": null,
+      "elapsed_s": 22.215266620999955,
+      "latest": {
+        "head": 522.418589969,
+        "left_wrist": 522.415931699,
+        "right_wrist": 522.416715284
+      }
+    },
+    "cameras": {
+      "head": {
+        "frames": 603,
+        "observed_fps": 29.994369447002565,
+        "max_receive_gap_s": 0.046666543000014826,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "decode_failures": [],
+        "preview": ".local/unitree_g1/experiments/head_camera_check_20261015/capture/head/00000319.jpg"
+      },
+      "left_wrist": {
+        "frames": 603,
+        "observed_fps": 29.999459919523783,
+        "max_receive_gap_s": 0.04523114700003816,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "decode_failures": [],
+        "preview": ".local/unitree_g1/experiments/head_camera_check_20261015/capture/left_wrist/00000303.jpg"
+      },
+      "right_wrist": {
+        "frames": 603,
+        "observed_fps": 29.998861605492042,
+        "max_receive_gap_s": 0.04252791099997921,
+        "shape": [
+          480,
+          640,
+          3
+        ],
+        "decode_failures": [],
+        "preview": ".local/unitree_g1/experiments/head_camera_check_20261015/capture/right_wrist/00000303.jpg"
+      }
+    }
+  },
+  "head_usb_serial": "253843064640",
+  "head_sdk_serial": "349622073101",
+  "notes": [
+    "USB and SDK serial identifiers differ; retain both.",
+    "by-id index0 resolves to depth node, RGB requires by-path interface 1.3 index0; keep same USB port.",
+    "Initial index2 test was infrared, not RGB; final RGB frames visually inspected."
+  ],
+  "active_profile": "artifacts/unitree_g1/camera_capture_profile.json"
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "verified_host": "192.168.123.164",
+  "role_confirmation": "2026-10-15 head D435i RGB verified visually at USB port 2.3 interface 1.3; USB serial 253843064640, SDK serial 349622073101. Wrist roles retain operator confirmation from 2026-10-14.",
+  "cameras": {
+    "head": {
+      "backend": "v4l2",
+      "device": "/dev/v4l/by-path/platform-3610000.xhci-usb-0:2.3:1.3-video-index0",
+      "expected_serial": "253843064640",
+      "fourcc": "YUYV",
+      "fps": 30,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "rotation_degrees": 0,
+      "realsense_sdk_serial": "349622073101"
+    },
+    "left_wrist": {
+      "backend": "v4l2",
+      "device": "/dev/v4l/by-id/usb-Intel_R__RealSense_TM__Depth_Camera_405_Intel_R__RealSense_TM__Depth_Camera_405_255323071511-video-index4",
+      "expected_serial": "255323071511",
+      "fourcc": "YUYV",
+      "fps": 30,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "rotation_degrees": 0
+    },
+    "right_wrist": {
+      "backend": "v4l2",
+      "device": "/dev/v4l/by-id/usb-Intel_R__RealSense_TM__Depth_Camera_405_Intel_R__RealSense_TM__Depth_Camera_405_260323072820-video-index4",
+      "expected_serial": "260323072820",
+      "fourcc": "YUYV",
+      "fps": 30,
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "rotation_degrees": 0
+    }
+  },
+  "ros": {
+    "setup": [
+      "/opt/ros/foxy/setup.bash",
+      "/home/unitree/cyclonedds_ws/install/setup.bash"
+    ],
+    "cyclonedds_uri": "/home/unitree/cyclonedds_ws/cyclonedds.xml"
+  },
+  "timing": "V4L2 read completion and ROS callback receipt are different proxies, neither is exposure time; local receipt remains causal alignment basis"
+}

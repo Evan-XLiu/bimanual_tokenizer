@@ -1,0 +1,36 @@
+{
+  "updated_at_utc": "2026-10-14T07:01:44.833171+00:00",
+  "request": "Latest request: +/-50 cm in every axis relative to engagement; supersedes interrupted 30 cm request",
+  "workspace": {
+    "per_axis_bounds_m": {
+      "x": [
+        -0.5,
+        0.5
+      ],
+      "y": [
+        -0.5,
+        0.5
+      ],
+      "z": [
+        -0.5,
+        0.5
+      ]
+    },
+    "shape": "box_centered_on_start",
+    "reference": "Independent end-effector positions at ACTIVE engagement in model frame",
+    "translation_scale": 1.0
+  },
+  "validation": {
+    "suite": "tests/unitree_g1/test_quest_bridge.py",
+    "tests": 19,
+    "passed": 19,
+    "coverage": "Both hands, all axes and signs, inside/outside workspace, downward requests, IK fallback/faults, existing offline IK worker and control protections",
+    "log": ".local/unitree_g1/restore-20261014/workspace-50cm-tests.log"
+  },
+  "unchanged": "URDF joint limits, velocity 1.5 rad/s, acceleration 3.0 rad/s^2, gains, tracking threshold 0.50 rad, gripper settings, control mode and camera changes",
+  "hardware_motion_tested": false,
+  "robot_commands_sent": 0,
+  "services_changed": false,
+  "applies": "Next process start; no running controller restarted",
+  "limitations": "Request box is not full reachability or collision protection; +/-50 cm hardware acceptance pending"
+}

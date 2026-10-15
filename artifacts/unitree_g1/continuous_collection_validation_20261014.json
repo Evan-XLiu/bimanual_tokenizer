@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-14",
+  "hardware_motion_enabled": false,
+  "hardware_acceptance": false,
+  "entrypoint": "scripts/unitree_g1/collect_episodes.py",
+  "behavior": {
+    "target_counts_only_saved_episodes": true,
+    "vr_service_persistent": true,
+    "fresh_release_press_each_episode": true,
+    "s": "save validated BiCAT/G1 dataset and increment",
+    "f": "delete current pending raw attempt, no export, retry",
+    "q": "stop with unlabelled attempt retained",
+    "faults": "stop batch without automatic rearm; retain diagnosis",
+    "format": "BiCAT/G1 LeRobot v3; per-episode datasets, 16D G1 joints"
+  },
+  "validation": {
+    "related_regression": {
+      "tests": 104,
+      "passed": 102,
+      "skipped": 2,
+      "reason": "LeRobot absent in XR environment"
+    },
+    "continuous_data_environment": {
+      "tests": 12,
+      "passed": 12,
+      "includes": [
+        "s/f/s -> two accepted episodes",
+        "single persistent input service; per-attempt routing and idle discard",
+        "stale headset prevents next episode",
+        "hardware/cleanup fault and export failure do not rearm or count",
+        "graceful interrupt cleanup",
+        "delete confined to current pending attempt",
+        "actual routed input main with mocked headset",
+        "real LeRobot AV1/Parquet roundtrip after source rename"
+      ]
+    },
+    "syntax_compilation": "passed",
+    "diff_whitespace_check": "passed"
+  },
+  "limitations": [
+    "Continuous physical robot/Quest session not exercised; live acceptance pending",
+    "Head camera remains approximately 15 source FPS; exported grid is 30Hz with recorded duplicates",
+    "Each accepted episode is an independent LeRobot dataset; batch manifest lists paths"
+  ],
+  "source_sha256": {
+    "scripts/unitree_g1/collect_episodes.py": "3df263e57f19737eda3ee5516e46939ba1f8a4f1060e0d7c194b52965759ebb9",
+    "scripts/unitree_g1/continuous_input.py": "bdf79b8b93498d491f8249bb76164175eb9eb034df79e9138fac10aa804af40d",
+    "scripts/unitree_g1/quest_bridge.py": "fa57141eac2b604cc9d282f8a9623782b6aa87a148d95760af4e86974a0ec568",
+    "scripts/unitree_g1/televuer_input.py": "b1f45b3e2f57e4260acb8531a344500d91f400c5441a5ed2b3a3c7c2e2dbdfb6"
+  }
+}

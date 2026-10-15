@@ -1,0 +1,205 @@
+{
+  "session": ".local/unitree_g1/experiments/quest_rotation_record_20261014_001",
+  "status": "finished_fault",
+  "checked_at_utc": "2026-10-14T07:40:56.689570+00:00",
+  "quest_url": "https://172.20.10.13:8012/?ws=wss://172.20.10.13:8012",
+  "control_mode": "arm_sdk",
+  "gripper_backend": "external-dex1",
+  "orientation_mode": "relative",
+  "active_limit_s": 180,
+  "recording": true,
+  "task": "双臂同步转动与外接夹爪遥控测试",
+  "preopen": {
+    "physical_unload_verified": false,
+    "error": null,
+    "command_frames": 343,
+    "phase": "DISARMED",
+    "elapsed_s": 4.5562168770002245,
+    "release_reason": "operator_release",
+    "first_fault": null,
+    "opening_complete": true,
+    "arm_sdk_release_submitted": true,
+    "external_gripper_zero_submitted": [
+      true,
+      true
+    ],
+    "external_gripper_cleanup_error": null,
+    "unload_submitted": false,
+    "physical_gripper_release_verified": false,
+    "physical_handover_verified": false,
+    "backend": "external-dex1"
+  },
+  "camera_ready": true,
+  "camera_error": null,
+  "camera_age_s": {
+    "right_wrist": 0.049425055000028806,
+    "head": 0.08577914299985423,
+    "left_wrist": 0.03253541999947629
+  },
+  "hardware_acceptance": false,
+  "summary": {
+    "unload_submitted": false,
+    "physical_unload_verified": false,
+    "error": "quest_input: Waist tracking error",
+    "command_frames": 714,
+    "phase": "FAULT",
+    "elapsed_s": 8.939774462999594,
+    "release_reason": "quest_input: Waist tracking error",
+    "first_fault": {
+      "reason": "quest_input: Waist tracking error",
+      "phase": "ACTIVE",
+      "last_step_time": 7305.433009304,
+      "gain_scale": 1.0,
+      "feedback_received": 7305.445227118,
+      "tracking_error_rad": [
+        0.042013394047711344,
+        0.002167478031168568,
+        0.009790445691423899,
+        0.014330472976965769,
+        0.003891334674778868,
+        0.00665653475599326,
+        0.023295264932357007,
+        0.05967513461717572,
+        0.004594925125697036,
+        0.014143030873710924,
+        0.017665529228709453,
+        0.02073547055586422,
+        0.018898764336052754,
+        0.023121756571547858
+      ],
+      "tracking_exceeded_arm_indices": []
+    },
+    "camera_recorder_returncode": 0,
+    "gripper_fault": null,
+    "last_gripper_command": {
+      "q": [
+        5.4,
+        5.4
+      ],
+      "kp": [
+        0.0,
+        0.0
+      ],
+      "kd": [
+        0.0,
+        0.0
+      ],
+      "states": [
+        "RELEASED",
+        "RELEASED"
+      ],
+      "phase": "RELEASED",
+      "backend": "external-dex1",
+      "coordinate": "external_service_q"
+    },
+    "external_gripper_zero_submitted": [
+      true,
+      true
+    ],
+    "external_gripper_cleanup_error": null,
+    "physical_gripper_release_verified": false,
+    "arm_sdk_release_submitted": true,
+    "physical_handover_verified": false,
+    "last_arm_sdk_request": {
+      "topic": "rt/arm_sdk",
+      "weight": 0.0,
+      "joint_indices": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28
+      ],
+      "q": [
+        -0.0008570813224650919,
+        0.004673714749515057,
+        -0.03409281745553017,
+        -0.13282985459754273,
+        0.44182075542832433,
+        0.28281638490549993,
+        -1.029490199119849,
+        -0.8717290021399888,
+        1.3398311065785404,
+        0.46077941009684675,
+        -0.24378878613122906,
+        -0.4688038856588391,
+        0.11351622991936904,
+        -0.942020797707103,
+        -0.3281068783031329,
+        1.4105196802974311,
+        0.23681609604953063
+      ],
+      "kp": [
+        60.0,
+        60.0,
+        60.0,
+        80.0,
+        80.0,
+        80.0,
+        80.0,
+        40.0,
+        40.0,
+        40.0,
+        80.0,
+        80.0,
+        80.0,
+        80.0,
+        40.0,
+        40.0,
+        40.0
+      ],
+      "kd": [
+        1.5,
+        1.5,
+        1.5,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        1.5,
+        1.5,
+        1.5,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        1.5,
+        1.5,
+        1.5
+      ]
+    },
+    "control_mode": "arm_sdk",
+    "hardware_motion_enabled": true
+  },
+  "active_log_span_s": 4.628317443999549,
+  "active_command_frames": 365,
+  "first_fault_waist": {
+    "motor_index": 14,
+    "target_rad": -0.03409281745553017,
+    "measured_rad": 0.1662396490573883,
+    "absolute_error_rad": 0.20033246651291847,
+    "threshold_rad": 0.2
+  },
+  "secondary_worker_error": "ValueError: Stale robot feedback in IK",
+  "camera_summary": {
+    "error": null,
+    "elapsed_s": 291.158112608,
+    "latest": {
+      "right_wrist": 7307.727613046,
+      "head": 7307.716008692,
+      "left_wrist": 7307.752140139
+    }
+  }
+}

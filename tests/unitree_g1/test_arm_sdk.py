@@ -34,6 +34,17 @@ def body():
 
 
 class ArmSDKTests(unittest.TestCase):
+    def test_rejected_motor_feedback_is_reported_before_missing_body(self):
+        io = ArmSDKIO.__new__(ArmSDKIO)
+        io.lock = threading.Lock()
+        io.latest = None
+        io.latest_telemetry = None
+        io.feedback_error = 'Nonzero motorstate (index, code): [(13, 512)]'
+        for check in (io.check_readiness, io.check_active_body):
+            with self.assertRaisesRegex(ValueError, r'13, 512'):
+                check()
+
+
     def setUp(self):
         self.profile, self.config = load_quest_profile()
 
@@ -100,6 +111,20 @@ class ArmSDKTests(unittest.TestCase):
         sample['imu_rpy'][0]=.31
         with self.assertRaisesRegex(ValueError,'tilt'):check_body(sample,1.1,.2)
         with self.assertRaisesRegex(ValueError,'Waist'):check_body(body(),1.1,.2,waist_q=(1.,)*3)
+
+    def test_all_waist_axes_half_rad_threshold(self):
+        self.assertEqual(STANDING['waist_tracking_error_rad'], .5)
+        reference=tuple(m['q'] for m in body()['motors'][12:15])
+        for index in range(12,15):
+            for sign in (-1,1):
+                for error in (.20033246651291847,.499,.501):
+                    sample=body()
+                    sample['motors'][index]['q'] += sign*error
+                    if error > .5:
+                        with self.assertRaisesRegex(ValueError,'Waist tracking error'):
+                            check_body(sample,1.1,.2,waist_q=reference)
+                    else:
+                        check_body(sample,1.1,.2,waist_q=reference)
 
     def test_mode_and_ownership_gate_never_requires_quiet_official_lowcmd(self):
         self.assertEqual(ArmSDKIO.command_topic_name, 'rt/arm_sdk')

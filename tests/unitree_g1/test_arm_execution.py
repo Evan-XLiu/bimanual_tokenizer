@@ -124,7 +124,7 @@ class ExecutionTests(unittest.TestCase):
         self.assertEqual(self.executor.reason, 'transport_failure')
 
     def test_tracking_fault_records_original_phase_and_preserves_first_reason(self):
-        for phase in ('ENGAGING', 'ACTIVE', 'RELEASING'):
+        for phase in ('ENGAGING', 'ACTIVE'):
             with self.subTest(phase=phase):
                 self.setUp()
                 if phase == 'ENGAGING':
@@ -133,8 +133,6 @@ class ExecutionTests(unittest.TestCase):
                     self.advance()
                 else:
                     self.engage()
-                    if phase == 'RELEASING':
-                        self.executor.release_control()
                 scale = self.executor.scale
                 self.t += .01
                 self.update(q=(.8,)+(.4,)*13)
@@ -144,8 +142,7 @@ class ExecutionTests(unittest.TestCase):
                 self.assertEqual(evidence.reason, 'tracking_error')
                 self.assertEqual(evidence.gain_scale, scale)
                 self.assertEqual(evidence.tracking_exceeded_arm_indices, (15,))
-                self.assertEqual(self.executor.release_reason,
-                                 'operator_release' if phase == 'RELEASING' else 'tracking_error')
+                self.assertEqual(self.executor.release_reason, 'tracking_error')
                 self.executor.stop()
                 for _ in range(15):
                     self.advance(feedback=False)
@@ -164,6 +161,38 @@ class ExecutionTests(unittest.TestCase):
         self.assertEqual(self.executor.first_fault.reason, 'stale_state')
         self.assertEqual(self.executor.first_fault.phase, 'RELEASING')
         self.assertEqual(self.executor.phase, 'FAULT')
+
+    def test_release_ignores_tracking_deviation_and_finishes_unloading(self):
+        self.engage()
+        self.executor.release_control()
+        for _ in range(11):
+            self.t += .01
+            self.update(q=(1.2,)*14)
+            self.executor.step(self.t)
+        self.assertEqual(self.executor.phase, 'DISARMED')
+        self.assertIsNone(self.executor.first_fault)
+        self.assertFalse(self.executor.fault)
+        self.assertEqual(self.executor.release_reason, 'operator_release')
+        self.assertEqual(self.sent[-1].q, (.4,)*14)
+        self.assertEqual(self.sent[-1].kp, (0.,)*14)
+        self.assertEqual(self.sent[-1].kd, (0.,)*14)
+
+    def test_release_retains_mode_clock_deadline_and_transport_checks(self):
+        for reason in ('mode_machine_changed', 'invalid_clock', 'servo_deadline', 'transport_failure'):
+            with self.subTest(reason=reason):
+                self.setUp()
+                self.engage()
+                self.executor.release_control()
+                self.t += .03 if reason == 'servo_deadline' else .01
+                self.update(mode=6 if reason == 'mode_machine_changed' else 5)
+                if reason == 'transport_failure':self.executor.emit=lambda c:False
+                if reason in ('invalid_clock', 'transport_failure'):
+                    with self.assertRaises((ValueError,OSError)):
+                        self.executor.step(self.executor.last_step if reason=='invalid_clock' else self.t)
+                else:
+                    self.executor.step(self.t)
+                self.assertEqual(self.executor.first_fault.reason,reason)
+                self.assertEqual(self.executor.first_fault.phase,'RELEASING')
 
     def test_missing_or_stale_state(self):
         with self.assertRaises(RuntimeError):

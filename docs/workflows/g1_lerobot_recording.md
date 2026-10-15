@@ -1,5 +1,154 @@
 # G1 / Quest 三路图像与状态动作采集
 
+## 2026-10-15 更换头部相机验证
+
+新头部为 RealSense D435i，USB序列号 `253843064640`，SDK报告序列号 `349622073101`（两种标识不同）。已恢复本机 enp3s0 临时直连 `192.168.123.223/24`，原有线配置保留，Wi-Fi不变。三路同时20秒RGB短测正常结束：头部587帧/29.23 FPS、左腕603帧/30.01 FPS、右腕603帧/30.02 FPS，全部640×480且JPEG解码通过；头部最大接收间隔0.0835秒。未启动机器人运动或修改机器人服务，未验证深度/IMU及180秒连续采集。
+
+默认 `camera_capture_profile.json` 已切换头部至 V4L2 YUYV 640×480/请求30 FPS、不旋转。RGB为 `/dev/v4l/by-path/platform-3610000.xhci-usb-0:2.3:1.3-video-index0`（当前video4），须保持USB插口；该机by-id链接存在接口重名，index0实际指向深度节点，index2为红外，不可作为RGB。初轮红外测试单独保留，最终结论来自RGB复测。双腕角色及配置保持10月14日确认值。见[验证报告](../../artifacts/unitree_g1/head_camera_validation_20261015.json)。
+
+简洁英文使用说明：[G1 Episode Collection Guide](g1_collection_quickstart.md)。
+
+## 正式连续采集：s保存、f重采
+
+入口：`scripts/unitree_g1/collect_episodes.py`。这是带人工质量确认的连续遥操作采集，
+不是机器人自主执行任务。一个批次只启动一次VR网站和WebSocket；每条使用独立的IK、控制和相机记录。
+机器人及夹爪保留当前 `arm_sdk + external-dex1` 路径。
+
+启动时依次检查TLS证书/私钥、网卡与本机VR地址/端口、相机配置、磁盘空间、LeRobot/AV1环境、
+官方运控模式、机器人及夹爪反馈、DDS网络、相机SSH连接和三路图像实际解码。
+执行模式还等待头显和控制器新鲜输入，然后进入`awaiting_n`等待终端确认。
+首条、保存后的下一条和失败重采都必须输入`n`并回车；等待期间不启动本条记录、控制或预全开。
+确认后重新检查机器人/夹爪和磁盘，三路相机就绪后
+才预全开夹爪、加载IK并开放本条输入。预检查不自动切换运控、起立或启动机器人服务。
+
+以目标10条为例，在仓库根目录使用当前有效的地址、证书及网卡运行。以下为2026-10-14配置示例；
+`--scene-confirmation True`表示本次现场已确认，`False`或省略时不能执行采集；输出目录必须不存在。
+在设备、网络地址和证书不变时，可复用完整命令，只按批次调整`--episodes`、`--task`、`--output`。
+其他必填参数仍需保留，不能从命令中省略；每批`--output`必须为新的目录。
+
+```bash
+env -u PYTHONPATH PYTHONNOUSERSITE=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
+  .venv-g1-xr/bin/python scripts/unitree_g1/collect_episodes.py \
+  --episodes 10 --task "填写本批次任务" \
+  --output .local/unitree_g1/collections/formal_001 \
+  --interface enp3s0 --host-address 172.20.10.13 \
+  --cert .local/unitree_g1/tls/rotation-20261014-001/cert.pem \
+  --key .local/unitree_g1/tls/rotation-20261014-001/key.pem \
+  --camera-host unitree@192.168.123.164 \
+  --camera-ssh-key .local/unitree_g1/ssh/id_ed25519 \
+  --execute --scene-confirmation True
+```
+
+只检查设备时，将最后一行改成 `--preflight-only`，并使用另一个新的输出目录。
+该模式不发运动指令、不预全开，也不启动VR服务，所以不替代执行模式的头显实际连通检查。
+默认每条ACTIVE上限180秒，`--active-seconds`可缩短；`--wait-seconds`默认300秒；
+`--min-free-gb`默认10 GiB，每条检查，不承诺足以容纳任意时长的全部批次。
+
+操作流程：
+
+终端提示保留 `Try X | Episode Y/N`：Try是累计尝试次数，Episode是当前要保存的有效条编号，
+显示从1开始；`f`后Try增加而Episode不变，`s`成功保存后两者进入下一条。磁盘目录编号仍从0开始。
+
+1. 初次进入脚本打印的VR网站，保持网页/VR会话打开。
+2. 放稳物体、复位场景后，在终端输入 `n` 并回车，开始本条检查、夹爪预全开和采集准备。
+3. 终端提示“Ready. Release both side grips, then hold both.”后，松开双侧握键，再重新按住接管；新条不沿用上一条的按住状态。
+4. 操作完成后松开任一侧握键结束，等待控制归还及相机记录关闭。
+5. 终端输入 `s` 并回车：人工确认本条有效/成功，保存原始数据并计入accepted，加入批次结束后的导出队列。
+   输入 `f` 并回车：删除本条暂存的图像、指令、输入及预全开记录，不导出、不计数。
+   两种情况均返回等待 `n`，不会直接开始下一条或自动预全开夹爪。
+6. 达到 `--episodes` 的有效条数后结束采集；等待`n`或判定时均可输入`q`，Ctrl-C也可提前结束。
+   子进程和VR清理结束后，统一编码已接受条目并显示逐条进度；未判定条保留为pending且不导出。
+   启动时的只读预检不受`n`门槛影响；`n`控制的是每条尝试的启动。
+
+单条硬件或相机故障时，子进程先尝试现有卸载流程；采集器保留原始数据和 `collection_fault.json`，进入 `r` 重检 / `q` 退出的等待状态。修复后输入 `r`，检查卸载证据、相机进程已结束、输入路由关闭、机器人/夹爪反馈、三路图像和VR输入；通过后仍需另行输入 `n` 开始新条。故障条目不计入成功数，不提供 `s/f`，不自动重试控制。
+控制归还/夹爪清零未确认、相机进程结束未确认或缺少摘要时保持阻塞，不能用传感器预检通过替代卸载证据。初始启动失败仍停止批次；编码改为采集结束后统一执行，单个导出失败保留原始数据并继续处理队列中的其他条目。`f`仅用于控制正常结束但演示内容无效的条目。
+每次进入下一条仍需新鲜松开/按住手势。仅软件提交清理可验证，不把它写成物理释放已确认。
+
+目录结构：
+
+```text
+formal_001/
+  collection.json                  # 目标、有效数、每次尝试的s/f结果和状态
+  checks/                          # 启动及每条只读检查；探测图像通过后删除
+  vr/                              # 常驻输入服务元数据/状态；不保存全批次原始输入
+  pending/attempt_000001/           # 当前尚未判定的原始记录，f后删除
+  episodes/episode_000000/
+    session.json, commands.jsonl, cameras/, input/, ...
+    operator_label.json            # s的人工标注
+    lerobot/                       # 本条独立的BiCAT/G1 LeRobot v3数据集
+  logs/                            # 每次尝试的过程日志；f后仅保留小型诊断和审计记录
+```
+
+`collection.json`的`accepted`列出已保存数据集路径；每条独立数据集内部`episode_index=0`，
+批次序号由外层`episode_000000...`及清单表示。保留每条原始记录，必要时可用转换器多个`--session`
+合并为统一多episode数据集。不自动覆盖或续写已有批次。
+
+当前已完成模拟s/f循环、持续输入跨条路由、故障不重启、删除边界及真实LeRobot写入读取的离线验证；
+尚未进行这条连续采集流程的真机验收。
+
+## 2026-10-14 当前默认格式：BiCAT/G1，LeRobot v3.0
+
+本节取代下文关于 `arm_sdk` 只保留原始数据、拒绝导出及必须事后手动转换的历史说明。
+`quest_bridge.py --record --grippers --task "任务描述"` 会在机器人控制、相机和子进程清理结束后，
+使用独立 `.venv-g1-data` 环境自动生成 `<会话目录>/lerobot/`。
+当前 `arm_sdk` 路径还需 `--gripper-backend external-dex1`；不带夹爪的采集因缺少完整状态/动作而拒绝。
+所有原有设备连接、执行和现场确认参数仍需按当前流程提供。
+
+- 标准目录为 `data/`（Parquet）、`videos/`（MP4/AV1）、`meta/`，30 Hz。
+- 图像字段为 `observation.images.top/left/right`。2026-10-14 新采集顶部完整保留1280×480、双腕640×480；原始JPEG和导出视频均不缩放、不裁剪。历史640×480头部会话保留原640×360导出兼容路径。
+  原始头部约15 FPS，30 Hz导出会复用图像；不能视为30 FPS独立曝光。图像复用数写入质量报告。
+- 状态/动作字段为 `observation.state_joint_angles`、`action_joint_angles`；
+  末端字段为 `observation.state_eef_absolute`、`action_eef_absolute`、`action_eef_delta`。
+  均为float32。G1关节字段保留16维（每侧7关节＋夹爪），YAM为14维，不能直接混用关节策略。
+  末端字段与BiCAT同为16维，但基座、虚拟TCP和夹爪单位为G1定义，不声称YAM动作语义等价。
+- 外接夹爪使用独立服务的真实 `q/dq/tau_est`，绝不读取LowState空槽31/33充当反馈。
+  服务坐标约5.4为打开、0为闭合，未标定为夹口宽度。只选择发送前收到且不超过0.2秒的反馈；
+  `observation.gripper_source_timestamps` 保留两侧来源时间。新采集额外将夹爪快照写入发送前观测。
+- SDK关节动作核对实际提交请求；末端动作FK使用提交的腰部和手臂目标，末端状态FK使用实测腰臂。
+  SDK请求不等于下层电机已实现的位置。原始35槽全身反馈保持原样。
+- 默认任务结果为 `unknown`，`next.success_known=false`；`next.success=false`不表示已经确认失败。
+  已有人工作业结果时，离线转换可用 `--outcome success/failure`。不要在任务完成前预填成功标签。
+  `next.done`为末帧，已确认成功的末帧 `next.success=true`。
+- 默认拒绝不完整或运行期故障。仅当首个故障明确为最后ACTIVE动作之后RELEASING阶段的
+  tracking_error、ACTIVE无故障、相机及夹爪清理正常时，允许导出此前连续ACTIVE段；
+  `failed_session=true` 和 `release_only_fault=true` 同时保留，绝不抹去退出故障。
+- 导出结果见 `export_status.json` 和 `export.log`。失败保留原始数据和中间目录，程序返回非零，
+  不上传、不覆盖已有数据集。仅在格式写入和官方读取验证完成后才公开最终 `lerobot/` 目录。
+
+参考格式：[BiCAT bottles/meta/info.json](https://huggingface.co/datasets/Evanxw0715/BiCAT-BimanualYAM-Dataset/blob/main/bottles/meta/info.json)。
+当前转换是BiCAT字段布局的G1适配，不删掉G1关节来伪装成YAM的14维。
+
+## 2026-10-14 当前相机采样配置
+
+新电脑使用 [camera_capture_profile.json](../../artifacts/unitree_g1/camera_capture_profile.json)。2026-10-14 更换双腕相机后，用户查看预览确认：B（`255323071511`）为左腕，A（`260323072820`）为右腕；两侧均通过固定序列号 V4L2 路径采集，下文历史相机标识不适用于当前设备。
+
+| 角色 | 当前来源 | 请求帧率 / 保存尺寸 |
+| --- | --- | --- |
+| head | 已有 `/camera/head/image/compressed` ROS 流 | 30 FPS / 1280×480 |
+| right_wrist | D405 `260323072820`，by-id video-index4，V4L2 YUYV | 30 FPS / 640×480 |
+| left_wrist | D405 `255323071511`，by-id video-index4，V4L2 YUYV | 30 FPS / 640×480 |
+
+左腕设备由现有发布器占用，因此只读订阅其图像，不另行打开设备、不重启服务。ROS 使用本次在机器人上核实的 Foxy/CycloneDDS 环境；本机不需安装 ROS。右腕在当前 USB2 连接下不提供 sysfs 序列号，依靠已核对的 USB 插口定位，换插口后必须重新核对。ROS 消息不带硬件序列号，profile 的 expected_serial 是本次人工及设备盘点证据，不是自动身份认证。
+
+三路不旋转、不裁剪。头部驱动虽然接受15 FPS请求，仍报告30 FPS；以实际到帧统计为准，不能视为已达成30 FPS。左腕保留上游 JPEG，不重新编码；其时间是机器人端订阅回调接收时刻，其他两路是 V4L2 读取完成时刻，均非曝光时间。帧头记录 timing 和左腕原始 source_timestamp_ns；重复或倒退的左腕时间戳不会刷新有效性。旧导出仍按本机完整接收时刻进行因果对齐，不声称曝光同步或已消除上游缓存延迟。
+
+仅相机测试（不启动机器人控制），从仓库根目录运行并使用新的输出目录：
+
+```bash
+env -u PYTHONPATH PYTHONNOUSERSITE=1 .venv-g1-xr/bin/python \
+  scripts/unitree_g1/record_cameras.py \
+  --host unitree@192.168.123.164 \
+  --ssh-key "$PWD/.local/unitree_g1/ssh/id_ed25519" \
+  --config artifacts/unitree_g1/camera_capture_profile.json \
+  --duration 20 --output .local/unitree_g1/experiments/camera_capture_NEW
+```
+
+`--duration` 包含 SSH/相机初始化时间。`quest_bridge.py --record` 默认使用此配置，也可通过 `--camera-config` 指定配置；本机新 SSH 密钥仍需显式传入 `--camera-ssh-key`，不要使用旧默认密钥路径。本次没有启动 Quest 或运动采集。
+
+**角色纠正：001/002及此前连通性测试中的左右腕标签颠倒；原始文件保留，不按旧标签用于训练。当前配置已对调采集角色，不修改机器人现有ROS话题名称。**
+
+20秒短测002正常结束（以下左右名称为当时错误标签），三路共同接收窗口约17.52秒：head 272帧/15.46 FPS、左腕511帧/29.10 FPS、右腕529帧/30.10 FPS。1312张JPEG全部解码且尺寸正确，最大接收间隔分别0.091/0.075/0.062秒。首轮001因 ROS Foxy执行器上下文错误失败，修复后002通过，两轮记录均保留。本次不等于180秒验收或正式机器人示范数据；arm_sdk导出限制保持不变。详见[采样验证报告](../../artifacts/unitree_g1/camera_capture_validation_20261014.json)。
+
 2026-10-13 控制路径迁移：Quest默认使用`arm_sdk`，新路径允许不带`--grippers`的三路原始记录，但内走线Dex1暂不支持，只有14维双臂SDK请求，不能作为原16维电机动作数据导出。会话记录`control_mode=arm_sdk`、`recording.export_supported=false`，每帧增加实际提交的`arm_sdk_request`（权重、腰臂目标与标称增益）。`convert_dataset.py`在读取会话时明确拒绝此类记录，包括`--include-failed`也不能绕过。原调试模式16维采集/导出格式保持，必须显式使用`--control-mode debug`；详见[新路径流程](quest_g1_bridge.md#官方运控与arm_sdk路径2026-10-13)。
 
 
@@ -118,3 +267,5 @@ env HF_HOME=/tmp/g1-dataset-hf HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 \
 最终目录包含官方`data/`、`videos/`、`meta/`；`meta/g1_recording.json`补充时间质量、单位、顺序、原始清单哈希和每段结果，`meta/g1_sources/`保留会话与相机元数据副本。完整原始图像/日志仍保存在会话目录，需要随数据备份，不会自动删除。
 
 2026-10-11 兼容说明：日志字段 `gripper_command.picked_up` 保留；新版本表示同侧夹爪已由新鲜ACTIVE扳机输入自动启用，旧版本表示已完成首次满捏。导出仍拒绝未接管前缀和故障数据，不改变16维状态/动作定义。
+
+2026-10-14 批次导出更新：连续采集按 `s` 仅保存原始数据并计入 accepted，不立即编码。达到目标数、`q` 或 Ctrl-C 结束采集并完成子进程/VR清理后，统一逐条导出已接受条目。`collection.json` schema v2 的 `accepted` 为原始episode目录，`exported`为成功回读的数据集目录，分别维护计数；故障未标注条目不进入编码队列。强制终止进程或断电不能保证执行退出导出。

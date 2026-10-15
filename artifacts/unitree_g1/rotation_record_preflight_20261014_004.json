@@ -1,0 +1,38 @@
+{
+  "read_only": true,
+  "command_frames": 0,
+  "preflight_passed": true,
+  "mode": {
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": "ai"
+    },
+    "fsm_code": 0,
+    "fsm_id": 501
+  },
+  "external_feedback": [
+    {
+      "index": 0,
+      "q": 5.356591701507568,
+      "dq": 0.011780972592532635,
+      "tau_est": -0.01953125,
+      "motorstate": 0,
+      "received": 8215.357690472,
+      "status_limitation": "Service may not populate motor fault fields"
+    },
+    {
+      "index": 1,
+      "q": 5.36367130279541,
+      "dq": -0.009817477315664291,
+      "tau_est": 0.01953125,
+      "motorstate": 0,
+      "received": 8215.360412214,
+      "status_limitation": "Service may not populate motor fault fields"
+    }
+  ],
+  "external_counts": [
+    1476,
+    1462
+  ]
+}

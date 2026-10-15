@@ -26,6 +26,14 @@ def command(phase='ACTIVE', scale=1.):
 
 
 class ExternalTests(unittest.TestCase):
+    def test_telemetry_captures_external_state_without_later_list_updates(self):
+        io=ExternalDex1ArmSDKIO.__new__(ExternalDex1ArmSDKIO)
+        io.external=SimpleNamespace(state_lock=threading.Lock(),latest=[dict(q=1.),dict(q=2.)])
+        with patch.object(ArmSDKIO,'telemetry',return_value=dict(received=10.,motors=[])):
+            before=io.telemetry()
+            io.external.latest[0]=dict(q=9.)
+        self.assertEqual(before['external_grippers'][0]['q'],1.)
+
     def test_external_trigger_coordinates_and_no_internal_slots(self):
         f = ExternalFollower(external_settings())
         f.initialize(telemetry(0.),0.)
@@ -46,14 +54,48 @@ class ExternalTests(unittest.TestCase):
     def test_closing_blocked_sign_is_correct_and_open_request_releases(self):
         f=ExternalFollower(external_settings());f.initialize(telemetry(0.),0.)
         f.update([1.,1.],.01,.01)
-        # Command service q=2, feedback q=2.4: closing lag is +.4 in canonical coordinates.
-        row=f.step(command(),telemetry(.01,(2.4,2.)),.01,80.)
+        # Command service q=2, feedback q=2.6: closing lag is +.6 in canonical coordinates.
+        row=f.step(command(),telemetry(.01,(2.6,2.)),.01,80.)
         self.assertEqual(row['states'][0],'CLOSING_BLOCKED')
         self.assertEqual(row['q'][0],2.)
         f.update([0.,1.],.02,.02)
-        row=f.step(command(),telemetry(.02,(2.4,2.)),.02,80.)
+        row=f.step(command(),telemetry(.02,(2.6,2.)),.02,80.)
         self.assertGreater(row['q'][0],2.)
         self.assertEqual(row['states'][0],'OPENING')
+
+    def test_tracking_fault_disabled_but_closing_obstruction_preserved(self):
+        self.assertIsNone(external_settings()['tracking_error'])
+        self.assertEqual(external_settings()['closing_error'], .5)
+        for side in (0, 1):
+            for opening in (False, True):
+                for error in (.301, .499, .501, 1.5):
+                    f=ExternalFollower(external_settings())
+                    f.initialize(telemetry(0.),0.)
+                    f.update([0. if opening else 1.]*2,.01,.01)
+                    actual=[2.,2.]
+                    actual[side] += -error if opening else error
+                    row=f.step(command(),telemetry(.01,actual),.01,80.)
+                    self.assertIsNone(f.fault)
+                    self.assertEqual(row['states'][side]=='CLOSING_BLOCKED', not opening and error > .5)
+
+    def test_input_one_second_and_feedback_point_two_are_independent(self):
+        f=ExternalFollower(external_settings())
+        f.initialize(telemetry(0.),0.)
+        f.update([1.,1.],0.,.999)
+        with self.assertRaisesRegex(ValueError,'Stale gripper input'):
+            f.update([1.,1.],.001,1.002)
+        with self.assertRaisesRegex(ValueError,'Stale gripper feedback'):
+            f.feedback(telemetry(0.),.201)
+        # Fresh feedback does not refresh the held trigger target.
+        f=ExternalFollower(external_settings())
+        f.initialize(telemetry(0.),0.)
+        f.update([1.,1.],0.,0.)
+        actual=[2.,2.]
+        for step in range(1,101):
+            row=f.step(command(),telemetry(step*.01,actual),step*.01,80.)
+            actual=row['q']
+        with self.assertRaisesRegex(ValueError,'Stale gripper target'):
+            f.step(command(),telemetry(1.01,actual),1.01,80.)
 
     def test_feedback_and_command_bounds(self):
         f=ExternalFollower(external_settings())
@@ -147,6 +189,24 @@ class ExternalTests(unittest.TestCase):
             previous=row['q'][0]
         self.assertAlmostEqual(previous,5.4)
         self.assertEqual(f.v,(0.,0.))
+
+    def test_preopen_records_no_control_only_before_writer_attempt(self):
+        from unittest.mock import Mock
+        for stage in ('preflight', 'open_writer'):
+            with self.subTest(stage=stage), tempfile.TemporaryDirectory() as directory:
+                fake = SimpleNamespace(preflight=Mock(), open_writer=Mock(), close=Mock(),
+                    external=SimpleNamespace(zero_submitted=[False, False]),
+                    external_cleanup_error=None)
+                getattr(fake, stage).side_effect = ValueError('Stale body feedback')
+                output = Path(directory)/'preopen'
+                with patch('external_dex1.ExternalDex1ArmSDKIO', return_value=fake):
+                    with self.assertRaisesRegex(RuntimeError, 'Stale body feedback'):
+                        preopen_external('unused', output, threading.Event())
+                result = json.loads((output/'summary.json').read_text())
+                self.assertEqual(result['control_publish_not_started'], stage == 'preflight')
+                fake.close.assert_called_once()
+                if stage == 'preflight':
+                    fake.open_writer.assert_not_called()
 
     def test_preopen_incomplete_stop_or_failure_blocks_next_stage(self):
         for kind in ('incomplete','stop','error'):

@@ -1,0 +1,183 @@
+{
+  "checked_at_utc": "2026-10-14T06:56:33.129410+00:00",
+  "status": "external_dex1_feedback_unavailable",
+  "read_only": true,
+  "host": "192.168.123.164",
+  "interface": "enp3s0",
+  "sampling_seconds": 6,
+  "external_feedback_counts": {
+    "left": 0,
+    "right": 0
+  },
+  "robot_lowstate_samples": 6296,
+  "serial_adapter": "FTDI FTAKZWL9, ttyUSB0..ttyUSB3 enumerated; serial presence does not prove motor connectivity",
+  "service": {
+    "name": "dex1_gripper.service",
+    "active_state": "inactive",
+    "sub_state": "dead",
+    "process_found": false,
+    "start_job": "waiting",
+    "after_includes": "multi-user.target",
+    "multi_user_start_job": "waiting",
+    "data_sync_start_job": "running",
+    "journal_entries": "none"
+  },
+  "diagnosis": "Dex1 service has not started and both actual state topics are silent; start ordering waits on multi-user.target while data_sync startup remains running. No conclusion about motor hardware health.",
+  "dds": {
+    "read_only": true,
+    "endpoints": [
+      [
+        "publisher",
+        "rt/api/dex3_msg_controller/request",
+        "unitree_api::msg::dds_::Request_"
+      ],
+      [
+        "publisher",
+        "rt/api/dex3_msg_controller/response",
+        "unitree_api::msg::dds_::Response_"
+      ],
+      [
+        "publisher",
+        "rt/arm_sdk",
+        "unitree_hg::msg::dds_::LowCmd_"
+      ],
+      [
+        "publisher",
+        "rt/dex3/left/state",
+        "unitree_hg::msg::dds_::HandState_"
+      ],
+      [
+        "publisher",
+        "rt/dex3/right/state",
+        "unitree_hg::msg::dds_::HandState_"
+      ],
+      [
+        "publisher",
+        "rt/lf/dex3/left/state",
+        "unitree_hg::msg::dds_::HandState_"
+      ],
+      [
+        "publisher",
+        "rt/lf/dex3/right/state",
+        "unitree_hg::msg::dds_::HandState_"
+      ],
+      [
+        "publisher",
+        "rt/lowcmd",
+        "unitree_hg::msg::dds_::LowCmd_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex1/left/cmd",
+        "homies::msg::dds_::MotorCmdStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex1/left/state",
+        "homies::msg::dds_::MotorStateStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex1/right/cmd",
+        "homies::msg::dds_::MotorCmdStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex1/right/state",
+        "homies::msg::dds_::MotorStateStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex3/left/cmd",
+        "homies::msg::dds_::HandCmdStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex3/left/state",
+        "homies::msg::dds_::HandStateStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex3/right/cmd",
+        "homies::msg::dds_::HandCmdStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/dex3/right/state",
+        "homies::msg::dds_::HandStateStamped_"
+      ],
+      [
+        "publisher",
+        "rt/stamped/lowcmd",
+        "homies::msg::dds_::LowCmdStamped_"
+      ],
+      [
+        "subscriber",
+        "rt/api/dex3_msg_controller/request",
+        "unitree_api::msg::dds_::Request_"
+      ],
+      [
+        "subscriber",
+        "rt/api/dex3_msg_controller/response",
+        "unitree_api::msg::dds_::Response_"
+      ],
+      [
+        "subscriber",
+        "rt/arm_sdk",
+        "unitree_hg::msg::dds_::LowCmd_"
+      ],
+      [
+        "subscriber",
+        "rt/dex1/left/cmd",
+        "unitree_go::msg::dds_::MotorCmds_"
+      ],
+      [
+        "subscriber",
+        "rt/dex1/right/cmd",
+        "unitree_go::msg::dds_::MotorCmds_"
+      ],
+      [
+        "subscriber",
+        "rt/dex3/left/cmd",
+        "unitree_hg::msg::dds_::HandCmd_"
+      ],
+      [
+        "subscriber",
+        "rt/dex3/right/cmd",
+        "unitree_hg::msg::dds_::HandCmd_"
+      ],
+      [
+        "subscriber",
+        "rt/lowcmd",
+        "unitree_hg::msg::dds_::LowCmd_"
+      ],
+      [
+        "subscriber",
+        "rt/user_lowcmd",
+        "unitree_hg::msg::dds_::LowCmd_"
+      ]
+    ],
+    "feedback": {
+      "rt/lowstate": {
+        "motor_count": 35,
+        "q": {
+          "31": 0.0,
+          "33": 0.0
+        },
+        "dq": {
+          "31": 0.0,
+          "33": 0.0
+        },
+        "tick": 2159165,
+        "samples": 6296
+      }
+    }
+  },
+  "limitations": [
+    "Stamped recording endpoints and command subscriptions are not evidence of actual Dex1 feedback.",
+    "LowState slots 31/33 do not represent external Dex1 state."
+  ],
+  "motion_commands_sent": 0,
+  "services_changed": false,
+  "calibration_performed": false
+}

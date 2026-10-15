@@ -1,0 +1,268 @@
+{
+  "raw": [
+    {
+      "tick": 4315199,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.11493772268295288,
+          "dq": -0.011555582284927368,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    },
+    {
+      "tick": 4315199,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.11496026813983917,
+          "dq": -0.0028865928761661053,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    },
+    {
+      "tick": 4315200,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.1149527058005333,
+          "dq": -0.010596455074846745,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    },
+    {
+      "tick": 4315201,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.11496783047914505,
+          "dq": -0.009637327864766121,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    },
+    {
+      "tick": 4315202,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.11496783047914505,
+          "dq": -0.013510679826140404,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    },
+    {
+      "tick": 4315203,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.1149527058005333,
+          "dq": -0.017384031787514687,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    },
+    {
+      "tick": 4315204,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.11496041715145111,
+          "dq": -0.00868741050362587,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    },
+    {
+      "tick": 4315205,
+      "faults": [
+        {
+          "index": 13,
+          "motorstate": 512,
+          "q": 0.11494514346122742,
+          "dq": -0.01740245148539543,
+          "temperature": [
+            56,
+            56
+          ],
+          "vol": 47.0
+        }
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "elapsed": 0.0,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.1,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.2,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.30000000000000004,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.4,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.5,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.6000000000000001,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.7000000000000001,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.8,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 0.9,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.0,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.1,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.2000000000000002,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.3,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.4000000000000001,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.5,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.6,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.7000000000000002,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.8,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    },
+    {
+      "elapsed": 1.9000000000000001,
+      "age": null,
+      "tick": null,
+      "error": "Nonzero motorstate"
+    }
+  ],
+  "preflight": "Stale body feedback",
+  "mode": {
+    "service_code": 0,
+    "service": {
+      "form": "0",
+      "name": "ai"
+    },
+    "fsm_code": 0,
+    "fsm_id": 501
+  },
+  "gripper_counts": [
+    1398,
+    1383
+  ]
+}

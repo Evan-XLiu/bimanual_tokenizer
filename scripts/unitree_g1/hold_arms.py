@@ -236,8 +236,10 @@ class DDSHoldIO:
             try:
                 if msg.mode_machine != self.profile['mode_machine'] or msg.mode_pr != 0:
                     raise ValueError('Unexpected machine variant or non-PR feedback')
-                if any(m.motorstate != 0 for m in msg.motor_state):
-                    raise ValueError('Nonzero motorstate')
+                faults = [(i, int(m.motorstate)) for i, m in enumerate(msg.motor_state)
+                          if m.motorstate != 0]
+                if faults:
+                    raise ValueError(f'Nonzero motorstate (index, code): {faults}')
                 q = tuple(float(msg.motor_state[i].q) for i in range(15, 29))
                 dq = tuple(float(msg.motor_state[i].dq) for i in range(15, 29))
                 if not all(math.isfinite(v) for v in q+dq):
@@ -279,10 +281,10 @@ class DDSHoldIO:
 
     def observation(self):
         with self.lock:
-            if self.latest is None:
-                raise RuntimeError('No state')
             if self.feedback_error:
                 raise ValueError(self.feedback_error)
+            if self.latest is None:
+                raise RuntimeError('No state')
             return self.latest[0]
 
     def telemetry(self):

@@ -10,7 +10,8 @@ IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 
 class InputTests(unittest.TestCase):
     def test_invalid_pose_and_buttons(self):
-        value = dict(left=IDENTITY, right=IDENTITY, leftState={}, rightState={})
+        value = dict(left=IDENTITY, right=IDENTITY, leftState={'triggerValue': 0., 'squeezeValue': 0.},
+                     rightState={'triggerValue': 0., 'squeezeValue': 0.})
         self.assertTrue(m.valid_event('CONTROLLER_MOVE', value))
         value['right'] = [0]*16
         self.assertFalse(m.valid_event('CONTROLLER_MOVE', value))
@@ -19,6 +20,36 @@ class InputTests(unittest.TestCase):
         self.assertFalse(m.valid_event('CONTROLLER_MOVE', value))
         value['rightState'] = {'thumbstickValue': [0]}
         self.assertFalse(m.valid_event('CONTROLLER_MOVE', value))
+
+    def test_missing_button_fields_are_not_neutral_inputs(self):
+        import copy
+        value=dict(left=IDENTITY,right=IDENTITY,
+                   leftState={'triggerValue': .2, 'squeezeValue': 1.},
+                   rightState={'triggerValue': .3, 'squeezeValue': 1.})
+        for side in ('leftState', 'rightState'):
+            for key in ('triggerValue','squeezeValue'):
+                for invalid in (None, True, b'0', float('inf')):
+                    raw=copy.deepcopy(value)
+                    raw[side][key]=invalid
+                    self.assertFalse(m.valid_event('CONTROLLER_MOVE',raw))
+                raw=copy.deepcopy(value)
+                del raw[side][key]
+                self.assertFalse(m.valid_event('CONTROLLER_MOVE',raw))
+
+    def test_serialization_marks_binary_nonfinite_and_unknown_invalid(self):
+        import json
+        import numpy as np
+        for raw in (b'bad', {'extra': b'bad'}, {'x': float('nan')}, object()):
+            record=dict(kind='CONTROLLER_MOVE',host_receive_monotonic_s=1.,
+                        session='test',valid=True,raw=raw,official_head_yaw={'x':np.zeros(2)})
+            result=json.loads(m.serialize_event(record))
+            self.assertFalse(result['valid'])
+            self.assertIn('serialization',result['input_error'])
+            self.assertNotIn('official_head_yaw',result)
+            self.assertEqual(result['host_receive_monotonic_s'],1.)
+        result=json.loads(m.serialize_event(dict(valid=True,raw=np.eye(4))))
+        self.assertTrue(result['valid'])
+        self.assertEqual(result['raw'],np.eye(4).tolist())
 
     def test_timeout_invalid_and_new_connection(self):
         monitor = m.Monitor(1)
@@ -118,7 +149,8 @@ class OfficialCallbackTests(unittest.TestCase):
             session = SimpleNamespace(CURRENT_WS_ID='test')
             head = SimpleNamespace(value={'camera': {'matrix': IDENTITY}})
             controllers = SimpleNamespace(value=dict(left=IDENTITY, right=IDENTITY,
-                leftState={'triggerValue': 0.25}, rightState={'triggerValue': 0.75}))
+                leftState={'triggerValue': 0.25, 'squeezeValue': 1.},
+                rightState={'triggerValue': 0.75, 'squeezeValue': 1.}))
             asyncio.run(tv.on_cam_move(head, session))
             asyncio.run(tv.on_controller_move(controllers, session))
             import json
@@ -127,6 +159,22 @@ class OfficialCallbackTests(unittest.TestCase):
             self.assertTrue(result['valid'])
             self.assertEqual(result['official_head_yaw']['left_ctrl_triggerValue'], 7.5)
             self.assertEqual(result['official_head_yaw']['right_ctrl_triggerValue'], 2.5)
+            # Actual malformed startup event and binary extension must not kill
+            # the callback; a later complete event remains usable.
+            for malformed in ({}, b'bad', dict(controllers.value, extra=b'bad')):
+                asyncio.run(tv.on_controller_move(SimpleNamespace(value=malformed), session))
+                self.assertFalse(json.loads(events.get_nowait())['valid'])
+            asyncio.run(tv.on_controller_move(controllers, session))
+            self.assertTrue(json.loads(events.get_nowait())['valid'])
+            from televuer import TeleVuer
+            from unittest.mock import AsyncMock
+            with patch.object(TeleVuer, 'on_controller_move', new=AsyncMock(side_effect=ValueError('bad upstream input'))):
+                asyncio.run(tv.on_controller_move(controllers, session))
+                failed=json.loads(events.get_nowait())
+                self.assertFalse(failed['valid'])
+                self.assertIn('upstream',failed['input_error'])
+            asyncio.run(tv.on_controller_move(controllers, session))
+            self.assertTrue(json.loads(events.get_nowait())['valid'])
             controllers.value['right'] = [0]*16
             asyncio.run(tv.on_controller_move(controllers, session))
             result = json.loads(events.get_nowait())

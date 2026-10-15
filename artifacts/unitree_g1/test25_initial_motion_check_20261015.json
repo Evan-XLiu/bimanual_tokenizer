@@ -1,0 +1,290 @@
+{
+  "criterion": "Onset is first max absolute arm joint change >0.03 rad, or FK endpoint displacement >0.01 m relative to first exported frame; excludes gripper. FK is not external physical measurement.",
+  "episodes": [
+    {
+      "episode": "episode_000000",
+      "frames": 559,
+      "duration_s": 18.600000381469727,
+      "motion": {
+        "observation.state_joint_angles": {
+          "left": {
+            "first_exceed_s": 1.1333333253860474,
+            "threshold": 0.03,
+            "delta_at_1s": 0.026952505111694336,
+            "max_first_5s": 0.1711946725845337
+          },
+          "right": {
+            "first_exceed_s": 0.4333333373069763,
+            "threshold": 0.03,
+            "delta_at_1s": 0.13555357046425343,
+            "max_first_5s": 1.3275285959243774
+          }
+        },
+        "action_joint_angles": {
+          "left": {
+            "first_exceed_s": 0.8333333134651184,
+            "threshold": 0.03,
+            "delta_at_1s": 0.0322527140378952,
+            "max_first_5s": 0.19306939840316772
+          },
+          "right": {
+            "first_exceed_s": 0.2666666805744171,
+            "threshold": 0.03,
+            "delta_at_1s": 0.1655837893486023,
+            "max_first_5s": 1.3803412318229675
+          }
+        },
+        "observation.state_eef_absolute": {
+          "left": {
+            "first_exceed_s": 1.0,
+            "threshold": 0.01,
+            "delta_at_1s": 0.010109483805555368,
+            "max_first_5s": 0.020703354270454683
+          },
+          "right": {
+            "first_exceed_s": 0.46666666865348816,
+            "threshold": 0.01,
+            "delta_at_1s": 0.05943117394563196,
+            "max_first_5s": 0.2609068334957811
+          }
+        },
+        "action_eef_absolute": {
+          "left": {
+            "first_exceed_s": 0.3333333432674408,
+            "threshold": 0.01,
+            "delta_at_1s": 0.01384943736809567,
+            "max_first_5s": 0.017228249094625187
+          },
+          "right": {
+            "first_exceed_s": 0.2666666805744171,
+            "threshold": 0.01,
+            "delta_at_1s": 0.07884611750288595,
+            "max_first_5s": 0.2863072627381127
+          }
+        }
+      },
+      "videos": {
+        "top": {
+          "decoded_frames": 559,
+          "max_identical_run_first_5s_frames": 2,
+          "mean_pixel_change_from_first": {
+            "0.5": 2.463012152777778,
+            "1.0": 3.8242390046296295,
+            "2.0": 5.555668402777778
+          },
+          "first_source_sequence": 669
+        },
+        "left": {
+          "decoded_frames": 559,
+          "max_identical_run_first_5s_frames": 2,
+          "mean_pixel_change_from_first": {
+            "0.5": 17.056048177083333,
+            "1.0": 13.051405164930555,
+            "2.0": 11.194510633680556
+          },
+          "first_source_sequence": 683
+        },
+        "right": {
+          "decoded_frames": 559,
+          "max_identical_run_first_5s_frames": 2,
+          "mean_pixel_change_from_first": {
+            "0.5": 7.1360503472222225,
+            "1.0": 30.746776258680555,
+            "2.0": 54.6974609375
+          },
+          "first_source_sequence": 684
+        }
+      }
+    },
+    {
+      "episode": "episode_000001",
+      "frames": 538,
+      "duration_s": 17.899999618530273,
+      "motion": {
+        "observation.state_joint_angles": {
+          "left": {
+            "first_exceed_s": 0.3333333432674408,
+            "threshold": 0.03,
+            "delta_at_1s": 0.07079082727432251,
+            "max_first_5s": 0.08780841529369354
+          },
+          "right": {
+            "first_exceed_s": 0.5,
+            "threshold": 0.03,
+            "delta_at_1s": 0.1655740737915039,
+            "max_first_5s": 1.6352954506874084
+          }
+        },
+        "action_joint_angles": {
+          "left": {
+            "first_exceed_s": 0.30000001192092896,
+            "threshold": 0.03,
+            "delta_at_1s": 0.06610530614852905,
+            "max_first_5s": 0.08682801946997643
+          },
+          "right": {
+            "first_exceed_s": 0.36666667461395264,
+            "threshold": 0.03,
+            "delta_at_1s": 0.22472095489501953,
+            "max_first_5s": 1.6867497563362122
+          }
+        },
+        "observation.state_eef_absolute": {
+          "left": {
+            "first_exceed_s": 1.3666666746139526,
+            "threshold": 0.01,
+            "delta_at_1s": 0.00563133770682919,
+            "max_first_5s": 0.023037739326698514
+          },
+          "right": {
+            "first_exceed_s": 0.5333333611488342,
+            "threshold": 0.01,
+            "delta_at_1s": 0.04993828428019679,
+            "max_first_5s": 0.31529967578276125
+          }
+        },
+        "action_eef_absolute": {
+          "left": {
+            "first_exceed_s": 1.1333333253860474,
+            "threshold": 0.01,
+            "delta_at_1s": 0.00813694866831875,
+            "max_first_5s": 0.023943296792241428
+          },
+          "right": {
+            "first_exceed_s": 0.23333333432674408,
+            "threshold": 0.01,
+            "delta_at_1s": 0.07238129043988681,
+            "max_first_5s": 0.3377572760863626
+          }
+        }
+      },
+      "videos": {
+        "top": {
+          "decoded_frames": 538,
+          "max_identical_run_first_5s_frames": 2,
+          "mean_pixel_change_from_first": {
+            "0.5": 2.6399189814814816,
+            "1.0": 3.608765914351852,
+            "2.0": 4.934205729166667
+          },
+          "first_source_sequence": 671
+        },
+        "left": {
+          "decoded_frames": 538,
+          "max_identical_run_first_5s_frames": 2,
+          "mean_pixel_change_from_first": {
+            "0.5": 9.284875217013889,
+            "1.0": 7.320203993055555,
+            "2.0": 15.13576931423611
+          },
+          "first_source_sequence": 677
+        },
+        "right": {
+          "decoded_frames": 538,
+          "max_identical_run_first_5s_frames": 1,
+          "mean_pixel_change_from_first": {
+            "0.5": 6.196282552083333,
+            "1.0": 28.429516059027776,
+            "2.0": 60.826830512152775
+          },
+          "first_source_sequence": 677
+        }
+      }
+    },
+    {
+      "episode": "episode_000002",
+      "frames": 506,
+      "duration_s": 16.83333396911621,
+      "motion": {
+        "observation.state_joint_angles": {
+          "left": {
+            "first_exceed_s": 1.2000000476837158,
+            "threshold": 0.03,
+            "delta_at_1s": 0.026449188590049744,
+            "max_first_5s": 0.42335473746061325
+          },
+          "right": {
+            "first_exceed_s": 0.30000001192092896,
+            "threshold": 0.03,
+            "delta_at_1s": 0.3968336582183838,
+            "max_first_5s": 1.5046194791793823
+          }
+        },
+        "action_joint_angles": {
+          "left": {
+            "first_exceed_s": 0.6333333253860474,
+            "threshold": 0.03,
+            "delta_at_1s": 0.031610190868377686,
+            "max_first_5s": 0.4061499834060669
+          },
+          "right": {
+            "first_exceed_s": 0.2666666805744171,
+            "threshold": 0.03,
+            "delta_at_1s": 0.4271557927131653,
+            "max_first_5s": 1.5482098460197449
+          }
+        },
+        "observation.state_eef_absolute": {
+          "left": {
+            "first_exceed_s": 1.2000000476837158,
+            "threshold": 0.01,
+            "delta_at_1s": 0.00871689773835545,
+            "max_first_5s": 0.04876767557465943
+          },
+          "right": {
+            "first_exceed_s": 0.4333333373069763,
+            "threshold": 0.01,
+            "delta_at_1s": 0.029905528209389885,
+            "max_first_5s": 0.3104414108548643
+          }
+        },
+        "action_eef_absolute": {
+          "left": {
+            "first_exceed_s": 0.4000000059604645,
+            "threshold": 0.01,
+            "delta_at_1s": 0.011886840751044538,
+            "max_first_5s": 0.10745048899859148
+          },
+          "right": {
+            "first_exceed_s": 0.23333333432674408,
+            "threshold": 0.01,
+            "delta_at_1s": 0.03997680169986083,
+            "max_first_5s": 0.3529524997143488
+          }
+        }
+      },
+      "videos": {
+        "top": {
+          "decoded_frames": 506,
+          "max_identical_run_first_5s_frames": 2,
+          "mean_pixel_change_from_first": {
+            "0.5": 3.6012731481481484,
+            "1.0": 3.7638744212962965,
+            "2.0": 5.51041087962963
+          },
+          "first_source_sequence": 636
+        },
+        "left": {
+          "decoded_frames": 506,
+          "max_identical_run_first_5s_frames": 1,
+          "mean_pixel_change_from_first": {
+            "0.5": 13.666712239583333,
+            "1.0": 12.476004774305556,
+            "2.0": 11.584296875
+          },
+          "first_source_sequence": 641
+        },
+        "right": {
+          "decoded_frames": 506,
+          "max_identical_run_first_5s_frames": 1,
+          "mean_pixel_change_from_first": {
+            "0.5": 9.568536241319444,
+            "1.0": 13.7717578125,
+            "2.0": 39.261448567708335
+          },
+          "first_source_sequence": 641
+        }
+      }
+    }
+  ]
+}
