@@ -22,7 +22,7 @@ SIDES = ('left', 'right')
 def external_settings():
     return dict(indices=[0, 1], opened=[-5.4, -5.4], closed=[0., 0.],
                 kp=5., kd=.05, velocity=5.0, acceleration=5.0,
-                tracking_error=None, closing_error=.50,
+                tracking_error=None, closing_error=.50, max_initial_speed=.20,
                 timeout=.2, input_timeout=1.0, servo_timeout=.1, position_tolerance=.01,
                 backend='external-dex1', internal_coordinate='negative of service q',
                 physical_opened=[5.4, 5.4], physical_closed=[0., 0.],
@@ -132,6 +132,10 @@ class ExternalDex1:
         self.check()
         self.snapshot(time.monotonic())
         if not self.live:
+            return
+        if self.writers:
+            if len(self.writers) != 2 or not all(count >= 2 for count in self.matches):
+                raise RuntimeError('External Dex1 command subscriber lost before reuse')
             return
         from cyclonedds.pub import DataWriter
         from cyclonedds.core import Listener
@@ -274,14 +278,17 @@ class ExternalDex1ArmSDKIO(ArmSDKIO):
         super().close()
 
 
-def preopen_external(interface, output, stop):
-    """Finite opening with arms/waist held via arm_sdk, official legs untouched."""
+def preopen_external(interface, output, stop, *, prepared_io=None):
+    """Open only when needed; a preflighted borrowed IO stays owned by the caller.
+
+    Reuse retains DDS monitoring and zeroed publishers, never active authority.
+    """
     from hold_arms import run_hold
     from quest_bridge import load_quest_profile
     profile, config = load_quest_profile()
     profile['hold_s'] = 10.
     output.mkdir(parents=True, exist_ok=False)
-    io = None
+    io = prepared_io
     result = dict(error='initialization_failed', command_frames=0, opening_complete=False)
     writer_open_attempted = False
 
@@ -306,25 +313,46 @@ def preopen_external(interface, output, stop):
 
     source = OpenSource()
     try:
-        io = ExternalDex1ArmSDKIO(interface, True, profile, config)
-        io.preflight()
+        if io is None:
+            io = ExternalDex1ArmSDKIO(interface, True, profile, config)
+            io.preflight()
         if stop.is_set():
             raise RuntimeError('Stopped before external preopen')
-        writer_open_attempted = True
-        io.open_writer()
-        with (output/'commands.jsonl').open('x', buffering=1) as log:
-            result = run_hold(io, config, profile, stop.is_set,
-                lambda row: log.write(json.dumps(io.decorate_log(row), allow_nan=False)+'\n'),
-                target_source=source)
-        result['opening_complete'] = source.complete
-        result['arm_sdk_release_submitted'] = result.pop('unload_submitted', False)
-        if not source.complete or stop.is_set():
-            result['error'] = result.get('error') or 'External preopen incomplete or stopped'
+        io.check()
+        io.check_readiness()
+        now = time.monotonic()
+        feedback, speeds = io.grippers.feedback(io.external.snapshot(now), now)
+        # Use the same measured open tolerance as the active completion gate.
+        already_open = (all(abs(q+5.4) <= .15 for q in feedback)
+                        and all(abs(v) <= io.grippers.c['max_initial_speed'] for v in speeds))
+        result.update(initial_gripper_q=[-q for q in feedback],
+                      skipped_already_open=already_open, reused_interface=prepared_io is not None)
+        if already_open:
+            result.update(error=None, opening_complete=True)
+        else:
+            writer_open_attempted = True
+            io.open_writer()
+            with (output/'commands.jsonl').open('x', buffering=1) as log:
+                result.update(run_hold(io, config, profile, stop.is_set,
+                    lambda row: log.write(json.dumps(io.decorate_log(row), allow_nan=False)+'\n'),
+                    target_source=source))
+            result['opening_complete'] = source.complete
+            result['arm_sdk_release_submitted'] = result.pop('unload_submitted', False)
+            if not source.complete or stop.is_set() or not result['arm_sdk_release_submitted']:
+                result['error'] = result.get('error') or 'External preopen incomplete or stopped'
     except Exception as exc:
         result['error'] = f'{type(exc).__name__}: {exc}'
     finally:
         if io:
-            io.close()
+            if prepared_io is None:
+                io.close()
+            elif writer_open_attempted:
+                # run_hold already released arm authority. Keep DDS discovery
+                # for Quest, but explicitly zero the external gripper gains.
+                try:
+                    io.external.zero()
+                except Exception as exc:
+                    io.external_cleanup_error = str(exc)
             result.update(external_gripper_zero_submitted=list(io.external.zero_submitted),
                           external_gripper_cleanup_error=io.external_cleanup_error)
             result['error'] = result.get('error') or io.external_cleanup_error

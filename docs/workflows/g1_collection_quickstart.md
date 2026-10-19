@@ -26,9 +26,9 @@ Run from the repository root in an interactive terminal. The example uses the se
 ```bash
 env -u PYTHONPATH PYTHONNOUSERSITE=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
   .venv-g1-xr/bin/python scripts/unitree_g1/collect_episodes.py \
-  --episodes 10 \
-  --task "Bottle 01" \
-  --output .local/unitree_g1/collections/bottle_01 \
+  --episodes 30 \
+  --task "Bottle 07" \
+  --output .local/unitree_g1/collections/bottle_07 \
   --interface enp3s0 \
   --host-address 172.20.10.13 \
   --cert .local/unitree_g1/tls/rotation-20261014-001/cert.pem \
@@ -46,6 +46,8 @@ For device checks only, replace `--execute --scene-confirmation True` with `--pr
 
 ## Collect each episode
 
+As of October 16, preflight/takeover thresholds are doubled: leg/waist joint speed 0.30 rad/s, Quest arm joint speed 0.20 rad/s, external Dex1 speed 0.20 service position units/s, body roll/pitch 0.30 rad, and IMU angular speed 0.40 rad/s per axis. These apply to preparation and takeover, including external preopening. Runtime body tilt (0.30 rad), angular speed (0.50 rad/s), and waist tracking error (0.50 rad) are unchanged. The shared arm_sdk body gate also applies to its other callers; legacy internal-gripper and standalone hold/probe initial-speed limits are unchanged. Restart collection to load changes; this update does not start motion.
+
 1. Wait for startup checks, then open the printed VR URL and enter VR.
 2. Reset the scene. Enter **`n` + Enter** to start this attempt's checks and gripper opening.
 3. Wait for **`Ready`**. Release both side grips, then hold both to take control.
@@ -58,11 +60,15 @@ For device checks only, replace `--execute --scene-confirmation True` with `--pr
 | `f` + Enter | Delete this attempt's raw data without counting it. Small diagnostic logs remain. |
 | `q` + Enter | Quit. Keep any unlabelled attempt in `pending/`. |
 
-After `s` or `f`, the script waits for another **`n`**. This also applies to retries. When the accepted count reaches `--episodes`, collection ends and queued exports begin. `q` or Ctrl-C ends collection early and exports already accepted episodes after child/VR cleanup. Encoding is sequential, with one progress message per episode and details in its `export.log`. An export failure retains raw data and does not prevent the remaining queued episodes from being processed. A forced kill or power loss cannot run exit-time export.
+After `s` or `f`, the script waits for another **`n`**. This also applies to retries. When the accepted count reaches `--episodes`, collection ends and queued exports begin. `q` or Ctrl-C ends collection early and exports already accepted episodes after the recording child has stopped. Quest/VR input-service shutdown runs in the background alongside encoding, so encoding does not wait for Quest to exit. If VR has not exited after 10 seconds, its process group is killed; cleanup warnings are recorded separately in `collection.json` and do not cancel exports. Before the collector exits, it joins the background cleanup task. Encoding is sequential, with one progress message per episode and details in its `export.log`. An export failure retains raw data and does not prevent the remaining queued episodes from being processed. A forced kill or power loss cannot run exit-time export.
 
 `Try` counts attempts. `Episode` identifies the current accepted-data slot: after `f`, Try increases but Episode stays the same. Both display from 1; directory numbering starts at 0.
 
 ## Output and failures
+
+Preparation now preloads IK in a separate process while cameras, gripper preopening, and robot checks run. VR routing opens only after those stages succeed and the matching IK worker is ready and alive; a fresh takeover gesture is still required. Each attempt stores `preparation_timing.json` with stage status/duration and total time to readiness. Terminal progress uses the concise `Preparing` and `Ready` prompts without stage timings; `collection.json` separately records `precheck_s` for the robot/VR check before `Preparing`. The IK parallel-load duration overlaps the other stages and must not be added to their durations; `ik_remaining_wait` is the additional wait after hardware preparation. Timings exclude Python startup before the child initializes its timing recorder. Existing active collectors need restarting to use the concise prompts; no running collection is restarted automatically. Hardware speedup remains to be measured.
+
+External Dex1 preparation now creates one control interface and runs its full preflight once per attempt. If fresh, valid feedback places both stationary grippers within 0.15 service-position units of 5.4 (the existing opening-completion tolerance), preopening sends no commands and records `skipped_already_open: true` in `preopen/summary.json`. Otherwise it performs the existing bounded opening and arm-authority release, then zeros external gains and retains the DDS interface/publishers for Quest. Readiness is checked again after preopening; ownership, feedback, stationary-state and subscriber checks still apply at takeover, with the waist hold pose refreshed. No control is automatically re-engaged: the operator must still release and hold both side grips. Timing records separate `robot_initialization_and_preflight`, `gripper_preopen`, and `robot_readiness_recheck`; runtime savings require a new hardware collection to measure. Restart collection to load this change.
 
 - Accepted raw data: `<output>/episodes/episode_000000/`; encoded data appears in `lerobot/` after batch export.
 - Batch progress: `<output>/collection.json`. Schema v2 `accepted` lists raw episode directories; `exported` lists verified dataset directories. `accepted_count` and `exported_count` are separate, and `export_results` records each outcome.

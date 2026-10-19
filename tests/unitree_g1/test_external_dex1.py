@@ -6,7 +6,7 @@ import tempfile
 import json
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'scripts/unitree_g1'))
 from arm_execution import Command
@@ -26,6 +26,109 @@ def command(phase='ACTIVE', scale=1.):
 
 
 class ExternalTests(unittest.TestCase):
+    def preopen_io(self, q=(2., 2.), speed=0., stale=False):
+        follower = ExternalFollower(external_settings())
+        def snapshot(now):
+            sample = telemetry(now-1. if stale else now, q)
+            for motor in sample['motors']:
+                motor['dq'] = speed
+            return sample
+        external = SimpleNamespace(snapshot=snapshot, zero_submitted=[False, False])
+        def zero():
+            external.zero_submitted[:] = [True, True]
+        external.zero = Mock(side_effect=zero)
+        io = SimpleNamespace(preflight=Mock(), check=Mock(), open_writer=Mock(), close=Mock(),
+                             external=external, external_cleanup_error=None, grippers=follower)
+        def readiness():
+            follower.initialize(snapshot(10.), 10.)
+        io.check_readiness = Mock(side_effect=readiness)
+        return io
+
+    def test_already_open_skips_commands_and_keeps_prepared_interface(self):
+        fake = self.preopen_io(q=(5.356, 5.368))
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)/'preopen'
+            with patch('external_dex1.ExternalDex1ArmSDKIO') as constructor, patch('hold_arms.run_hold') as run:
+                preopen_external('unused', output, threading.Event(), prepared_io=fake)
+            constructor.assert_not_called()
+            run.assert_not_called()
+            fake.preflight.assert_not_called()
+            fake.open_writer.assert_not_called()
+            fake.external.zero.assert_not_called()
+            fake.close.assert_not_called()
+            result = json.loads((output/'summary.json').read_text())
+            self.assertTrue(result['opening_complete'])
+            self.assertTrue(result['skipped_already_open'])
+            self.assertTrue(result['control_publish_not_started'])
+            self.assertEqual(result['command_frames'], 0)
+
+    def test_prepared_interface_rejects_stale_moving_stopped_or_foreign_control(self):
+        for reason in ('stale', 'moving', 'stopped', 'ownership'):
+            with self.subTest(reason=reason), tempfile.TemporaryDirectory() as directory:
+                fake = self.preopen_io(q=(5.36, 5.36), speed=.21 if reason=='moving' else 0.,
+                                       stale=reason=='stale')
+                stop = threading.Event()
+                if reason == 'stopped': stop.set()
+                if reason == 'ownership': fake.check.side_effect = OwnershipLost('Foreign controller')
+                with self.assertRaises(RuntimeError):
+                    preopen_external('unused', Path(directory)/'preopen', stop, prepared_io=fake)
+                fake.open_writer.assert_not_called()
+                fake.close.assert_not_called()
+
+    def test_needed_opening_reuses_interface_and_requires_release(self):
+        for fault in (None, 'release', 'zero'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as directory:
+                fake = self.preopen_io(q=(5.2, 5.36))  # Either side outside open tolerance needs motion.
+                fake.decorate_log = lambda row: row
+                if fault == 'zero': fake.external.zero.side_effect = RuntimeError('zero failed')
+                def run(io, config, profile, stop, log, target_source):
+                    self.assertIs(io, fake)
+                    self.assertEqual(profile['hold_s'], 10.)
+                    target_source.complete = True
+                    return dict(error=None, command_frames=10, unload_submitted=fault!='release')
+                output = Path(directory)/'preopen'
+                with patch('hold_arms.run_hold', side_effect=run):
+                    if fault:
+                        with self.assertRaises(RuntimeError):
+                            preopen_external('unused', output, threading.Event(), prepared_io=fake)
+                    else:
+                        preopen_external('unused', output, threading.Event(), prepared_io=fake)
+                fake.preflight.assert_not_called()
+                fake.open_writer.assert_called_once()
+                fake.external.zero.assert_called_once()
+                fake.close.assert_not_called()
+                result = json.loads((output/'summary.json').read_text())
+                self.assertFalse(result['control_publish_not_started'])
+                self.assertEqual(bool(result['error']), fault is not None)
+
+    def test_reopening_external_publishers_reuses_and_rechecks_matches(self):
+        external = ExternalDex1.__new__(ExternalDex1)
+        external.live = True
+        external.check = Mock()
+        external.snapshot = Mock()
+        external.writers = [object(), object()]
+        external.matches = [2, 2]
+        original = list(external.writers)
+        external.open()
+        self.assertEqual(external.writers, original)
+        external.matches = [2, 1]
+        with self.assertRaisesRegex(RuntimeError, 'subscriber lost'):
+            external.open()
+
+    def test_doubled_initial_speed_gates(self):
+        profile, _ = load_quest_profile()
+        self.assertEqual(profile['max_initial_speed'], .20)
+        for side in range(2):
+            for speed in (-.201, -.20, -.15, .15, .20, .201):
+                sample = telemetry(0.)
+                sample['motors'][side]['dq'] = speed
+                follower = ExternalFollower(external_settings())
+                if abs(speed) > .20:
+                    with self.assertRaisesRegex(ValueError, 'not stationary'):
+                        follower.initialize(sample, 0.)
+                else:
+                    follower.initialize(sample, 0.)
+
     def test_telemetry_captures_external_state_without_later_list_updates(self):
         io=ExternalDex1ArmSDKIO.__new__(ExternalDex1ArmSDKIO)
         io.external=SimpleNamespace(state_lock=threading.Lock(),latest=[dict(q=1.),dict(q=2.)])
@@ -194,9 +297,7 @@ class ExternalTests(unittest.TestCase):
         from unittest.mock import Mock
         for stage in ('preflight', 'open_writer'):
             with self.subTest(stage=stage), tempfile.TemporaryDirectory() as directory:
-                fake = SimpleNamespace(preflight=Mock(), open_writer=Mock(), close=Mock(),
-                    external=SimpleNamespace(zero_submitted=[False, False]),
-                    external_cleanup_error=None)
+                fake = self.preopen_io()
                 getattr(fake, stage).side_effect = ValueError('Stale body feedback')
                 output = Path(directory)/'preopen'
                 with patch('external_dex1.ExternalDex1ArmSDKIO', return_value=fake):
@@ -213,8 +314,8 @@ class ExternalTests(unittest.TestCase):
             stopped=threading.Event()
             if kind=='stop':stopped.set()
             opened=[]
-            fake=SimpleNamespace(preflight=lambda:None,open_writer=lambda:opened.append(True),
-                close=lambda:None,external=SimpleNamespace(zero_submitted=[False,False]),external_cleanup_error=None)
+            fake=self.preopen_io()
+            fake.open_writer.side_effect=lambda:opened.append(True)
             with tempfile.TemporaryDirectory() as directory:
                 output=Path(directory)/'preopen'
                 with patch('external_dex1.ExternalDex1ArmSDKIO',return_value=fake),patch('hold_arms.run_hold',return_value=dict(error='fault' if kind=='error' else None,unload_submitted=True)):

@@ -536,6 +536,11 @@ with tempfile.TemporaryDirectory() as tmp:
             assert time.monotonic() < deadline
             time.sleep(.01)
         q = [.05,.04,.2,1.25,.1,.04,0.,-.05,.04,.1,1.25,.1,.04,-.1]
+        # Preloading must be safe before feedback or routed VR input exists.
+        time.sleep(.05)
+        assert proc.is_alive()
+        assert not (output/'target.json').exists()
+        assert not (output/'worker_error.json').exists()
         phase = 'WAITING'
         def feedback():
             write_json(output/'feedback.json', dict(nonce='test', time=time.monotonic(),

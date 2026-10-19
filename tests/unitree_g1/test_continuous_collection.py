@@ -2,9 +2,11 @@
 import io
 import json
 import socket
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
+import threading
 import time
 from types import SimpleNamespace
 import unittest
@@ -169,7 +171,7 @@ class CollectorTests(unittest.TestCase):
         return SimpleNamespace(**values)
 
     def fake_collector(self,root,choices,summary=None,export_ok=True,preflight_only=False,fresh=True,starts=None,
-                       repairs=None,summaries=None,repair_failures=0):
+                       repairs=None,summaries=None,repair_failures=0,slow_vr=False):
         collector=Collector(self.args(root,preflight_only=preflight_only,execute=not preflight_only))
         collector.device_preflight=lambda index:None
         collector.camera_preflight=lambda:None
@@ -192,12 +194,21 @@ class CollectorTests(unittest.TestCase):
         collector.camera_preflight=camera_check
         collector.episode_command=lambda attempt,service:['record',str(attempt)]
         calls=[]
+        export_finished=threading.Event()
+        export_count=0
         def start():
             calls.append('start_vr')
-            process=SimpleNamespace(returncode=None)
+            process=SimpleNamespace(returncode=None,pid=12345)
             process.poll=lambda:process.returncode
-            process.terminate=lambda:setattr(process,'returncode',0)
-            process.wait=lambda timeout:process.returncode
+            process.terminate=lambda:None if slow_vr else setattr(process,'returncode',0)
+            def wait(timeout):
+                if slow_vr and timeout==10:
+                    if not export_finished.wait(2):
+                        raise AssertionError('VR wait blocked batch export')
+                    raise subprocess.TimeoutExpired('fake VR', timeout)
+                process.returncode=0
+                return 0
+            process.wait=wait
             collector.input_process=process
             collector.input_log=io.StringIO()
             return collector.args.output/'vr'
@@ -211,15 +222,40 @@ class CollectorTests(unittest.TestCase):
             return 0
         collector.run_process=run
         def exporter(destination,**kwargs):
-            self.assertEqual(collector.input_process.poll(),0)
+            nonlocal export_count
+            if slow_vr:
+                self.assertIsNone(collector.input_process.poll())
             self.assertIn(collector.state['phase'],('exporting_batch',))
             self.assertTrue(all(Path(p).is_dir() for p in collector.state['accepted']))
             if export_ok:(destination/'lerobot').mkdir()
+            export_count+=1
+            if export_count==len(collector.state['accepted']):export_finished.set()
             return dict(exported=export_ok)
-        with patch('collect_episodes.ensure_service',return_value={}) as ensure,patch('collect_episodes.local_preflight',return_value={}),patch('collect_episodes.set_route'),patch('collect_episodes.check_service',return_value=dict(receive_fresh=fresh)),patch('collect_episodes.export_recording',side_effect=exporter):
+        with patch('collect_episodes.os.killpg') as kill,patch('collect_episodes.ensure_service',return_value={}) as ensure,patch('collect_episodes.local_preflight',return_value={}),patch('collect_episodes.set_route'),patch('collect_episodes.check_service',return_value=dict(receive_fresh=fresh)),patch('collect_episodes.export_recording',side_effect=exporter):
             code=collector.run()
             self.assertEqual(ensure.call_count,0 if preflight_only else 1)
+            if slow_vr:kill.assert_called_once()
         return collector,code,calls
+
+    def test_vr_timeout_does_not_block_export_or_turn_success_into_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            c,code,_=self.fake_collector(Path(tmp),iter(['s','s']),slow_vr=True)
+            self.assertEqual(code,0)
+            self.assertEqual(c.state['exported_count'],2)
+            self.assertEqual(c.state['phase'],'complete')
+            self.assertIn('process group killed',c.state['input_cleanup_error'])
+            self.assertFalse(c.input_cleanup_thread.is_alive())
+            self.assertTrue(c.input_log.closed)
+            saved=json.loads((c.args.output/'collection.json').read_text())
+            self.assertEqual(saved,c.state)
+
+    def test_export_failure_and_vr_timeout_keep_both_results(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            c,code,_=self.fake_collector(Path(tmp),iter(['s','s']),slow_vr=True,export_ok=False)
+            self.assertEqual(code,1)
+            self.assertEqual(c.state['phase'],'export_failed')
+            self.assertEqual(len(c.state['export_results']),2)
+            self.assertIn('process group killed',c.state['input_cleanup_error'])
 
     def test_s_f_s_counts_only_two_saved_and_keeps_vr_once(self):
         with tempfile.TemporaryDirectory() as tmp:

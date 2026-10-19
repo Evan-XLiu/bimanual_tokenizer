@@ -13,6 +13,7 @@ import socket
 import ssl
 import subprocess
 import sys
+import threading
 import time
 
 from continuous_input import check_service, set_route, write_json
@@ -157,6 +158,8 @@ class Collector:
         self.stop=False
         self.child=None
         self.input_process=None
+        self.input_cleanup_thread=None
+        self.input_cleanup_error=None
         self.robot_checks=0
         self.camera_checks=0
         self.state=dict(schema='g1-continuous-collection-v2',target=args.episodes,accepted=[],
@@ -344,7 +347,35 @@ class Collector:
             '--shared-input',str(service),'--defer-export']
 
     def run(self):
-        # Collection cleanup (including stopping VR) finishes before any encoding.
+        try:
+            return self.collect_and_export()
+        finally:
+            if self.input_cleanup_thread is not None:
+                self.input_cleanup_thread.join()
+                if self.input_cleanup_error:
+                    self.state['input_cleanup_error']=self.input_cleanup_error
+                    print(f'VR cleanup warning: {self.input_cleanup_error}; export results retained',
+                          file=sys.stderr,flush=True)
+                self.checkpoint(self.state['phase'])
+
+    def cleanup_input(self):
+        """Reap input-only VR in parallel with export; never write collection state here."""
+        try:
+            if self.input_process.poll() is None:
+                self.input_process.terminate()
+                try:
+                    self.input_process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    os.killpg(self.input_process.pid,signal.SIGKILL)
+                    self.input_process.wait(timeout=5)
+                    self.input_cleanup_error='VR exit timed out after 10s; process group killed'
+        except Exception as exc:
+            self.input_cleanup_error=f'{type(exc).__name__}: {exc}'
+        finally:
+            self.input_log.close()
+
+    def collect_and_export(self):
+        # Recording/motion cleanup finishes first. Input-only VR exits in parallel.
         result=self.collect()
         if not self.state['accepted']:
             return result
@@ -399,6 +430,7 @@ class Collector:
                 if self.wait_for_start() != 'n' or self.stop:
                     break
                 self.checkpoint('checking_next_episode')
+                precheck_started = time.monotonic()
                 try:
                     self.device_preflight(number)
                     if not check_service(service)['receive_fresh']:
@@ -408,8 +440,10 @@ class Collector:
                     print(self.state['last_preflight_error'],flush=True)
                     if not self.wait_for_repair(service):break
                     continue
+                precheck_s = time.monotonic()-precheck_started
                 attempt=a.output/'pending'/f'attempt_{number:06d}'
-                record=dict(attempt=number,path=str(attempt),start_confirmation='n',decision=None)
+                record=dict(attempt=number,path=str(attempt),start_confirmation='n',decision=None,
+                            precheck_s=precheck_s)
                 self.state['attempts'].append(record)
                 self.checkpoint('recording')
                 print(f'{self.episode_label()} | Preparing',flush=True)
@@ -478,8 +512,9 @@ class Collector:
                 self.terminate(self.child)
             finally:
                 if self.input_process:
-                    try:self.terminate(self.input_process,timeout=10)
-                    finally:self.input_log.close()
+                    self.input_cleanup_thread=threading.Thread(target=self.cleanup_input,
+                                                              name='vr-cleanup')
+                    self.input_cleanup_thread.start()
 
 
 def main():

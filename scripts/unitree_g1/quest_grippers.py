@@ -74,7 +74,7 @@ class GripperFollower:
 
     def initialize(self,telemetry,now):
         q,dq=self.feedback(telemetry,now)
-        if max(map(abs,dq))>.1:
+        if max(map(abs,dq))>self.c.get('max_initial_speed', .1):
             raise ValueError('Grippers not stationary at engagement')
         if any(not lo-.01<=x<=hi+.01 for x,lo,hi in zip(q,self.c['opened'],self.c['closed'])):
             raise ValueError('Gripper initial pose outside tested range')

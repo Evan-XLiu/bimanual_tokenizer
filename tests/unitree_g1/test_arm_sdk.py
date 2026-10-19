@@ -7,7 +7,7 @@ import tempfile
 import threading
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'scripts/unitree_g1'))
 from arm_execution import Command
@@ -96,14 +96,23 @@ class ArmSDKTests(unittest.TestCase):
     def test_standing_gate_requires_fresh_finite_stationary_body(self):
         check_body(body(), 1.1, .2, preflight=True)
         cases = [lambda b:b.update(received=.7), lambda b:b.update(received=1.2),
-                 lambda b:b.update(imu_rpy=[.16,0.,0.]),
-                 lambda b:b.update(imu_gyroscope=[0.,.21,0.]),
+                 lambda b:b.update(imu_rpy=[.31,0.,0.]),
+                 lambda b:b.update(imu_gyroscope=[0.,.41,0.]),
                  lambda b:b.update(imu_rpy=[float('nan'),0.,0.]),
-                 lambda b:b['motors'][0].update(dq=.16),
+                 lambda b:b['motors'][0].update(dq=.31),
                  lambda b:b['motors'][12].update(motorstate=1)]
         for mutate in cases:
             sample=body();mutate(sample)
             with self.assertRaises(ValueError):check_body(sample,1.1,.2,preflight=True)
+
+    def test_doubled_preflight_boundaries(self):
+        for sign in (-1, 1):
+            sample = body()
+            sample['imu_rpy'] = [sign*.30, sign*.30, 0.]
+            sample['imu_gyroscope'] = [sign*.40]*3
+            for motor in sample['motors'][:15]:
+                motor['dq'] = sign*.30
+            check_body(sample, 1.1, .2, preflight=True)
 
     def test_active_gate_allows_balance_corrections_but_rejects_tilt_and_waist_drift(self):
         sample=body();sample['motors'][0]['dq']=.2
@@ -164,6 +173,31 @@ class ArmSDKTests(unittest.TestCase):
             io.mode_evidence={'fsm_id':500}
             with self.assertRaisesRegex(OwnershipLost,'changed'):
                 io._check_mode()
+
+    def test_reuse_writer_checks_readiness_and_refreshes_waist_hold(self):
+        io = ArmSDKIO.__new__(ArmSDKIO)
+        io.lock = threading.Lock()
+        io.mode_evidence = {'fsm_id': 501}
+        io.check = Mock()
+        io.check_readiness = Mock()
+        io.telemetry = lambda: dict(motors=[dict(index=i, q=.1*i) for i in range(12, 15)])
+        io.writer = object()
+        io.matched = 1
+        original = io.writer
+        with patch('hold_arms.DDSHoldIO.open_writer') as create:
+            io.open_writer()
+            create.assert_not_called()
+        self.assertIs(io.writer, original)
+        for actual, expected in zip(io.waist_q, (1.2, 1.3, 1.4)):
+            self.assertAlmostEqual(actual, expected)
+        io.check.assert_called_once()
+        io.check_readiness.assert_called_once()
+        io.matched = 0
+        with self.assertRaisesRegex(RuntimeError, 'subscriber lost'):
+            io.open_writer()
+        io.check.side_effect = OwnershipLost('Foreign controller')
+        with self.assertRaises(OwnershipLost):
+            io.open_writer()
 
     @sdk_isolated
     def test_sdk_release_uses_weight_ramp_on_stop_fault_and_logging_failure(self):

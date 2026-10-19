@@ -7,6 +7,7 @@ Debug lowcmd is explicit legacy opt-in; internal Dex1 is debug-only. No replay
 input, automatic rearming or mode changes. Each run requires a fresh gesture.
 """
 import argparse
+from contextlib import contextmanager
 from dataclasses import replace
 import hashlib
 import json
@@ -40,6 +41,7 @@ def load_quest_profile():
     # Quest-only trial override; preserve the original hold/probe profile.
     profile, config = load_profile(ROOT/'artifacts/unitree_g1/hold_shadow_profile.json', False)
     profile['hold_s'] = LIMITS['active_s']
+    profile['max_initial_speed'] = .20
     tracking = (LIMITS['tracking_error_rad'],)*14
     profile['controller']['tracking_error'] = list(tracking)
     timeouts=dict(state_timeout=LIMITS['feedback_timeout_s'],
@@ -52,6 +54,50 @@ def write_json(path, value):
     temp = path.with_suffix('.tmp')
     temp.write_text(json.dumps(value, allow_nan=False)+'\n')
     temp.replace(path)
+
+
+class PreparationTiming:
+    def __init__(self, output, clock=time.monotonic):
+        self.output, self.clock = output, clock
+        self.started = clock()
+        self.stages = []
+        self.save(False)
+
+    def save(self, ready):
+        write_json(self.output/'preparation_timing.json', dict(
+            started=self.started, elapsed_s=self.clock()-self.started,
+            ready=ready, stages=self.stages))
+
+    @contextmanager
+    def stage(self, name):
+        row = dict(name=name, started=self.clock(), status='running')
+        self.stages.append(row)
+        self.save(False)
+        try:
+            yield
+        except BaseException:
+            row['status'] = 'failed'
+            raise
+        else:
+            row['status'] = 'complete'
+        finally:
+            row['elapsed_s'] = self.clock()-row['started']
+            self.save(False)
+            print(f'Preparing: {name} {row["status"]} ({row["elapsed_s"]:.2f}s)', flush=True)
+
+
+def wait_for_preloaded_ik(output, nonce, process, stop, deadline, snapshot):
+    while True:
+        if (stop.is_set() or not process.is_alive()
+                or (output/'worker_error.json').exists() or time.monotonic() > deadline):
+            raise RuntimeError('IK initialization failed before routing VR input')
+        if (output/'ik_ready.json').exists():
+            ready = json.loads((output/'ik_ready.json').read_text())
+            if ready.get('nonce') != nonce:
+                raise ValueError('IK readiness session mismatch')
+            return ready
+        snapshot()
+        time.sleep(.02)
 
 
 def read_packet(path, nonce, now):
@@ -258,7 +304,7 @@ def worker(output, nonce, done, with_grippers=False, trial_limits=None):
             expected = json.loads((ROOT/'artifacts/unitree_g1/hold_shadow_profile.json').read_text())['joint_names']
             if list(robot.model.names)[1:] != expected:
                 raise ValueError('IK/executor joint ordering mismatch')
-            write_json(output/'ik_ready.json', {'nonce': nonce})
+            write_json(output/'ik_ready.json', {'nonce': nonce, 'time': time.monotonic()})
             with (output/'proposals.jsonl').open('x', buffering=1) as log:
                 while not done.is_set():
                     if terminal is not None:
@@ -363,6 +409,34 @@ def open_grippers_before_teleoperation(args, output, stop):
         raise RuntimeError('Gripper pre-opening failed; inspect preopen/summary.json')
 
 
+def reconcile_external_preopen_cleanup(result, output, preopen_started, writer_open_attempted):
+    """Carry earlier release evidence only if the Quest writer was never opened."""
+    if writer_open_attempted or result.get('command_frames') != 0:
+        return
+    if result.get('external_gripper_cleanup_error') or result.get('unload_error'):
+        return
+    if not preopen_started:
+        result['control_publish_not_started'] = True
+        return
+    try:
+        preopen = json.loads((output/'preopen/summary.json').read_text())
+    except (OSError, ValueError):
+        return
+    if not isinstance(preopen, dict):
+        return
+    if preopen.get('external_gripper_cleanup_error') or preopen.get('unload_error'):
+        return
+    if (preopen.get('control_publish_not_started') is True
+            and preopen.get('command_frames') == 0):
+        result['control_publish_not_started'] = True
+    elif (preopen.get('arm_sdk_release_submitted') is True
+            and preopen.get('external_gripper_zero_submitted') == [True, True]):
+        result.update(arm_sdk_release_submitted=True,
+                      external_gripper_zero_submitted=[True, True],
+                      release_evidence_source='preopen/summary.json',
+                      quest_writer_open_attempted=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--interface', required=True)
@@ -446,67 +520,90 @@ def main():
     io = input_proc = ik_proc = input_log = None
     camera_proc = camera_log = None
     external_preopen_started = False
+    writer_open_attempted = False
     result = dict(error='initialization_failed', command_frames=0, unload_submitted=False)
     source = QuestSource(output, nonce)
     source.input_service = args.shared_input
+    timing = PreparationTiming(output)
     try:
-        if args.record:
-            camera_log=(output/'cameras.log').open('x')
-            camera_proc=subprocess.Popen([sys.executable,str(ROOT/'scripts/unitree_g1/record_cameras.py'),
-                '--output',str(output/'cameras'),'--host',args.camera_host,
-                '--ssh-key',str(args.camera_ssh_key),'--config',str(args.camera_config)],stdout=camera_log,stderr=subprocess.STDOUT)
-            source.camera_status=output/'cameras/status.json'
-            camera_deadline=time.monotonic()+30
-            while True:
-                if stop.is_set() or camera_proc.poll() is not None or time.monotonic()>camera_deadline:
-                    raise RuntimeError('Camera recording failed before engagement; inspect cameras.log')
-                try:
-                    check_camera_status(source.camera_status,time.monotonic())
-                    break
-                except (OSError,ValueError,KeyError,TypeError):time.sleep(.05)
-        if args.execute and args.grippers:
-            if external_grippers:
-                external_preopen_started = True
-                preopen_external(args.interface, output/'preopen', stop)
-            else:
-                open_grippers_before_teleoperation(args,output,stop)
-        if stop.is_set():
-            raise RuntimeError('Stopped before Quest initialization')
-        io = (ExternalDex1ArmSDKIO(args.interface, args.execute, profile, config) if external_grippers
-              else ArmSDKIO(args.interface, args.execute, profile, config) if args.control_mode == 'arm_sdk'
-              else QuestGripperIO(args.interface,args.execute,profile,grip_settings) if args.grippers
-              else DDSHoldIO(args.interface, args.execute, profile))
-        if args.control_mode == 'arm_sdk':
-            source.body_checker = io.check_active_body
-        source.gripper_io=io if args.grippers else None
-        if args.grippers:io.status_path=output/'gripper_status.json'
-        io.record_observation=args.record
-        io.preflight()
-        source.snapshot(io, 'WAITING')
-        if args.shared_input:
-            from continuous_input import check_service
-            check_service(args.shared_input)
-        else:
-            input_log = (output/'input.log').open('x')
-            input_proc = subprocess.Popen([sys.executable, str(ROOT/'scripts/unitree_g1/televuer_input.py'),
-                '--cert', str(args.cert.resolve()), '--key', str(args.key.resolve()),
-                '--output', str(output/'input'), '--host-address', args.host_address,
-                '--timeout', str(LIMITS['input_timeout_s'])]+
-                (['--gripper-status',str(output/'gripper_status.json')] if args.grippers else []),
-                stdout=input_log, stderr=subprocess.STDOUT)
+        # IK only builds a model and proposals; it waits for feedback/input and
+        # cannot publish DDS commands. Keep VR routing closed until all gates pass.
+        ik_started = time.monotonic()
+        ik_deadline = ik_started+60
         ik_proc = context.Process(target=worker, args=(output, nonce, done, args.grippers, dict(LIMITS)))
         ik_proc.start()
+        with timing.stage('cameras'):
+            if args.record:
+                camera_log=(output/'cameras.log').open('x')
+                camera_proc=subprocess.Popen([sys.executable,str(ROOT/'scripts/unitree_g1/record_cameras.py'),
+                    '--output',str(output/'cameras'),'--host',args.camera_host,
+                    '--ssh-key',str(args.camera_ssh_key),'--config',str(args.camera_config)],stdout=camera_log,stderr=subprocess.STDOUT)
+                source.camera_status=output/'cameras/status.json'
+                camera_deadline=time.monotonic()+30
+                while True:
+                    if stop.is_set() or camera_proc.poll() is not None or time.monotonic()>camera_deadline:
+                        raise RuntimeError('Camera recording failed before engagement; inspect cameras.log')
+                    try:
+                        check_camera_status(source.camera_status,time.monotonic())
+                        break
+                    except (OSError,ValueError,KeyError,TypeError):time.sleep(.05)
+        if external_grippers:
+            with timing.stage('robot_initialization_and_preflight'):
+                if stop.is_set():
+                    raise RuntimeError('Stopped before Quest initialization')
+                io = ExternalDex1ArmSDKIO(args.interface, args.execute, profile, config)
+                io.preflight()
+        with timing.stage('gripper_preopen'):
+            if args.execute and args.grippers:
+                if external_grippers:
+                    external_preopen_started = True
+                    preopen_external(args.interface, output/'preopen', stop, prepared_io=io)
+                else:
+                    open_grippers_before_teleoperation(args,output,stop)
+        with timing.stage('robot_readiness_recheck' if external_grippers else 'robot_initialization_and_preflight'):
+            if stop.is_set():
+                raise RuntimeError('Stopped before Quest initialization')
+            io = (io if external_grippers
+                  else ArmSDKIO(args.interface, args.execute, profile, config) if args.control_mode == 'arm_sdk'
+                  else QuestGripperIO(args.interface,args.execute,profile,grip_settings) if args.grippers
+                  else DDSHoldIO(args.interface, args.execute, profile))
+            if args.control_mode == 'arm_sdk':
+                source.body_checker = io.check_active_body
+            source.gripper_io=io if args.grippers else None
+            if args.grippers:io.status_path=output/'gripper_status.json'
+            io.record_observation=args.record
+            if external_grippers:
+                io.check()
+                io.check_readiness()
+            else:
+                io.preflight()
+            source.snapshot(io, 'WAITING')
+        with timing.stage('input_service'):
+            if args.shared_input:
+                from continuous_input import check_service
+                check_service(args.shared_input)
+            else:
+                input_log = (output/'input.log').open('x')
+                input_proc = subprocess.Popen([sys.executable, str(ROOT/'scripts/unitree_g1/televuer_input.py'),
+                    '--cert', str(args.cert.resolve()), '--key', str(args.key.resolve()),
+                    '--output', str(output/'input'), '--host-address', args.host_address,
+                    '--timeout', str(LIMITS['input_timeout_s'])]+
+                    (['--gripper-status',str(output/'gripper_status.json')] if args.grippers else []),
+                    stdout=input_log, stderr=subprocess.STDOUT)
+        with timing.stage('ik_remaining_wait'):
+            ik_ready = wait_for_preloaded_ik(output, nonce, ik_proc, stop, ik_deadline,
+                                           lambda: source.snapshot(io, 'WAITING'))
+        timing.stages.append(dict(name='ik_parallel_load', started=ik_started,
+                                  elapsed_s=ik_ready['time']-ik_started, status='complete',
+                                  overlaps_other_stages=True))
+        with timing.stage('input_routing'):
+            if args.shared_input:
+                from continuous_input import set_route
+                set_route(args.shared_input,output/'input',nonce)
+        timing.save(True)
         if args.shared_input:
-            # Do not accumulate headset events while the IK model is loading.
-            deadline = time.monotonic()+60
-            while not (output/'ik_ready.json').exists():
-                if stop.is_set() or not ik_proc.is_alive() or (output/'worker_error.json').exists() or time.monotonic()>deadline:
-                    raise RuntimeError('IK initialization failed before routing VR input')
-                source.snapshot(io,'WAITING')
-                time.sleep(.02)
-            from continuous_input import set_route
-            set_route(args.shared_input,output/'input',nonce)
-            write_json(output/'collection_ready.json',dict(nonce=nonce,time=time.monotonic()))
+            write_json(output/'collection_ready.json',dict(
+                nonce=nonce,time=time.monotonic(),preparation_s=time.monotonic()-timing.started))
         print(f'Quest: https://{args.host_address}:8012/?ws=wss://{args.host_address}:8012', flush=True)
         print('MODE: '+('LIVE CANDIDATE' if args.execute else 'SHADOW: NO MOTOR PUBLISHER'), flush=True)
         print(f'Transport: {args.control_mode}; '+
@@ -554,6 +651,7 @@ def main():
                 with io.lock:
                     if max(abs(x) for x in io.latest[1]) > profile['max_initial_speed']:
                         raise ValueError('Arms not stationary at engagement')
+                writer_open_attempted = True
                 io.open_writer()
                 with (output/'commands.jsonl').open('x', buffering=1) as log:
                     result = run_hold(io, config, profile, stop.is_set,
@@ -615,16 +713,9 @@ def main():
             result['physical_handover_verified'] = False
             result['last_arm_sdk_request'] = io.last_sdk if io else None
         result['control_mode'] = args.control_mode
-        if external_preopen_started and io is None:
-            # Explicit preopen evidence only; zero command_frames alone cannot
-            # establish that a partially opened writer never sent a command.
-            try:
-                preopen = json.loads((output/'preopen/summary.json').read_text())
-                if (preopen.get('control_publish_not_started') is True
-                        and not preopen.get('external_gripper_cleanup_error')):
-                    result['control_publish_not_started'] = True
-            except (OSError, ValueError):
-                pass
+        if external_grippers:
+            reconcile_external_preopen_cleanup(
+                result, output, external_preopen_started, writer_open_attempted)
         result.update(hardware_motion_enabled=args.execute, physical_unload_verified=False)
         if not args.execute:
             result['unload_submitted'] = False

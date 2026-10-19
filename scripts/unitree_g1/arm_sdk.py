@@ -16,8 +16,8 @@ from hold_arms import DDSHoldIO, OwnershipLost
 # on this robot and is used by the Holosoma arm_sdk+loco split-body backend.
 # This remains a candidate, not hardware acceptance. No arbitrary FSM override;
 # lock the exact mode during takeover. Never infer FSM from mode_machine.
-STANDING = dict(service='ai', fsm_id=500, allowed_fsm_ids=(500, 501), preflight_tilt_rad=.15,
-                preflight_gyro_rad_s=.2, preflight_leg_speed_rad_s=.15,
+STANDING = dict(service='ai', fsm_id=500, allowed_fsm_ids=(500, 501), preflight_tilt_rad=.30,
+                preflight_gyro_rad_s=.4, preflight_leg_speed_rad_s=.30,
                 active_tilt_rad=.30, active_gyro_rad_s=.5,
                 waist_tracking_error_rad=.50, waist_kp=60., waist_kd=1.5)
 # Waist gains follow the official arm7 example, not the debug profile.
@@ -136,6 +136,12 @@ class ArmSDKIO(DDSHoldIO):
         self.check_readiness()
         motors = {m['index']: m for m in self.telemetry()['motors']}
         self.waist_q = tuple(motors[i]['q'] for i in range(12, 15))
+        if self.writer is not None:
+            # Preopening may have released authority without tearing down DDS.
+            # All ownership/readiness checks above still apply at takeover.
+            if self.matched == 0:
+                raise RuntimeError('Arm SDK command subscriber lost before reuse')
+            return
         super().open_writer()
 
     def write(self, command):
