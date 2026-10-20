@@ -11,6 +11,7 @@ lr: null
 # Reconstruction evaluation (tokenize -> detokenize MSE on val set)
 reconst_every: 1000
 max_reconst_batches: 100
+reconstruct_on_train: false  # evaluate reconstruction on every training episode
 
 # Bootstrap-only path for non-trainable codecs such as FAST when using a
 # prebuilt BPE and only persisting dataset action stats / sidecars.

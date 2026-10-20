@@ -1,0 +1,67 @@
+#PBS -j oe
+#PBS -k oed
+#PBS -N eval_BAR_box_s10000
+#PBS -P CFP05-CF-002
+#PBS -l walltime=02:00:00
+#PBS -l select=1:ncpus=12:mem=225gb:ngpus=1:gpu_model=H200
+
+set -euo pipefail
+cd "${PBS_O_WORKDIR:?Submit from the repository root}"
+module load singularity/1.3.1
+ROOT="$PBS_O_WORKDIR"
+OUT="$ROOT/outputs/offline_eval_box_step10000/${PBS_JOBID}"
+mkdir -p "$OUT"
+export OUT
+
+singularity exec --nv --bind /scratch:/scratch \
+  /app1/common/singularity-img/hopper/pytorch/pytorch_2.7.0_cuda_12.8.sif \
+  bash -lc 'cd "${PBS_O_WORKDIR}" && exec "${PBS_O_WORKDIR}/.venv/bin/python" - "$OUT"' <<'PY'
+import json
+import sys
+from pathlib import Path
+
+from scripts.robotwin.evaluate_stage1_vla import PolicySpec, _evaluate_policy
+
+out = Path(sys.argv[1])
+spec = PolicySpec(
+    label="BAR_BTT_Molmo2ER_step10000",
+    policy_name="bar_btt_molmo",
+    checkpoint=Path(
+        "/scratch/xuanweiliu/bimanual_tokenizer/outputs/"
+        "BiCAT_all_BAR_BTT_Molmo2ER_H200/667470.hopper-m-02/train/"
+        "checkpoints/recent/step_10000/pretrained_model"
+    ),
+)
+result = _evaluate_policy(
+    spec=spec,
+    dataset_repo_id="local/bicat_box",
+    dataset_root=(
+        "/scratch/xuanweiliu/bimanual_tokenizer/data/"
+        "BiCAT-BimanualYAM-Dataset/box"
+    ),
+    # Training-seen episodes; no validation split and no robot connection.
+    episodes=[0, 1, 2, 3, 4],
+    device="cuda",
+    batch_size=1,
+    generation_batch_size=1,
+    num_workers=2,
+    max_batches=20,
+    max_generation_samples=20,
+    seed=1000,
+)
+(out / "results.json").write_text(
+    json.dumps(
+        {
+            "dataset": {
+                "repo_id": "local/bicat_box",
+                "episodes": [0, 1, 2, 3, 4],
+                "max_batches": 20,
+            },
+            "models": [result],
+        },
+        indent=2,
+        sort_keys=True,
+    )
+)
+print(json.dumps(result, indent=2, sort_keys=True))
+PY

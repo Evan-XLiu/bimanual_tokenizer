@@ -1,0 +1,34 @@
+#!/bin/bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N BiCAT_OAT_150K
+#PBS -P CFP05-CF-002
+#PBS -l walltime=72:00:00
+#PBS -l select=1:ncpus=12:mem=225gb:ngpus=1:gpu_model=H200
+#PBS -V
+
+set -euo pipefail
+cd /scratch/xuanweiliu/bimanual_tokenizer
+export BICAT_DATA_ROOT=/scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset
+export HYDRA_FULL_ERROR=1
+
+.venv/bin/praxis-train --config-name train_codecs \
+  codecs@codec=tokens/oat \
+  dataset=bicat_all \
+  trainer.max_steps=150000 trainer.batch_size=128 trainer.global_batch_size=512 \
+  trainer.num_workers=4 trainer.prefetch_factor=4 trainer.use_episode_aware_sampler=true \
+  trainer.drop_n_first_frames=0 trainer.drop_n_last_frames=0 trainer.weight_decay=0.0 \
+  trainer.betas='[0.9,0.95]' trainer.eps=1e-8 trainer.lr_scheduler=constant \
+  trainer.warmup_steps=200 trainer.min_lr_ratio=0.1 trainer.use_ema=true \
+  trainer.ema_decay=0.995 trainer.mixed_precision=bf16 trainer.gradient_accumulation_steps=1 \
+  trainer.find_unused_parameters=false trainer.max_grad_norm=1.0 \
+  trainer.distributed_strategy=ddp trainer.fsdp_min_num_params=100000000 \
+  trainer.fsdp_reshard_after_forward=true trainer.fsdp_cpu_offload=false \
+  trainer.log_every=200 trainer.val_every=0 trainer.checkpoint_every=1000 trainer.val_ratio=0.0 \
+  trainer.use_wandb=true trainer.wandb_project=BiCAT_realworld \
+  trainer.wandb_entity=evan_lxw-harbin-institute-of-technology +trainer.wandb_required=true \
+  trainer.wandb_upload_eval_videos=true trainer.wandb_max_eval_videos=16 trainer.lr=5e-5 \
+  trainer.reconst_every=1000 trainer.max_reconst_batches=100 trainer.skip_codec_fit=false \
+  seed=42 device=cuda run_name=BiCAT_all_OAT_14joint_150k \
+  output_dir=/scratch/xuanweiliu/bimanual_tokenizer/realworld_OAT/AT \
+  run_mode=overwrite resume_checkpoint=null

@@ -48,6 +48,44 @@ class BTTMolmoPolicy(MolmoPolicyBase):
 
 
 @dataclass
+class OATMolmoPolicyConfig(MolmoPolicyConfig):
+    name: str = "bar_oat_molmo"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=action_tokenizer_config_factory("oat")
+    )
+
+
+class OATMolmoPolicy(MolmoPolicyBase):
+    CONFIG_CLASS = OATMolmoPolicyConfig
+
+
+@dataclass
+class FASTMolmoPolicyConfig(MolmoPolicyConfig):
+    PRETRAINED_RUNTIME_OVERRIDE_KEYS: ClassVar[frozenset[str]] = (
+        MolmoPolicyConfig.PRETRAINED_RUNTIME_OVERRIDE_KEYS | FAST_RUNTIME_OVERRIDE_KEYS
+    )
+    name: str = "bar_fast_molmo"
+    decode_stop_mode: DecodeStopMode = "eos"
+    decode_strict: bool | None = None
+    decode_failure_mode: str = "raise"
+    action_tokenizer: dict[str, object] = field(
+        default_factory=default_fast_action_tokenizer_config
+    )
+
+
+class FASTMolmoPolicy(FastVlmPolicyMixin, MolmoPolicyBase):
+    CONFIG_CLASS = FASTMolmoPolicyConfig
+
+    def _post_set_io(self) -> None:
+        super()._post_set_io()
+        # FAST's variable-length hook replaces the common fixed-length hook.
+        self._build_state_prefix_projector()
+        from praxis.policies.core.vlm.dtypes import parse_vlm_dtype
+
+        self.to(dtype=parse_vlm_dtype(self.config.vlm_dtype))
+
+
+@dataclass
 class ACodecPaliPolicyConfig(PaliPolicyConfig):
     """Hyperparameters for ACodec-backed block Pali VLM policy."""
 

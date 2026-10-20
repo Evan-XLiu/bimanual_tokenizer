@@ -261,6 +261,55 @@ def test_codecs_trainer_nondefault_action_key_checkpoint_reload(
     torch.testing.assert_close(after, before)
 
 
+def test_codecs_trainer_reconstructs_all_training_episodes(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "praxis.training.codecs_trainer.LeRobotDataset", _DummyLeRobotDataset
+    )
+    monkeypatch.setattr(
+        "praxis.training.codecs_trainer.LeRobotActionOnlyDatasetAdapter",
+        _DummyActionOnlyAdapter,
+    )
+    monkeypatch.setattr(
+        "praxis.training.codecs_trainer.ensure_lerobot_dataset_available",
+        lambda **kwargs: None,
+    )
+    cfg = _build_cfg(tmp_path, codec_cfg={
+        "name": "acodec", "kind": "tokens", "action_horizon": 2,
+        "latent_horizon": 2, "emb_dim": 32, "latent_dim": 16,
+        "head_dim": 8, "encoder_depth": 1, "decoder_depth": 1,
+        "dropout": 0.1, "vq_codebook_size": 32, "vq_kmeans_init": False,
+    })
+    cfg.trainer.val_ratio = 0.0
+    cfg.trainer.reconstruct_on_train = True
+    cfg.trainer.use_ema = True
+    trainer = CodecsTrainer(cfg)
+    assert trainer.val_dataset is trainer.dataset
+    assert trainer.dataset.drop_last_requested == [True, False, False]
+    assert trainer.val_dataloader is not trainer.dataloader
+    for param in trainer.model.parameters():
+        param.grad = torch.ones_like(param)
+    import copy
+    model_before = copy.deepcopy(trainer.model.state_dict())
+    gradients_before = {name: None if param.grad is None else param.grad.clone()
+                        for name, param in trainer.model.named_parameters()}
+    rng_before = torch.get_rng_state().clone()
+    optimizer_before = None if trainer.optimizer is None else copy.deepcopy(trainer.optimizer.state_dict())
+    metrics = trainer.reconstruct()
+    assert "train_reconst_loss" in metrics
+    assert "val_reconst_loss" not in metrics
+    assert metrics["train_reconst_loss"] >= 0.0
+    torch.testing.assert_close(torch.get_rng_state(), rng_before)
+    for name, value in trainer.model.state_dict().items():
+        torch.testing.assert_close(value, model_before[name])
+    for name, param in trainer.model.named_parameters():
+        if gradients_before[name] is None:
+            assert param.grad is None
+        else:
+            torch.testing.assert_close(param.grad, gradients_before[name])
+    if trainer.optimizer is not None:
+        assert trainer.optimizer.state_dict() == optimizer_before
+
+
 def test_codecs_trainer_val_batch_size_defaults_to_train_batch_size(
     monkeypatch, tmp_path: Path
 ) -> None:

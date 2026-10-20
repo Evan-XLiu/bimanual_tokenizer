@@ -1,0 +1,10 @@
+#!/bin/bash
+#PBS -j oe
+#PBS -N BTT_USAGE
+#PBS -P CFP05-CF-002
+#PBS -l walltime=04:00:00
+#PBS -l select=1:ncpus=12:mem=225gb:ngpus=1:gpu_model=H200
+#PBS -V
+set -euo pipefail
+cd /scratch/xuanweiliu/bimanual_tokenizer
+.venv/bin/python -u /tmp/measure_btt.py > realworld_BiCAT/AT/BTT_tokenizer_step_150000/codebook_usage.txt 2>&1

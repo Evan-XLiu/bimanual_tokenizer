@@ -300,7 +300,11 @@ def _evaluate_policy(
     evaluated_batches = 0
     evaluated_samples = 0
 
-    with torch.inference_mode():
+    # Action-token codecs may be stored in the policy's VLM dtype (bf16), while
+    # LeRobot batches arrive as float32.  Use the same autocast context as
+    # deployment/training so tokenization and forward passes have compatible
+    # dtypes on CUDA.
+    with torch.inference_mode(), policy._autocast_context():
         for batch_index, raw_batch in enumerate(loader):
             if batch_index >= max_batches:
                 break

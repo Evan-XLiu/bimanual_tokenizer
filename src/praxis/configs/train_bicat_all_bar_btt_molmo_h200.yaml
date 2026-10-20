@@ -1,0 +1,41 @@
+defaults:
+  - train_bicat_all_bar_btt_molmo_30k
+  - _self_
+
+run_name: BiCAT_all_BAR_BTT_Molmo2ER_H200
+output_dir: outputs/BiCAT_all_BAR_BTT_Molmo2ER_H200/manual/train
+policy:
+  vlm_model_name: /scratch/xuanweiliu/bimanual_tokenizer/.cache/models/Molmo2-ER
+  action_tokenizer:
+    pretrained_path: /scratch/xuanweiliu/bimanual_tokenizer/BiCAT_realworld/AT/BTT_tokenizer_step_150000
+trainer:
+  batch_size: 128
+  global_batch_size: null
+  distributed_strategy: ddp
+  checkpoint_start_step: 5000
+  checkpoint_every: 1000
+  checkpoint_candidates:
+    best:
+      k: 0
+    recent:
+      k: 4
+  wandb_entity: null
+  wandb_required: false
+  log_every: 10
+
+# Hopper dataset paths must also work without shell environment overrides.
+dataset:
+  root: /scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset/box
+  sources:
+    - name: box
+      repo_id: local/bicat_box
+      root: /scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset/box
+    - name: bottles
+      repo_id: local/bicat_bottles
+      root: /scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset/bottles
+    - name: pen
+      repo_id: local/bicat_pen
+      root: /scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset/pen
+    - name: plate
+      repo_id: local/bicat_plate
+      root: /scratch/xuanweiliu/bimanual_tokenizer/data/BiCAT-BimanualYAM-Dataset/plate

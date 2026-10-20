@@ -734,6 +734,21 @@ class CodecsTrainer(DefaultTrainer):
             self.val_dataset = None
             self.val_dataloader = None
 
+        if bool(getattr(self.tc, "reconstruct_on_train", False)):
+            if val_episodes:
+                raise ValueError("reconstruct_on_train requires trainer.val_ratio=0.0.")
+            self.val_dataset = self.dataset
+            self.val_dataloader = self.dataset.make_dataloader(
+                batch_size=self.val_batch_size,
+                num_workers=self.tc.num_workers,
+                shuffle=False,
+                prefetch_factor=self.tc.prefetch_factor,
+                use_episode_aware_sampler=self.tc.use_episode_aware_sampler,
+                drop_n_first_frames=drop_n_first_frames,
+                drop_n_last_frames=drop_n_last_frames,
+                drop_last=False,
+            )
+
     def _init_model(self) -> None:
         codec_build_cfg = _resolve_codec_build_cfg(
             self.cfg.codec,
@@ -896,6 +911,12 @@ class CodecsTrainer(DefaultTrainer):
             _fit_on_main_rank()
             self.runtime.wait_for_everyone()
 
+        if bool(getattr(getattr(self, "tc", None), "reconstruct_on_train", False)):
+            metrics = self.reconstruct()
+            if self.runtime.is_main_process:
+                self.logger.log(
+                    self._format_logged_metrics(metrics, default_group="train"), step=0
+                )
         self.save_latest_checkpoint()
         rank0_error = None
         if self.runtime.is_main_process:
@@ -954,7 +975,13 @@ class CodecsTrainer(DefaultTrainer):
     # ------------------------------------------------------------------
 
     def reconstruct(self) -> dict[str, float]:
-        if not self.run_train_loop or self.val_dataloader is None:
+        # Keep evaluation from advancing the RNG used by training dropout.
+        devices = [self.device] if self.device.type == "cuda" else []
+        with torch.random.fork_rng(devices=devices):
+            return self._reconstruct_impl()
+
+    def _reconstruct_impl(self) -> dict[str, float]:
+        if self.val_dataloader is None:
             return {}
         if self.action_key is None:
             raise RuntimeError("action_key must be initialized before reconstruct")
@@ -1028,7 +1055,14 @@ class CodecsTrainer(DefaultTrainer):
         self.model.train()
 
         metric_pipeline.reduce(self.runtime)
-        return metric_pipeline.finalize()
+        metrics = metric_pipeline.finalize()
+        if bool(getattr(getattr(self, "tc", None), "reconstruct_on_train", False)):
+            return {
+                "train_reconst" + key[len("val_reconst"):]
+                if key.startswith("val_reconst") else key: value
+                for key, value in metrics.items()
+            }
+        return metrics
 
 
 def _reconstruct_actions(

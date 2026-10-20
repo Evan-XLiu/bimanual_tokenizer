@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -j oe
+#PBS -k oed
+#PBS -N RW_BTT
+#PBS -P CFP05-CF-002
+#PBS -l walltime=72:00:00
+#PBS -l select=1:ncpus=12:mem=225gb:ngpus=1:gpu_model=H200
+#PBS -V
+
+set -Eeuo pipefail
+cd /scratch/xuanweiliu/bimanual_tokenizer
+export PYTHONUNBUFFERED=1 HYDRA_FULL_ERROR=1 WANDB_MODE=online
+export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 HF_DATASETS_DISABLE_PROGRESS_BARS=1
+export OMP_NUM_THREADS=8 MKL_NUM_THREADS=8
+export HF_HOME=/scratch/xuanweiliu/bimanual_tokenizer/.cache/huggingface
+export HF_DATASETS_CACHE=/scratch/xuanweiliu/bimanual_tokenizer/.cache/huggingface/datasets
+exec .venv/bin/python -u artifacts/realworld_300k/launch.py btt

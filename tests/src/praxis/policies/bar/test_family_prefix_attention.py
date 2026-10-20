@@ -5,6 +5,7 @@
 """Regression guard for family-scoped prefix attention defaults."""
 
 from praxis.policies.bar.backbones.pali.pali_base import PaliPolicyBase
+from praxis.policies.bar.backbones.molmo.molmo_base import MolmoPolicyBase
 from praxis.policies.bar.backbones.qwen.qwen_base import QwenPolicyBase
 from praxis.policies.bar.backbones.smol.smol_base import SmolPolicyBase
 from praxis.policies.ki.backbones.pali.pali_base import (
@@ -20,6 +21,7 @@ from praxis.policies.ki.backbones.smol.smol_base import (
 
 def test_family_prefix_attention_scopes():
     assert PaliPolicyBase._PREFIX_ATTENTION == "bidirectional"
+    assert MolmoPolicyBase._PREFIX_ATTENTION == "causal"
     assert SmolPolicyBase._PREFIX_ATTENTION == "causal"
     assert QwenPolicyBase._PREFIX_ATTENTION == "causal"
     assert KiPaliPolicyBase._PREFIX_ATTENTION == "bidirectional"
