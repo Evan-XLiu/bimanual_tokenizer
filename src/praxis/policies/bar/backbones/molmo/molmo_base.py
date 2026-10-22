@@ -65,8 +65,12 @@ class MolmoPolicyBase(VlmActionTokenPolicyBase):
     CONFIG_CLASS: ClassVar[type[MolmoPolicyConfig] | None] = None
     ACTION_TOKEN_OWNER_NAME: ClassVar[str] = "Molmo"
     _PREFIX_ATTENTION: ClassVar[Literal["bidirectional", "causal"]] = "causal"
+    _PREFILL_BIDIRECTIONAL_IMAGE_TOKENS: ClassVar[bool] = True
     _PREFILL_EXTRA_KEYS: ClassVar[tuple[str, ...]] = (
-        "pixel_values", "image_token_pooling", "image_grids", "image_num_crops",
+        "pixel_values",
+        "image_token_pooling",
+        "image_grids",
+        "image_num_crops",
         "token_type_ids",
     )
     vlm: Any

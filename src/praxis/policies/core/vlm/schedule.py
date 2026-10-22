@@ -14,6 +14,27 @@ import torch
 PrefixAttentionMode = Literal["bidirectional", "causal"]
 
 
+def overlay_bidirectional_token_mask(
+    attention_mask: torch.Tensor,
+    token_type_ids: torch.Tensor | None,
+) -> torch.Tensor:
+    """Let marked prefix tokens attend to one another in a prepared 4D mask."""
+    if token_type_ids is None:
+        return attention_mask
+    if attention_mask.ndim != 4 or attention_mask.shape[1] != 1:
+        raise ValueError("Expected attention mask with shape (B, 1, L, L).")
+    if token_type_ids.ndim != 2 or attention_mask.shape[0] != token_type_ids.shape[0]:
+        raise ValueError("Token type ids must match the attention mask batch.")
+    seq_len = token_type_ids.shape[1]
+    if attention_mask.shape[-2:] != (seq_len, seq_len):
+        raise ValueError("Token type ids must match the attention mask sequence.")
+    marked = token_type_ids.to(device=attention_mask.device, dtype=torch.bool)
+    token_pairs = marked[:, None, :, None] & marked[:, None, None, :]
+    if attention_mask.dtype == torch.bool:
+        return attention_mask | token_pairs
+    return attention_mask.masked_fill(token_pairs, 0)
+
+
 def _schedule_tensor(
     block_schedule: Sequence[int],
     *,

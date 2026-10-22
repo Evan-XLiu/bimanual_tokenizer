@@ -33,6 +33,7 @@ from praxis.policies.core.vlm.prefix import (
     compact_suffix_position_offsets,
     suffix_position_offsets_from_vlm_inputs,
 )
+from praxis.policies.core.vlm.schedule import overlay_bidirectional_token_mask
 
 
 def _apply_rotary_pos_emb(
@@ -63,24 +64,6 @@ def _image_token_mask_function(token_type_ids: Tensor):
         return q_is_image & kv_is_image
 
     return inner_mask
-
-
-def _overlay_image_token_mask(
-    attention_mask: Tensor,
-    token_type_ids: Tensor | None,
-) -> Tensor:
-    """Allow image tokens to attend bidirectionally in a prepared mask."""
-    if token_type_ids is None:
-        return attention_mask
-    token_type_ids = token_type_ids.to(
-        device=attention_mask.device,
-        dtype=torch.bool,
-    )
-    image_pairs = token_type_ids[:, :, None] & token_type_ids[:, None, :]
-    image_pairs = image_pairs[:, None, :, :]
-    if attention_mask.dtype == torch.bool:
-        return attention_mask | image_pairs
-    return attention_mask.masked_fill(image_pairs, 0)
 
 
 class MolmoPrefixAdapter:
@@ -138,7 +121,7 @@ class MolmoPrefixAdapter:
         causal_mask = layer_attention_mask
         if causal_mask is not None:
             causal_mask = causal_mask.to(device=inputs_embeds.device)
-            causal_mask = _overlay_image_token_mask(
+            causal_mask = overlay_bidirectional_token_mask(
                 causal_mask,
                 vlm_inputs.get("token_type_ids"),
             )

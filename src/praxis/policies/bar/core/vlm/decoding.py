@@ -29,6 +29,7 @@ from praxis.policies.core.observations import extract_instructions
 from praxis.policies.core.vlm.schedule import (
     PrefixAttentionMode,
     build_attention_mask,
+    overlay_bidirectional_token_mask,
 )
 
 
@@ -60,6 +61,7 @@ def build_vlm_prefill_inputs(
     mask_dtype: torch.dtype,
     prefix_attention: PrefixAttentionMode,
     extra_prepare_keys: tuple[str, ...] = (),
+    image_token_type_ids: Tensor | None = None,
 ) -> dict[str, Tensor]:
     """Build BAR cached prefill inputs for one blockwise decode step."""
     full_input_ids = torch.cat([prompt_input_ids, pred_block_vlm_ids], dim=1)
@@ -84,6 +86,19 @@ def build_vlm_prefill_inputs(
         dtype=mask_dtype,
         prefix_attention=prefix_attention,
     )
+    if image_token_type_ids is not None:
+        if image_token_type_ids.shape != prompt_input_ids.shape:
+            raise ValueError("Image token type ids must match prompt input ids.")
+        image_token_type_ids = torch.cat(
+            [
+                image_token_type_ids,
+                torch.zeros_like(pred_block_vlm_ids, dtype=image_token_type_ids.dtype),
+            ],
+            dim=1,
+        )
+        model_inputs["attention_mask"] = overlay_bidirectional_token_mask(
+            model_inputs["attention_mask"], image_token_type_ids
+        )
     return model_inputs
 
 
@@ -161,6 +176,14 @@ def run_blockwise_vlm_forward_step_result(
     updated_input_ids = torch.cat([running_input_ids, pred_block_vlm_ids], dim=1)
 
     if past_key_values is None:
+        use_bidirectional_image_tokens = getattr(
+            policy, "_PREFILL_BIDIRECTIONAL_IMAGE_TOKENS", False
+        )
+        image_token_type_ids = base_vlm_inputs.get("token_type_ids")
+        if use_bidirectional_image_tokens and image_token_type_ids is None:
+            raise RuntimeError(
+                "Molmo prefill requires token_type_ids to restore image attention."
+            )
         model_inputs = build_vlm_prefill_inputs(
             vlm=policy.vlm,
             base_vlm_inputs=base_vlm_inputs,
@@ -171,6 +194,9 @@ def run_blockwise_vlm_forward_step_result(
             mask_dtype=mask_dtype,
             prefix_attention=policy._require_prefix_attention(),
             extra_prepare_keys=getattr(policy, "_PREFILL_EXTRA_KEYS", ()),
+            image_token_type_ids=(
+                image_token_type_ids if use_bidirectional_image_tokens else None
+            ),
         )
     else:
         model_inputs = build_vlm_cached_step_inputs(

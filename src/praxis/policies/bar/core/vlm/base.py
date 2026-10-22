@@ -78,6 +78,7 @@ class VlmActionTokenPolicyBase(
     ACTION_TOKEN_OWNER_NAME: str | None = None
     _SCHEDULE_STRIP_KEYS: ClassVar[tuple[str, ...]] = ("labels",)
     _PREFILL_EXTRA_KEYS: ClassVar[tuple[str, ...]] = ()
+    _PREFILL_BIDIRECTIONAL_IMAGE_TOKENS: ClassVar[bool] = False
     processor: Any
 
     def __init__(self, config: Any, **kwargs) -> None:
